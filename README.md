@@ -22,10 +22,6 @@ Prerequisites
 Quick setup (Copilot CLI)
 1. Start an interactive Copilot session from the repository root: `copilot`
 2. Authenticate: run `/login` inside the Copilot session and follow the prompts.
-3. Initialize repository instructions and register skills: run `/init`.
-4. Manage and run skills: use `/skills` to list and invoke available skills. Example flows (interactive):
-   - Run a simulation: invoke the `simulation` skill and paste the job description.
-   - Run ranking: invoke the `ranking` skill (no inputs) to compute ephemeral rankings.
 
 Using Claude or Gemini instead
 - To run the same skill workflows with Claude or Gemini, move or duplicate the skills folder into a model-specific location: `.claude/skills/` or `.gemini/skills/`.
@@ -43,6 +39,7 @@ Each skill uses template files under `assets/templates/` and canonical rules und
 - Simulation outputs stored in: `.github/skills/simulation/simulations/` — generated, timestamped files produced by the Simulation skill.
 
 When customizing, prefer updating templates and the editable reference files rather than altering skill code; run the Simulation skill afterward to validate effects.
+
 ## Intended workflow
 
 1. Run the Simulation skill with a raw JD (paste JD text). The skill validates references, parses the JD, applies the contract, and writes a timestamped markdown simulation to the simulations folder.
