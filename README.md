@@ -32,13 +32,17 @@ Using Claude or Gemini instead
 - Add model instruction files at the repo root if needed (CLAUDE.md or GEMINI.md). Copilot recognizes these files and model selection via `/model`.
 - In a Copilot session, select the model with `/model claude` or `/model gemini`, run `/init` to register, then use `/skills` as above. The skill invocation pattern and templates remain the same.
 
-## Templates & references
+## Templates, references & configuration
 
-Each skill uses template files under `assets/templates/` and canonical rules under `references/` to ensure consistent outputs. Key files:
-- Simulation templates: `assets/templates/*.md` inside the simulation skill
-- Ranking rules: `.github/skills/ranking/references/ranking_rules.md`
-- Simulation outputs stored in: `.github/skills/simulation/simulations/`
+Each skill uses template files under `assets/templates/` and canonical rules under `references/` to ensure consistent outputs. Key files and editable configuration:
 
+- Simulation templates: `.github/skills/simulation/assets/templates/*.md` — edit these to change output formatting (skill, experience, degree mapping templates).
+- Simulation references: `.github/skills/simulation/references/` — this folder contains the candidate artifacts and inputs the Simulation skill consumes (e.g., `candidate_resume.md`, `candidate_profile.md`, `candidate_preferences.md`). Editing these files will change how simulations evaluate the candidate.
+- Important: `simulation_contract.md` in the same references folder is canonical and SHOULD NOT be modified unless you understand the contract impact; changing it will change simulation semantics.
+- Ranking rules: `.github/skills/ranking/references/ranking_rules.md` — defines the canonical scoring model; treat it as authoritative for ranking behavior.
+- Simulation outputs stored in: `.github/skills/simulation/simulations/` — generated, timestamped files produced by the Simulation skill.
+
+When customizing, prefer updating templates and the editable reference files rather than altering skill code; run the Simulation skill afterward to validate effects.
 ## Intended workflow
 
 1. Run the Simulation skill with a raw JD (paste JD text). The skill validates references, parses the JD, applies the contract, and writes a timestamped markdown simulation to the simulations folder.
