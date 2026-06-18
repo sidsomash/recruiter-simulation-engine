@@ -14,6 +14,24 @@ A modular engine that converts job descriptions into structured, recruiter‑gra
   - Purpose: Read all simulation outputs, extract structured fields, compute composite scores using `references/ranking_rules.md`, and return an ephemeral ranked table of roles. Does not modify simulations.
   - Inputs: none (auto-discovers simulations directory).
 
+## Setup
+
+Prerequisites
+- Install the GitHub Copilot CLI and follow the official docs: https://docs.github.com/copilot/how-tos/use-copilot-agents/use-copilot-cli
+
+Quick setup (Copilot CLI)
+1. Start an interactive Copilot session from the repository root: `copilot`
+2. Authenticate: run `/login` inside the Copilot session and follow the prompts.
+3. Initialize repository instructions and register skills: run `/init`.
+4. Manage and run skills: use `/skills` to list and invoke available skills. Example flows (interactive):
+   - Run a simulation: invoke the `simulation` skill and paste the job description.
+   - Run ranking: invoke the `ranking` skill (no inputs) to compute ephemeral rankings.
+
+Using Claude or Gemini instead
+- To run the same skill workflows with Claude or Gemini, move or duplicate the skills folder into a model-specific location: `.claude/skills/` or `.gemini/skills/`.
+- Add model instruction files at the repo root if needed (CLAUDE.md or GEMINI.md). Copilot recognizes these files and model selection via `/model`.
+- In a Copilot session, select the model with `/model claude` or `/model gemini`, run `/init` to register, then use `/skills` as above. The skill invocation pattern and templates remain the same.
+
 ## Templates & references
 
 Each skill uses template files under `assets/templates/` and canonical rules under `references/` to ensure consistent outputs. Key files:
