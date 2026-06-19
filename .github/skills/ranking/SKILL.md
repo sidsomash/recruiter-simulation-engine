@@ -130,7 +130,8 @@ The output table includes:
 ---
 
 ### **Step 6 — Return Output**
-Return the ranked table and insights to the user.
+
+Print the ranked table (markdown) to stdout and only print it; do not write CSVs or any files. Return concise insights immediately after the printed table. Ranking results remain ephemeral and no persistent files should be created.
 
 No files are written — ranking is ephemeral.
 
