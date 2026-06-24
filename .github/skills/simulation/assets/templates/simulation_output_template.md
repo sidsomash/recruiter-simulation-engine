@@ -1,5 +1,17 @@
 # Simulation Output
 
+## 0. Metadata
+- Company: <company name or "Unknown">  
+- Job Title: <canonical job title>  
+- Posting Date: <YYYY-MM-DD or "Unknown">  
+- Source URL / Reference: <url or file path>  
+- Compensation: <salary or hourly range or "Unknown">  
+- Location(s): <city, state, remote/hybrid flags>  
+- Years of Experience Required: <e.g., "3+" or "entry-level">  
+- Degree Requirement: <e.g., "Bachelor's CS" or "Not specified">  
+
+---
+
 ## 1. Recruiter Takeaway
 <one-paragraph summary of overall fit, major strengths, and major risks>
 

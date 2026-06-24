@@ -66,3 +66,32 @@ This document presents the ranked results of all simulation outputs using the sc
   `references/ranking_rules.md`.
 - This template defines the required output structure for the ranking skill.
 - The ranking skill must not alter column order or required sections.
+
+---
+
+## 💾 CSV Export Format (machine-readable)
+
+The ranking skill will persist a CSV file to: `assets/ranking_results.csv` (overwritten on each invocation).
+The CSV MUST contain the following header row (columns, in this order):
+
+Rank,Role,Company,Compensation,Location,YearsRequired,Composite,Recruiter,Interview,DegreeScore,SkillScore,ExperienceScore,PrefPenalties,FitScore,FitCategory,FileName,PostingDate
+
+- Rank: integer (1 = top)
+- Role: canonical job title
+- Company: employer name
+- Compensation: raw compensation string from metadata
+- Location: metadata Location(s)
+- YearsRequired: metadata years field
+- Composite: numeric composite score (0–100)
+- Recruiter: recruiter screen likelihood (%)
+- Interview: interview likelihood (%)
+- DegreeScore: normalized numeric score (0–1)
+- SkillScore: normalized numeric score (0–1)
+- ExperienceScore: normalized numeric score (0–1)
+- PrefPenalties: numeric penalty points applied
+- FitScore: normalized numeric score (0–1)
+- FitCategory: textual final fit category (e.g., "Strong match")
+- FileName: source simulation filename
+- PostingDate: posting date from metadata (or "Unknown")
+
+This CSV is the canonical persisted artifact for programmatic consumption. The ranking skill implementation must overwrite `assets/ranking_results.csv` each run and ensure the header and column ordering above are preserved exactly.

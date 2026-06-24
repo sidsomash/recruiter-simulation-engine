@@ -79,17 +79,21 @@ The SKILL.md does not restate these rules to avoid duplication and drift.
 From each simulation output, the ranking skill extracts:
 
 - Role Title  
+- Company / Employer  
 - Recruiter Screen Likelihood  
 - Interview Likelihood  
+- Compensation / Pay Range (if present)  
+- Location(s)  
 - Degree Alignment Score  
 - Skill Alignment Score  
 - Experience Alignment Score  
+- Years-of-Experience Required (parsed)  
 - Preference Violations  
 - Final Fit Summary Category  
 - Internship Mode Flag  
-- Any metadata included in the simulation header  
+- Posting Date / Source URL (if present)  
 
-These fields are required for scoring.
+The ranking skill must prefer explicit metadata extracted by the simulation (Metadata section) over filename heuristics; when metadata fields are missing, fall back to conservative inference. These fields are required for scoring.
 
 ---
 
@@ -131,9 +135,13 @@ The output table includes:
 
 ### **Step 6 — Return Output**
 
-Print the ranked table (markdown) to stdout and only print it; do not write CSVs or any files. Return concise insights immediately after the printed table. Ranking results remain ephemeral and no persistent files should be created.
+Persist the complete ranking as a CSV at: `assets/ranking_results.csv`. Behavior:
 
-No files are written — ranking is ephemeral.
+- The ranking skill MUST write a CSV file to `assets/ranking_results.csv` on each invocation and OVERWRITE any existing file with the new ranked results.
+- The CSV file format and column ordering are defined in `assets/templates/ranking_output_template.md` and must be followed exactly.
+- Do NOT print the full table to stdout. Instead, after writing the CSV, the skill MUST emit a short confirmation message indicating the CSV was updated (e.g., "Ranking persisted to assets/ranking_results.csv").
+
+Persisting the CSV enables downstream programmatic consumption; the ranking skill must still follow the canonical scoring model in `references/ranking_rules.md`.
 
 ---
 

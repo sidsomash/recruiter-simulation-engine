@@ -1,6 +1,7 @@
 ---
 name: simulation
 description: Evaluates a job description against the candidate’s resume, profile, and preferences using a deterministic simulation contract, then outputs and stores a structured simulation result for ranking.
+context: fork
 ---
 
 # Simulation Skill
@@ -41,9 +42,9 @@ These templates ensure consistent structure across all simulation outputs.
 
 ## 📝 Inputs
 
-This skill accepts a single input:
+This skill prompts the user to paste the job description (JD) after invocation and uses that pasted JD as the sole input for the simulation. The skill does not rely on any external context or previously stored JDs.
 
-- **job_description** (string): Raw text of the job description.
+- **job_description** (string, required): Raw text of the job description — the skill will request this from the user at invocation.
 
 No additional parameters, flags, or overrides are supported.
 
@@ -65,18 +66,25 @@ This ensures the simulation always uses the latest candidate data.
 ---
 
 ### **Step 2 — Parse the Job Description**
-Extract structured information:
+Extract structured information into an explicit, machine-readable job metadata object. At minimum, extract the following fields when present in the JD (use conservative heuristics and fallbacks):
 
-- required skills  
-- preferred skills  
-- responsibilities  
-- degree requirements  
-- years of experience  
-- location  
-- clearance requirements  
-- internship indicators (“intern”, “internship”, “summer”, “co‑op”)  
+- Company / Employer (explicit organization name or hiring team)  
+- Job Title (canonicalized)  
+- Posting Date / JD timestamp  
+- Job URL or source reference  
+- Compensation / Pay Range (salary or hourly)  
+- Location(s) (city, state, remote/hybrid flags)  
+- Required years of experience (numeric range or "entry/mid/senior")  
+- Degree requirements (degree level and domain)  
+- Required skills  
+- Preferred skills  
+- Responsibilities / duties  
+- Clearance / defense requirements  
+- Internship indicators ("intern", "internship", "summer", "co‑op")  
+- Remote / Onsite / Hybrid expectation  
+- Level / seniority (if specified)  
 
-Convert the JD into a structured internal representation.
+If any field is missing, record a null/empty value rather than failing. Convert the JD into a structured internal representation (metadata + parsed sections) that will be used by the rest of the contract.
 
 ---
 
@@ -136,7 +144,10 @@ Example: `skills/simulation/simulations/20260617_153022_data-engineer.md`
 
 ### **Step 7 — Return Output**
 
-Return the full simulation output to the user.
+- Write the completed simulation output exclusively to the markdown file at `skills/simulation/simulations/<timestamp>_<slugified-role>.md`.
+- Do NOT print, stream, or otherwise emit any simulation content (full or partial) to the terminal, logs, or assistant response payload. All simulation details must be persisted only to the output file.
+- After successfully saving the file, terminal/assistant responses should be restricted to a concise confirmation containing ONLY the relative file path and a one-line status (for example: "Saved: .github/skills/simulation/simulations/20260623_093815_role.md"). No simulation content, analysis, or excerpts should be included in the response.
+- If an error prevents writing the file, return a brief error message that describes the failure (no simulation content).
 
 ---
 
