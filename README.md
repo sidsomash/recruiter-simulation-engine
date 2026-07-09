@@ -4,15 +4,28 @@ A modular engine that converts job descriptions into structured, recruiter‑gra
 
 ## Core skills
 
-- Simulation skill
-  - Location: .github/skills/simulation
-  - Purpose: Parse a pasted job description, apply the simulation contract (skill & responsibility mapping, experience/degree mapping, preference checks, recruiter decision), render results using canonical templates, and save outputs to `skills/simulation/simulations/<timestamp>_<slug>.md`.
-  - Inputs: single `job_description` string. Deterministic given the same candidate references.
+- **Initialize skill**
+  - Location: `.github/skills/initialize`, `.claude/skills/initialize`, `.gemini/skills/initialize`
+  - Purpose: Interactive onboarding skill that guides new users through creating their candidate profile by collecting resume, profile, and preferences data. Creates foundational artifacts that power all downstream skills.
+  - Invocation: "Initialize my candidate profile" or "Set up my candidate profile"
+  - Output: Creates three markdown files across all three directories:
+    - `candidate_resume.md`
+    - `candidate_profile.md`
+    - `candidate_preferences.md`
 
-- Ranking skill
-  - Location: .github/skills/ranking
+- **Simulation skill**
+  - Location: `.github/skills/simulation`, `.claude/skills/simulation`, `.gemini/skills/simulation`
+  - Purpose: Parse a pasted job description, apply the simulation contract (skill & responsibility mapping, experience/degree mapping, preference checks, recruiter decision), render results using canonical templates, and save outputs to `skills/simulation/simulations/<timestamp>_<slug>.md`.
+  - Invocation: "Run a simulation for this job description" or "Simulate this JD"
+  - Input: Paste raw job description text
+  - Output: Deterministic simulation file saved to simulations folder
+
+- **Ranking skill**
+  - Location: `.github/skills/ranking`, `.claude/skills/ranking`, `.gemini/skills/ranking`
   - Purpose: Read all simulation outputs, extract structured fields, compute composite scores using `references/ranking_rules.md`, and return an ephemeral ranked table of roles. Does not modify simulations.
-  - Inputs: none (auto-discovers simulations directory).
+  - Invocation: "Rank my simulations" or "Show ranked results"
+  - Input: None (auto-discovers simulations directory)
+  - Output: Ranked table in terminal response (ephemeral, not persisted)
 
 ## Setup
 
