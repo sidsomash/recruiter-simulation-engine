@@ -439,15 +439,15 @@ To preserve this determinism:
 
 ## 📦 Incoming Features
 
-### **Resume-Rewrite Skill** (In Development)
-A skill that automatically rewrites your resume to target a specific job description. It will:
+### **Resume-Rewrite Skill** (Now Available)
+A skill that rewrites your resume to target a specific job description. It:
 - Highlight relevant skills and responsibilities
 - Reorder work history for maximum impact
 - Optimize language for ATS and recruiter scanning
 - Generate a "signals" document showing what the rewritten resume optimizes for
 - Integrate with the Simulation skill for immediate fit testing
 
-Expected release: Q3 2026
+Released: Q3 2026
 
 ---
 

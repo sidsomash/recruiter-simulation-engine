@@ -1,223 +1,156 @@
-# Resume Rewrite Guidelines v1.0
-### (Generalized, Candidate‑Agnostic, ATS‑Optimized)
+# Resume Rewriting Guidelines v1.0
 
-## 1. Purpose
-These guidelines define how the resume‑restructure skill rewrites a candidate’s résumé
-to align with a target job description (JD) while preserving factual accuracy.
-
-The rewritten résumé must:
-- Highlight the most relevant skills and experience for the JD  
-- Improve clarity, impact, and recruiter readability  
-- Maintain strict truthfulness  
-- Preserve the candidate’s authentic background  
-- Follow ATS‑friendly formatting  
-
-The goal is **alignment**, not fabrication.
+This document defines the strategy and rules for rewriting a candidate's résumé to target a specific job description. The goal is to emphasize relevant experience while preserving factual accuracy.
 
 ---
 
-## 2. Core Principles
+## 1. Core Principles
 
-### 2.1 Truthfulness
-- No fabricated experience, skills, or achievements  
-- No inflated titles or responsibilities  
-- No invented metrics  
-- Allowed: reframing, reorganizing, quantifying existing work  
+### 1.1 Honesty First
+- **Never fabricate** skills, roles, or accomplishments.
+- **Never exaggerate** metrics or timelines.
+- **Always ground** claims in the original résumé.
+- **Reframe, don't reinvent:** Present existing content in JD-relevant language.
 
-### 2.2 Relevance
-- Prioritize content that aligns with the JD  
-- De‑emphasize unrelated experience  
-- Remove filler, fluff, and generic statements  
+### 1.2 Context Over Content
+- Same skill/accomplishment → described differently for different recruiters.
+- Example: "Optimized Spark SQL queries" (for data engineer) vs. "Reduced query latency by 40%" (for performance engineer).
+- Use JD terminology and domain language naturally.
 
-### 2.3 Clarity
-- Use concise, high‑impact bullet points  
-- Lead with action verbs  
-- Quantify impact wherever possible  
-- Avoid jargon unless industry‑standard  
+### 1.3 Emphasis and Omission
+- **Prioritize:** Lead with JD-relevant accomplishments.
+- **Reorder:** Rearrange bullet points to emphasize recruiter priorities.
+- **Minimize:** De-emphasize or softly exclude accomplishments with weak relevance (but never delete facts).
+- **Group:** Organize skills and experiences by domain/function.
 
-### 2.4 ATS Compatibility
-- No tables, text boxes, or multi‑column layouts  
-- Use standard section headers  
-- Use consistent date formats  
-- Spell out acronyms on first use  
-
----
-
-## 3. Required Resume Sections
-
-A rewritten résumé must include:
-
-1. **Header**  
-   - Name, email, phone, location (city/state), LinkedIn (optional)
-
-2. **Skills Section**  
-   - Grouped by category (Languages, Tools, Cloud, Frameworks, etc.)  
-   - Prioritized based on JD relevance  
-
-3. **Experience Section**  
-   - Reverse chronological  
-   - Each role includes:
-     - Company  
-     - Title  
-     - Location  
-     - Dates  
-     - 3–5 bullets rewritten for JD alignment  
-
-4. **Projects Section** (optional but recommended)  
-   - Only include projects relevant to the JD  
-   - 2–3 bullets per project  
-
-5. **Education Section**  
-   - Degree, major, institution, graduation date  
-   - Certifications (optional)  
+### 1.4 Consistency
+- Keep names, dates, and core facts unchanged.
+- Maintain the structure and flow of the original résumé.
+- Use consistent terminology and tone.
 
 ---
 
-## 4. Bullet Point Rewrite Rules
+## 2. Section-by-Section Rewriting Strategy
 
-### 4.1 Structure
-Each bullet must follow:
+### 2.1 Contact & Header
+**Rewrite Level:** Minimal
 
-Action verb → What you did → How you did it → Impact (quantified if possible)
+- Keep name, email, phone, locations unchanged.
+- Keep LinkedIn URL and citizenship status unchanged.
+- Do NOT modify or add false information.
 
-### 4.2 Action Verbs
-Use strong verbs:
-- Built, engineered, developed, designed  
-- Automated, optimized, deployed  
-- Analyzed, modeled, evaluated  
-- Architected, orchestrated, implemented  
-
-Avoid weak verbs:
-- Helped, assisted, worked on, responsible for  
-
-### 4.3 Quantification
-Where possible, include:
-- percentages  
-- time saved  
-- throughput improvements  
-- scale (dataset size, user count, etc.)  
-
-### 4.4 JD Alignment
-Rewrite bullets to emphasize:
-- required skills  
-- preferred skills  
-- responsibilities listed in the JD  
-
-Do **not**:
-- copy JD language verbatim  
-- misrepresent experience  
+**Example:** No changes needed.
 
 ---
 
-## 5. Skills Section Rewrite Rules
+### 2.2 Education
+**Rewrite Level:** Minimal
 
-### 5.1 Prioritization
-Skills must be reordered so that:
-- JD‑required skills appear first  
-- JD‑preferred skills appear next  
-- Irrelevant skills are moved to the bottom or removed  
-
-### 5.2 Normalization
-Normalize skill names:
-- “PySpark” → “Spark (PySpark)”  
-- “Postgres” → “PostgreSQL”  
-- “LLM” → “Large Language Models (LLMs)”  
-
-### 5.3 No Skill Inflation
-Do not add skills the candidate does not have.
+- Keep degree name, major, minor, university, and graduation date unchanged.
+- Keep classification (STEM, quantitative, etc.) unchanged.
+- Optionally highlight relevant coursework or classifications if they strengthen JD alignment.
 
 ---
 
-## 6. Experience Rewrite Rules
+### 2.3 Skills
+**Rewrite Level:** Aggressive
 
-### 6.1 Relevance Weighting
-For each role:
-- Keep 3–5 bullets  
-- Rewrite bullets to emphasize JD‑aligned responsibilities  
-- Remove or downplay unrelated tasks  
+#### 2.3.1 Reordering
+- **Priority 1:** Required skills from JD (e.g., SQL, Python, Databricks).
+- **Priority 2:** Preferred skills from JD (e.g., PySpark, Azure).
+- **Priority 3:** Complementary skills that reinforce domain depth (e.g., testing frameworks, CI/CD).
+- **Priority 4:** Adjacent skills with lower relevance.
 
-### 6.2 Technical Depth
-If the JD is technical:
-- Increase specificity (tools, frameworks, cloud platforms)  
-- Highlight architecture, pipelines, systems, and scale  
+#### 2.3.2 Grouping
+Organize skills by functional domain. Lead with JD-aligned categories first.
 
-If the JD is less technical:
-- Emphasize business impact, collaboration, communication  
-
-### 6.3 Seniority Alignment
-If the JD is:
-- **Entry‑level** → emphasize projects, internships, coursework  
-- **Mid‑level** → emphasize ownership, autonomy, impact  
-- **Senior** → emphasize leadership, architecture, cross‑team influence  
+#### 2.3.3 Emphasis
+- **List JD-required skills first** in each category.
+- **Add brief context** if a skill deserves emphasis (e.g., production vs. coursework).
 
 ---
 
-## 7. Project Rewrite Rules
+### 2.4 Work Experience
+**Rewrite Level:** Strategic
 
-### 7.1 Relevance
-Only include projects that:
-- Demonstrate JD‑aligned skills  
-- Show technical depth or problem‑solving  
+#### 2.4.1 Role Selection
+- **Keep all roles** from the original résumé (do not omit jobs).
+- **Emphasize** roles that best demonstrate JD competencies.
 
-### 7.2 Structure
-Each project must include:
-- One‑line summary  
-- 2–3 bullets describing:
-  - tools used  
-  - architecture or approach  
-  - measurable outcomes  
+#### 2.4.2 Bullet Point Rewriting
 
----
+**Rule 1: Lead with JD Relevance**
+- First 2–3 bullet points should directly address JD responsibilities.
+- Use JD terminology and domain language.
 
-## 8. Formatting Rules
+**Rule 2: Emphasize Metrics and Outcomes**
+- If the original bullet includes metrics, emphasize them.
+- Use domain-relevant metrics aligned to JD priorities.
 
-### 8.1 Layout
-- Single column  
-- One page (preferred)  
-- Two pages only for 8+ years experience  
+**Rule 3: Adapt Language to JD Domain**
+- Use keywords from the JD naturally.
+- Translate technical accomplishments into recruiter-relevant language.
 
-### 8.2 Typography
-- Standard fonts (Arial, Calibri, Helvetica, Times)  
-- 10–12 pt body text  
-- Bold for section headers and company names  
-
-### 8.3 Dates
-Use consistent format:
-- “May 2025 – Present”  
-- “Jun 2024 – Aug 2024”  
-
-### 8.4 File Format
-- Plain text or Markdown for internal processing  
-- PDF for final export (outside the skill)  
+**Rule 4: Reorder Bullet Points**
+- Move JD-aligned bullet points to the top.
+- Deprioritize accomplishments with weak relevance (but keep them).
 
 ---
 
-## 9. Prohibited Content
-The rewritten résumé must not include:
-- Fabricated achievements  
-- Exaggerated titles  
-- Personal details (age, marital status, photo)  
-- Irrelevant hobbies  
-- Buzzwords without substance  
+### 2.5 Projects
+**Rewrite Level:** Selective
+
+- **Prioritize** projects most relevant to the JD domain.
+- **Rewrite descriptions** to emphasize technical alignment.
+- **Optionally de-emphasize** projects with weak relevance (but keep all original facts).
 
 ---
 
-## 10. Output Requirements
+## 3. Recruiter Perspective: What to Emphasize
 
-The resume‑restructure skill must output:
+### 3.1 Common JD Priorities
 
-1. **Rewritten Resume**  
-   Fully rewritten résumé aligned to the JD.
+| Priority | What Recruiters Look For | How to Highlight |
+|----------|-------------------------|-----------------|
+| **Technical Skills Match** | Core tools (Python, SQL, Databricks) | Lead bullets; list first in skills |
+| **Hands-On Experience** | Production systems, real data, scale | Use specific examples; cite metrics |
+| **Ownership & Initiative** | Led design, built from scratch | Active verbs ("Engineered," "Designed," "Architected") |
+| **Domain Depth** | Industry-specific knowledge | Use JD terminology; mention domain experience |
+| **Scalability & Performance** | Large datasets, optimization, SLAs | Emphasize metrics ("10x data growth," "70% reduction") |
+| **Collaboration** | Cross-team work, communication | Mention working with senior engineers, teams |
+| **Learning Agility** | Mastered new tools quickly | Cite rapid adoption (e.g., "Quickly mastered Databricks") |
 
-2. **Change Summary**  
-   A list of:
-   - Added emphasis areas  
-   - Removed content  
-   - Rewritten bullets  
-   - Skills reordering  
+### 3.2 Red Flags to Avoid
 
-3. **JD Alignment Notes**  
-   A short explanation of:
-   - Why certain changes were made  
-   - How the résumé now aligns with the JD  
+- **Vague language:** "Helped with data tasks" → "Engineered ETL pipelines for S3 datasets"
+- **Buzzwords without substance:** "Big data expert" → "Processed 10M records/day at CapTech"
+- **Irrelevant projects:** Bury low-relevance projects; don't lead with them
+- **Missing metrics:** "Optimized queries" → "Optimized queries by 40%, reducing latency from 8s to 5s"
+- **Passive voice:** "Pipelines were developed" → "Engineered and deployed production pipelines"
+
+---
+
+## 4. Rewrite Checklist
+
+Before finalizing a tailored résumé, verify:
+
+- [ ] All facts are grounded in the original résumé (no fabrication)
+- [ ] Emphasis matches JD priorities (from simulation analysis)
+- [ ] JD terminology is used naturally (not forced)
+- [ ] Metrics and accomplishments are preserved
+- [ ] Skill section leads with JD-required skills
+- [ ] Work experience bullets are reordered to emphasize JD alignment
+- [ ] Projects are prioritized by JD relevance
+- [ ] Names, dates, and core facts are unchanged
+- [ ] Structure follows the resume output template
+- [ ] Tone is consistent with original résumé
+
+---
+
+## 5. Notes
+
+- Rewriting is an art + science: there is no single "correct" tailored résumé for every JD.
+- Different recruiters prioritize different things; tailor accordingly.
+- Multiple tailored résumés for different roles is encouraged (portfolio approach).
+- The simulation output provides the "rewrite directive"—use it as a guide for emphasis.
 

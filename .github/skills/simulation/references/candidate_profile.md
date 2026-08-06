@@ -24,7 +24,7 @@ Databricks, Snowflake, Airflow, Jenkins, Docker, Supabase, LlamaIndex, Vertex AI
 ---
 
 ## Domain Experience
-- Financial services (top‑5 U.S. institution)
+- Financial services (top‑5 U.S. institution/bank)
 - Logistics / supply chain (UPS)
 - Defense‑adjacent analytics (ExoAnalytic)
 - AI platform engineering
