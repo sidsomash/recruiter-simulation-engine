@@ -39,7 +39,7 @@ Gemini has access to the following skills in this directory:
 - **Purpose:** Reads all simulation outputs, extracts structured fields, computes composite scores using the canonical ranking rules, and returns a ranked table of roles.
 - **Invocation:** "Rank my simulations" or "Show ranked results"
 - **Input:** None (auto-discovers simulations directory)
-- **Output:** Ephemeral ranked table in terminal response (not persisted)
+- **Output:** Runs the deterministic `run_ranking.py` script (Python 3.8+, stdlib-only, no venv needed); persists a ranked CSV to `assets/ranking_results.csv` (overwritten each run) and echoes the script's confirmation message
 - **Scoring Model:** `references/ranking_rules.md` (canonical and authoritative)
 
 ### 4. **Resume-Restructure Skill**
@@ -80,7 +80,7 @@ Invoke when the user says:
 ## 📁 Output Locations
 
 - **Simulation outputs:** `skills/simulation/simulations/` (timestamped markdown files)
-- **Ranking outputs:** Ephemeral (printed to terminal, not persisted)
+- **Ranking outputs:** Persisted CSV at `skills/ranking/assets/ranking_results.csv` (overwritten each run)
 - **Candidate reference files:** Created by Initialize skill and referenced by Simulation skill
 
 ---

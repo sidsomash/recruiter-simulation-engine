@@ -99,32 +99,43 @@ The ranking skill must prefer explicit metadata extracted by the simulation (Met
 
 ## 🧮 Workflow
 
-### **Step 1 — Load All Simulation Files**
-Read all `.md` files in: `skills/simulation/simulations/`
+### **Step 0 — Preflight: Verify Python Is Available**
+Scoring is performed by a deterministic script (`run_ranking.py`), not by the
+model, so a Python interpreter must be available before invoking it.
 
-If no files exist, return an error.
-
----
-
-### **Step 2 — Parse Each Simulation Output**
-Extract structured fields using the known simulation output template.
-
----
-
-### **Step 3 — Apply Scoring Model**
-Compute all scoring dimensions and the composite score using the rules in: `references/ranking_rules.md`
+- Try `python3 --version`, then fall back to `python --version` if `python3`
+  is not found.
+- If neither is available, stop and tell the user: "Python 3.8+ is required
+  to run the ranking skill. Please install Python and try again." Do not
+  attempt to hand-compute the ranking as a substitute — determinism depends
+  on the script running, not the model estimating scores.
+- No virtual environment, `pip install`, or `requirements.txt` is needed —
+  `run_ranking.py` uses only the Python standard library.
 
 ---
 
-### **Step 4 — Sort Simulations**
-Sort descending by composite score, applying tie-breakers as defined in the rules.
+### **Step 1 — Run the Ranking Script**
+From within `skills/ranking/`, invoke:
 
-If internship mode is detected:
-- produce separate rankings for internships and full-time roles.
+```
+python3 run_ranking.py
+```
+
+(fall back to `python run_ranking.py` if `python3` is not the resolved command)
+
+The script performs all of the following internally:
+- Loads all `.md` files in `skills/simulation/simulations/` (returns a clear
+  error if none exist)
+- Parses each output using the known simulation output template
+- Applies the composite scoring model from `references/ranking_rules.md`,
+  including point-scale degree/skill/experience scoring, severity-tiered
+  preference-violation penalties, hard-reject bottoming (rules 5.3), and
+  internship/full-time separation (rules 5.4)
+- Sorts and ranks using the documented tie-breaker chain (rules 5.2)
 
 ---
 
-### **Step 5 — Generate Ranked Table Output**
+### **Step 2 — Generate Ranked Table Output**
 
 The output table includes:
 
@@ -133,13 +144,13 @@ The output table includes:
 
 ---
 
-### **Step 6 — Return Output**
+### **Step 3 — Return Output**
 
-Persist the complete ranking as a CSV at: `assets/ranking_results.csv`. Behavior:
+The script persists the complete ranking as a CSV at: `assets/ranking_results.csv`. Behavior:
 
-- The ranking skill MUST write a CSV file to `assets/ranking_results.csv` on each invocation and OVERWRITE any existing file with the new ranked results.
+- The script writes `assets/ranking_results.csv` on each invocation and OVERWRITES any existing file with the new ranked results.
 - The CSV file format and column ordering are defined in `assets/templates/ranking_output_template.md` and must be followed exactly.
-- Do NOT print the full table to stdout. Instead, after writing the CSV, the skill MUST emit a short confirmation message indicating the CSV was updated (e.g., "Ranking persisted to assets/ranking_results.csv").
+- Do NOT print the full table to stdout. Relay the script's own confirmation message (e.g., "Ranking persisted to assets/ranking_results.csv") instead of re-generating it.
 
 Persisting the CSV enables downstream programmatic consumption; the ranking skill must still follow the canonical scoring model in `references/ranking_rules.md`.
 
