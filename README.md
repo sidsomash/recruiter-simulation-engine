@@ -39,15 +39,38 @@ cd recruiter-simulation-engine
 copilot
 ```
 
-### **Step 2: Initialize your candidate profile (one-time setup)**
+### **Step 2: Initialize your candidate profile (one-time setup — ~10 minutes)**
 ```
 # Inside the Copilot session:
-/initialize candidate profile
+Initialize my candidate profile
 ```
-This will guide you through creating three files:
-- **candidate_resume.md** — your work history and education
-- **candidate_profile.md** — background, location, constraints
-- **candidate_preferences.md** — desired roles, skills, environments
+
+**What happens:**
+
+1. **Paste your resume** (any format: LinkedIn, PDF text, markdown, plain text)
+   - AI automatically extracts structured data:
+     - Contact info (name, email, phone, locations, citizenship, LinkedIn)
+     - Education (degree, school, graduation, minor, classification)
+     - Skills (languages, platforms, frameworks, tools, databases)
+     - Work experience (companies, roles, dates, achievements, years)
+     - Projects (names, roles, durations, technologies)
+
+2. **Review the extracted resume**
+   - AI displays what it found and asks for confirmations or corrections
+
+3. **Answer targeted supplemental questions** (only for missing/unclear fields)
+   - Graduation date if not provided
+   - Technical summary (1–3 sentences)
+   - Top competencies
+   - Preferred/avoided roles
+   - Location and compensation preferences
+   - Defense/clearance stance
+
+4. **Receive your candidate files:**
+   - `candidate_resume.md` — Structured work history and education
+   - `candidate_profile.md` — Background, location, domain experience
+   - `candidate_preferences.md` — Desired roles, locations, compensation, constraints
+   - **Pre-populated mobile prompt** — `.github/skills/simulation/one_shot_simulation_prompt.md` (ready to copy and use in ChatGPT/Claude/Gemini)
 
 ### **Step 3: Run a simulation**
 Paste a job description and say:
@@ -142,7 +165,44 @@ Each directory contains the same skills with identical logic. Pick the one match
   - `candidate_resume.md` — Structured work history and education
   - `candidate_profile.md` — Background, location, constraints
   - `candidate_preferences.md` — Desired roles, skills, environments
+  - **Bonus:** Pre-populated mobile simulation prompt for use in any AI app
 - **Run this once** before simulating any jobs (other skills depend on it)
+
+#### **Initialize Skill Workflow**
+
+The Initialize Skill uses a two-phase approach optimized for minimal user friction:
+
+**Phase 1: Resume Extraction (5 min)**
+- User pastes resume in **any format** (LinkedIn, PDF text, markdown, plain text)
+- AI automatically extracts:
+  - Contact: name, email, phone, locations, citizenship, LinkedIn
+  - Education: degree, school, graduation, minor, classification, level
+  - Skills: languages, platforms, frameworks, tools, databases
+  - Experience: companies, roles, dates, achievements, years in each skill
+  - Projects: names, roles, durations, technologies, outcomes
+- AI displays the extracted resume for review/confirmation
+
+**Phase 2: Supplemental Questioning (5 min)**
+- AI identifies **gaps** (fields that are missing or unclear)
+- AI asks **only necessary questions**:
+  - Education details if incomplete
+  - Technical summary (1–3 sentences)
+  - Top competencies (AI suggests inferred list)
+  - Preferred/avoided roles
+  - Location and compensation preferences
+  - Defense/clearance stance
+  - Any additional constraints
+- User answers only the questions that apply
+
+**Output:**
+- Three candidate reference files (saved to all three platform directories)
+- Pre-populated mobile simulation prompt ready to copy/paste into ChatGPT/Claude/Gemini
+
+**Key Benefits:**
+- Resume-first approach = less typing for users
+- Gap detection = no unnecessary questions
+- Mobile-ready = immediate access to simulations from any AI app
+- Unified across platforms = same workflow in GitHub, Claude, Gemini
 
 ### **2. Simulation Skill**
 - **Location:** `.github/skills/simulation/`, `.claude/skills/simulation/`, `.gemini/skills/simulation/`

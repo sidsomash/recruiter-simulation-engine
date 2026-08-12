@@ -1,14 +1,14 @@
 ---
 name: initialize
-description: Guides a new user through initializing their candidate preferences, profile, and resume across .github, .claude, and .gemini directories using structured templates and interactive prompts.
+description: Guides candidates through profile initialization by collecting resume first, then asking targeted supplemental questions to fill gaps. Creates candidate_resume.md, candidate_profile.md, candidate_preferences.md, and populates the one_shot_simulation_prompt.md for mobile use.
 context: fork
 ---
 
 # Initialize Skill
 
-An onboarding skill that helps new users set up their complete candidate profile by creating structured, standardized markdown files for preferences, profile, and resume. The skill guides users through each section with clear templates and context-aware prompts.
+An onboarding skill that helps new candidates set up their complete, reusable profile. The skill prioritizes extracting information from a pasted resume, then asks targeted supplemental questions to fill missing profile and preference data. All collected data is saved as structured markdown files across `.github`, `.claude`, and `.gemini` directories, and is also embedded in an interactive simulation prompt for mobile users.
 
-This skill creates a persistent candidate foundation that powers all downstream skills (simulation, ranking, etc.).
+This skill creates a persistent candidate foundation that powers all downstream skills (simulation, ranking, resume restructuring, etc.).
 
 ---
 
@@ -19,14 +19,20 @@ This skill does not depend on external reference files but creates the following
 - [candidate_resume.md](../../simulation/references/candidate_resume.md)  
 - [candidate_profile.md](../../simulation/references/candidate_profile.md)  
 - [candidate_preferences.md](../../simulation/references/candidate_preferences.md)  
+- [one_shot_simulation_prompt.md](../one_shot_simulation_prompt.md) ← populated with candidate data  
 
-These files are created in `.github/skills/simulation/references/` and mirrored in `.claude/skills/simulation/references/` and `.gemini/skills/simulation/references/`.
+These files are created in:
+1. `.github/skills/simulation/references/` (primary)
+2. `.claude/skills/simulation/references/` (mirror)
+3. `.gemini/skills/simulation/references/` (mirror)
+
+The `one_shot_simulation_prompt.md` is populated once and remains in `.github/skills/simulation/` for mobile user access.
 
 ---
 
 ## 🧩 Templates
 
-The following templates guide user input:
+The following templates guide extraction and formatting:
 
 - [resume_input_template.md](#resume-input-template)  
 - [profile_input_template.md](#profile-input-template)  
@@ -36,13 +42,20 @@ The following templates guide user input:
 
 ## 📝 Inputs
 
-This skill operates interactively, collecting user input in three phases:
+This skill operates in **two phases**:
 
-1. **Resume Phase** — Extract work history, education, skills, and projects
-2. **Profile Phase** — Synthesize technical strengths, domain experience, and role alignment  
-3. **Preferences Phase** — Collect role preferences, location, compensation, and constraints
+**Phase 1 — Resume Extraction:**
+- User pastes raw resume (text, LinkedIn-style, PDF-converted, etc.)
+- Skill automatically extracts structured fields and builds `candidate_resume.md`
+- Skill identifies gaps in extracted data
 
-No parameters or flags are required; the skill guides the user through each phase.
+**Phase 2 — Supplemental Questioning:**
+- Skill asks targeted questions for missing or unclear fields
+- Questions are context-aware (e.g., only ask about graduation date if education is incomplete)
+- Candidate fills in remaining profile and preference details
+- Skill builds `candidate_profile.md` and `candidate_preferences.md`
+
+No parameters or flags are required; the skill guides the user through both phases.
 
 ---
 
@@ -50,68 +63,246 @@ No parameters or flags are required; the skill guides the user through each phas
 
 ### **Step 1 — Confirm Initialization**
 
-Ask the user to confirm they want to initialize a new candidate profile. If they decline, exit gracefully.
+Greet the user and ask to confirm they want to initialize their candidate profile. If they decline, exit gracefully.
 
 ---
 
-### **Step 2 — Resume Collection (Interactive)**
+### **Step 2 — Request Resume Paste (Critical First Step)**
 
-Display the resume template and guide the user through:
+Display this prompt:
 
-- **Contact Information** (name, email, phone, locations, citizenship, LinkedIn)
-- **Education** (degree, school, graduation date, classification, minor if any)
-- **Skills** (languages, platforms, frameworks/tools)
-- **Work Experience** (company, role, dates, achievements/bullets)
-- **Projects** (project name, role, dates, description)
+```
+📋 **Paste Your Resume Below**
 
-Prompt the user for each section. Accept free-form input and lightly structure it using the template format.
+Please paste your resume in any format (LinkedIn text, PDF-converted text, Markdown, plain text, etc). 
+The skill will extract and structure it automatically.
 
-**Output:** Structured `candidate_resume.md` file.
+Resume formats accepted:
+- Pasted from LinkedIn
+- Plain text exported from resume
+- PDF-to-text conversions
+- Markdown-formatted resumes
+- Any text-based resume
 
----
+Paste here:
+```
 
-### **Step 3 — Profile Synthesis (Interactive)**
-
-Display the profile template and guide the user through:
-
-- **Summary** (1–3 sentences about technical focus and background)
-- **Technical Strengths** (core competencies, languages, tools/platforms)
-- **Domain Experience** (industries, verticals, problem spaces)
-- **Work History Summary** (brief overview of roles and what was accomplished)
-- **Education Summary** (degree level, classification, focus areas)
-- **Experience Depth** (years in key skill areas)
-- **Role Alignment** (what role types fit best, and what doesn't)
-- **Location** (primary locations, remote preferences)
-- **Citizenship** (for clearance/restricted roles)
-
-Prompt the user for each section. Draw inspiration from the resume but ask synthesizing questions (e.g., "What are your 3–5 technical strengths?" or "What industries do you want to work in?").
-
-**Output:** Structured `candidate_profile.md` file.
+**Important:** This is the **primary data source**. The skill extracts as much as possible from this input.
 
 ---
 
-### **Step 4 — Preferences Collection (Interactive)**
+### **Step 3 — Parse Resume Automatically**
 
-Display the preferences template and guide the user through:
+Extract the following fields from the pasted resume using conservative heuristics:
 
-- **Preferred Role Domains** (data engineering, ML, backend, etc.)
-- **Avoided Role Domains** (clearance roles, finance, etc.)
-- **Location Preferences** (preferred cities, remote/hybrid/onsite stance)
-- **Compensation Preferences** (minimum acceptable, target range)
-- **Work Environment Preferences** (remote, hybrid, onsite, travel tolerance)
-- **Role Level Preferences** (new grad, early career, senior, etc.)
-- **Defense / Clearance Stance** (willing, unwilling, requires clearance)
-- **Additional Notes** (openness to emerging roles, constraints, etc.)
+**Contact Information:**
+- Name (from header or first mention)
+- Email (regex: xxx@xxx.xxx)
+- Phone (regex: (XXX) XXX-XXXX or similar)
+- Locations (cities, states mentioned)
+- Citizenship (if mentioned)
+- LinkedIn URL (if present)
 
-Prompt the user for each section. Ask clarifying questions to ensure preferences are specific and actionable (e.g., "What's your minimum acceptable salary?" or "Are you open to fully remote roles?").
+**Education:**
+- Degree name (e.g., "B.S. in Computer Science")
+- School / University name
+- Graduation date / Expected graduation
+- Minor or secondary focus (if listed)
+- Degree classification (infer from major: STEM, quantitative, liberal arts, etc.)
+- Degree level (Bachelor's, Master's, PhD)
 
-**Output:** Structured `candidate_preferences.md` file.
+**Skills:**
+- Programming languages (extract keywords: Python, Java, JavaScript, etc.)
+- Cloud platforms (AWS, GCP, Azure, etc.)
+- Frameworks & tools (FastAPI, Docker, Spark, React, etc.)
+- Databases (PostgreSQL, Snowflake, MongoDB, etc.)
+
+**Work Experience:**
+- Company name
+- Job title
+- Location
+- Employment dates (start/end year or "present")
+- Bullet-point achievements (extract verbatim or paraphrase)
+- Count years of experience in key areas
+
+**Projects:**
+- Project name
+- Role (if specified)
+- Duration
+- Key technologies used
+- Outcomes
+
+**Record gaps:** Track which fields were not found or are unclear.
 
 ---
 
-### **Step 5 — Save Files Across All Directories**
+### **Step 4 — Display Extracted Resume**
 
-Write the three generated files to:
+Show the candidate the extracted `candidate_resume.md` in formatted markdown. Ask: **"Does this look correct? Any additions or corrections needed?"**
+
+Allow the candidate to:
+- Confirm it's correct as-is
+- Provide corrections for specific sections
+- Add missing details
+
+This ensures accuracy before moving forward.
+
+---
+
+### **Step 5 — Supplemental Questioning (Targeted Phase)**
+
+Based on gaps identified in Step 3, ask **targeted questions only**. Do NOT ask about fields already captured in the resume.
+
+**Questions to ask (if needed):**
+
+1. **If education is incomplete:**
+   - "What's your graduation date or expected graduation?"
+   - "Did you complete a minor or secondary focus?"
+   - "What degree level is this? (Bachelor's, Master's, PhD)"
+
+2. **If contact info is missing:**
+   - "What's your primary phone number?"
+   - "What's your best email for recruiters to contact you?"
+   - "Are you a US citizen? (Relevant for clearance-required roles)"
+
+3. **For profile synthesis (draw from resume but ask clarifying questions):**
+   - "In 1–3 sentences, how would you describe your technical focus and background?"
+   - "What are your top 5 technical competencies?" (suggest inferred list from resume)
+   - "What industries or problem spaces have you worked in?" (suggest inferred list)
+   - "Years of experience in [key skill from resume]?" (ask for any skills with unclear duration)
+
+4. **For role preferences:**
+   - "What role types do you want to pursue?" (suggest: Data Engineer, ML Engineer, Backend, etc.)
+   - "Are there role types you want to avoid?" (suggest: Defense/DoD, Finance, Sales, etc.)
+
+5. **For location & compensation:**
+   - "What are your preferred work locations or regions?"
+   - "Remote, hybrid, or on-site preference?"
+   - "What's your minimum acceptable base salary?"
+   - "What's your target salary range?"
+
+6. **For constraints:**
+   - "Are you willing to work on defense/clearance-required roles?"
+   - "Any other preferences or constraints?" (open-ended)
+
+**Implementation:** Use a structured question flow. Only ask questions for gaps. Skip sections if the resume provided complete information.
+
+---
+
+### **Step 6 — Build Candidate Profile**
+
+From the resume and supplemental answers, construct `candidate_profile.md`:
+
+```markdown
+# Candidate Profile
+
+## Summary
+[1–3 sentence summary from supplemental Q or inferred from resume]
+
+## Technical Strengths
+### Core Competencies
+- [5–7 inferred or stated competencies]
+
+### Languages
+[From resume]
+
+### Tools & Platforms
+[From resume]
+
+## Domain Experience
+- [Industries/verticals from work history]
+
+## Work History Summary
+[Brief summaries of key roles, inferred from resume]
+
+## Education
+- Degree: [from resume]
+- School: [from resume]
+- Graduation: [from resume or supplemental Q]
+- Classification: [inferred STEM/non-STEM]
+
+## Experience Depth (Years)
+- [Skill]: X years
+
+## Role Alignment
+[Inferred from supplemental Q or stated preferences]
+
+## Location
+[From supplemental Q or resume]
+
+## Citizenship
+[From resume or supplemental Q]
+```
+
+---
+
+### **Step 7 — Build Candidate Preferences**
+
+From supplemental answers, construct `candidate_preferences.md`:
+
+```markdown
+# Candidate Preferences
+
+## 1. Preferred Role Domains
+- [From supplemental Q]
+
+## 2. Avoided Role Domains
+- [From supplemental Q]
+
+## 3. Location Preferences
+Preferred:
+- [From supplemental Q or resume]
+
+Acceptable:
+- [Remote/hybrid/onsite stance]
+
+Avoided:
+- [From supplemental Q]
+
+## 4. Compensation Preferences
+Minimum acceptable base salary:
+- [From supplemental Q]
+
+Target compensation:
+- [From supplemental Q]
+
+## 5. Work Environment Preferences
+Preferred:
+- [Remote/hybrid/onsite]
+
+Avoided:
+- [High travel, etc.]
+
+## 6. Role Level Preferences
+Preferred:
+- [New grad, early career, senior, etc.]
+
+## 7. Defense / Clearance Stance
+[Willing / Unwilling / Requires clearance]
+
+## 8. Additional Notes
+[Open-ended constraints or opportunities]
+```
+
+---
+
+### **Step 8 — Populate one_shot_simulation_prompt.md**
+
+Replace the placeholder sections in `.github/skills/simulation/one_shot_simulation_prompt.md` with extracted candidate data:
+
+**Sections to populate:**
+- `[CANDIDATE INFO — REPLACE THIS WITH THE CANDIDATE'S RESUME]` → Use formatted `candidate_resume.md`
+- `[CANDIDATE INFO — REPLACE THIS WITH THE CANDIDATE'S PROFILE]` → Use formatted `candidate_profile.md`
+- `[CANDIDATE INFO — REPLACE THIS WITH DEGREE DETAILS]` → Extract from degree info
+- `[CANDIDATE INFO — REPLACE THIS WITH PREFERENCES OR STATE "NO PREFERENCES PROVIDED"]` → Use formatted `candidate_preferences.md`
+
+This creates a **pre-filled simulation prompt** that mobile users can immediately copy and paste into any AI app.
+
+---
+
+### **Step 9 — Save Files Across All Directories**
+
+Write the generated files to all three locations:
 
 1. `.github/skills/simulation/references/`
 2. `.claude/skills/simulation/references/`
@@ -122,17 +313,21 @@ Write the three generated files to:
 - `candidate_profile.md`
 - `candidate_preferences.md`
 
-Ensure all three locations have identical copies for consistency.
+**Also update:**
+- `.github/skills/simulation/one_shot_simulation_prompt.md` (populated version)
+
+Ensure all three directories have identical copies of the first three files.
 
 ---
 
-### **Step 6 — Return Confirmation**
+### **Step 10 — Return Confirmation**
 
-Return a concise confirmation summarizing:
+Return a confirmation message summarizing:
 
 - ✅ Files created successfully
-- 📂 Locations where files were saved (all three directories)
-- 🚀 Next steps (e.g., "You can now run the simulation skill with a job description")
+- 📂 Locations where files were saved
+- 📱 Mobile simulation prompt ready at `.github/skills/simulation/one_shot_simulation_prompt.md`
+- 🚀 Next steps (e.g., "You can now run the simulation skill or copy the mobile prompt")
 
 Example output:
 
@@ -149,7 +344,14 @@ Created:
    • candidate_profile.md
    • candidate_preferences.md
 
-🚀 Next: Run a simulation by pasting a job description with the simulation skill.
+📱 Mobile simulation prompt ready:
+   • .github/skills/simulation/one_shot_simulation_prompt.md
+   (Pre-populated with your data — ready to copy and share)
+
+🚀 Next:
+   1. Run "Simulate this JD" with a job description
+   2. Copy the mobile prompt and use it in ChatGPT/Claude/Gemini
+   3. Run "Rank my simulations" after multiple JDs
 ```
 
 ---
