@@ -41,9 +41,13 @@ copilot
 
 ### **Step 2: Initialize your candidate profile (one-time setup — ~10 minutes)**
 ```
-# Inside the Copilot session:
+# Inside the Copilot session, use either format:
 Initialize my candidate profile
+# or
+/initialize
 ```
+
+**Note:** Skills can be invoked with natural language expressions or the `/` prefix. Both work identically.
 
 **What happens:**
 
@@ -76,6 +80,8 @@ Initialize my candidate profile
 Paste a job description and say:
 ```
 Simulate this job description
+# or
+/simulate
 ```
 The engine will generate a timestamped simulation file showing how you fit.
 
@@ -83,6 +89,8 @@ The engine will generate a timestamped simulation file showing how you fit.
 After running multiple simulations, say:
 ```
 Rank my simulations
+# or
+/rank
 ```
 You'll see a ranked table of all opportunities with fit scores.
 
@@ -160,7 +168,9 @@ Each directory contains the same skills with identical logic. Pick the one match
 ### **1. Initialize Skill**
 - **Location:** `.github/skills/initialize/`, `.claude/skills/initialize/`, `.gemini/skills/initialize/`
 - **Purpose:** Interactive onboarding that creates your candidate profile (three markdown files)
-- **Invocation:** "Initialize my candidate profile" or "Set up my candidate profile"
+- **Invocation:** 
+  - Natural language: `"Initialize my candidate profile"` or `"Set up my candidate profile"`
+  - Slash command: `/initialize`
 - **Output:**
   - `candidate_resume.md` — Structured work history and education
   - `candidate_profile.md` — Background, location, constraints
@@ -207,7 +217,9 @@ The Initialize Skill uses a two-phase approach optimized for minimal user fricti
 ### **2. Simulation Skill**
 - **Location:** `.github/skills/simulation/`, `.claude/skills/simulation/`, `.gemini/skills/simulation/`
 - **Purpose:** Parse a job description and evaluate fit against your candidate profile
-- **Invocation:** "Run a simulation for this job description" or "Simulate this JD"
+- **Invocation:** 
+  - Natural language: `"Run a simulation for this job description"` or `"Simulate this JD"`
+  - Slash command: `/simulate`
 - **Input:** Raw job description text (paste from LinkedIn, job board, email, etc.)
 - **Output:** Timestamped markdown file in `skills/simulation/simulations/` (e.g., `2026-07-09_1245_senior-engineer.md`)
 - **What it evaluates:**
@@ -220,7 +232,9 @@ The Initialize Skill uses a two-phase approach optimized for minimal user fricti
 ### **3. Ranking Skill**
 - **Location:** `.github/skills/ranking/`, `.claude/skills/ranking/`, `.gemini/skills/ranking/`
 - **Purpose:** Aggregate all simulations and rank roles by fit score
-- **Invocation:** "Rank my simulations" or "Show ranked results"
+- **Invocation:** 
+  - Natural language: `"Rank my simulations"` or `"Show ranked results"`
+  - Slash command: `/rank`
 - **Input:** None (auto-discovers all simulations in `skills/simulation/simulations/`)
 - **Output:** Ranked table in terminal (ephemeral, not saved)
 - **Scoring Model:** Applies rules from `references/ranking_rules.md`
@@ -229,7 +243,9 @@ The Initialize Skill uses a two-phase approach optimized for minimal user fricti
 ### **4. Resume-Restructure Skill**
 - **Location:** `.github/skills/resume-restructure/`, `.claude/skills/resume-restructure/`, `.gemini/skills/resume-restructure/`
 - **Purpose:** Rewrite your resume to target a specific job description
-- **Invocation:** "Restructure my resume for this JD"
+- **Invocation:** 
+  - Natural language: `"Restructure my resume for this JD"`
+  - Slash command: `/restructure`
 - **Status:** Available for targeted resume optimization
 - **Output:** Tailored resume markdown with signals optimized for simulation scoring
 - **Note:** Pairs well with Simulation skill to test fit *before* applying
@@ -355,35 +371,59 @@ Rank | Role | Company | Fit | Skills | Experience | Preferences | Recruiter
 Each skill uses template files under `assets/templates/` and canonical rules under `references/` to ensure consistent outputs.
 
 ### **Editable Files (Safe to Modify)**
-- **Simulation templates:** `<skill_dir>/simulation/assets/templates/*.md`
+- **Simulation templates:** `.github/skills/simulation/assets/templates/*.md` (and same in `.claude/` and `.gemini/`)
   - `skill_mapping_template.md` — How skills are displayed
   - `experience_mapping_template.md` — How experience is presented
   - `degree_mapping_template.md` — How education fit is shown
   - `simulation_output_template.md` — Overall output format
   - Edit these to customize output formatting; re-run simulations to see changes
+  - Safe: Changing templates only affects future simulation output formatting, not logic
 
-- **Candidate reference files:** `<skill_dir>/simulation/references/`
-  - `candidate_resume.md` — Edit to update your work history
-  - `candidate_profile.md` — Edit to update background/constraints
-  - `candidate_preferences.md` — Edit to update role preferences
-  - Editing these changes how *all future* simulations evaluate you
+- **Candidate reference files:** `.github/skills/simulation/references/` (and same in `.claude/` and `.gemini/`)
+  - `candidate_resume.md` — Edit to update your work history or project details
+  - `candidate_profile.md` — Edit to update background, technical strengths, domain experience
+  - `candidate_preferences.md` — Edit to update role preferences, location, compensation, constraints
+  - **Impact:** Editing these changes how *all future* simulations evaluate you
+  - **Tip:** Re-run simulations on old JDs after updating to see how your fit has changed
 
-- **Ranking rules:** `<skill_dir>/ranking/references/ranking_rules.md`
-  - Defines the scoring model for ranking
-  - Edit to adjust how fit scores are calculated
-  - Only edit if you understand scoring logic
+- **Ranking rules:** `.github/skills/ranking/references/ranking_rules.md` (and same in `.claude/` and `.gemini/`)
+  - Defines the scoring model for how simulations are ranked
+  - Adjust weights to emphasize skills, experience, or preferences differently
+  - **Impact:** Changing this re-ranks all existing simulations
+  - Only edit if you understand the scoring logic
 
-### **Protected Files (Do Not Modify)**
-- **Simulation contract:** `<skill_dir>/simulation/references/simulation_contract.md`
-  - ⛔ **Do not modify** — it defines the evaluation rules
-  - Changing it alters how *all* simulations work
-  - Only modify if you fully understand the consequences
+### **Protected Files (Do Not Modify Unless You Know What You're Doing)**
+- **Simulation contract:** `.github/skills/simulation/references/simulation_contract.md` (and same in `.claude/` and `.gemini/`)
+  - ⛔ **Critical** — Defines how all simulations evaluate candidates
+  - Changing it alters evaluation logic for *all* simulations (past and future)
+  - Only modify if you fully understand the consequences and want to change recruiting logic
+  - Examples: How skills are mapped, how experience is weighted, degree matching rules, preference violation penalties
 
 ### **Generated Files (Read-Only)**
-- **Simulation outputs:** `<skill_dir>/simulation/simulations/<timestamp>_<slug>.md`
+- **Simulation outputs:** `.github/skills/simulation/simulations/<timestamp>_<slug>.md` (and same in `.claude/` and `.gemini/`)
   - Auto-generated by the Simulation skill
-  - Preserve these as snapshots; do not edit
-  - Use git to version-control them
+  - Preserve these as deterministic snapshots
+  - Do not edit (editing breaks reproducibility)
+  - Use git to version-control them for audit trails
+  - Reference these for historical comparisons
+
+- **Skill definitions:** `.github/skills/*/SKILL.md` (`.claude/` and `.gemini/` versions are identical)
+  - Auto-loaded by each AI platform
+  - Do not edit unless implementing a new version of the skill
+  - Changes propagate to all future skill invocations
+
+---
+
+## ✅ Sanity Check: What to Edit When
+
+| Goal | Edit This | Impact |
+|------|-----------|--------|
+| Update resume/skills | `candidate_resume.md` | Future simulations re-evaluate you |
+| Change role preferences | `candidate_preferences.md` | Future simulations check different preferences |
+| Adjust ranking weights | `ranking_rules.md` | Re-ranks all existing simulations |
+| Customize output look | Templates in `assets/templates/` | Only affects formatting, not logic |
+| Change evaluation rules | `simulation_contract.md` | ⚠️ Changes ALL simulation logic (be careful!) |
+| Fix a simulation | Re-run simulation (don't edit file) | Preserves original, creates new snapshot |
 
 ---
 
@@ -398,6 +438,21 @@ Each skill uses template files under `assets/templates/` and canonical rules und
 ---
 
 ## ❓ FAQ
+
+### **Q: How do I invoke skills — do I need to use `/` or natural language?**
+A: Both work! Skills accept either format:
+- Natural language: `"Run a simulation for this job description"`
+- Slash command: `/simulate`
+Choose whichever feels more natural to you. Behavior is identical.
+
+### **Q: What's the difference between the mobile prompt and running Copilot CLI?**
+A: The mobile prompt (`.github/skills/simulation/one_shot_simulation_prompt.md`) is pre-populated with your candidate data and ready to paste into any AI app (ChatGPT, Claude, Gemini). It's self-contained and doesn't need file infrastructure. The Copilot CLI/Claude/Gemini skills are more powerful because they have file access for persistence. Choose based on where you're working.
+
+### **Q: Can I use the engine without the Initialize skill?**
+A: No. The Simulation and Ranking skills require candidate reference files created by Initialize. You must run Initialize first to set up `candidate_resume.md`, `candidate_profile.md`, and `candidate_preferences.md`.
+
+### **Q: What if I don't have preferences — do I have to fill them out?**
+A: No. The Initialize skill will create a `candidate_preferences.md` file with your answers. If you skip preference questions or provide "none", the Simulation skill will note "No preference violations evaluated" and skip preference checks.
 
 ### **Q: Can I edit my simulations after they're generated?**
 A: No. Simulations are deterministic snapshots. Instead, edit your candidate profile (resume, preferences) and re-run the simulation. This preserves the original for comparison.
@@ -416,11 +471,14 @@ A: See `references/ranking_rules.md` for the exact formula. It's a weighted comb
 
 Edit this file to adjust weights if needed.
 
+### **Q: Why would I use the Resume-Restructure skill?**
+A: To tailor your resume for a specific job before applying. It highlights relevant skills, reorders experience, and optimizes language. Then you can run a simulation on the same JD to test your improved fit score.
+
 ### **Q: Can I use this with my own evaluation rules?**
-A: Yes. Edit the templates and ranking rules to fit your needs. The engine is designed to be customizable:
-- **Change output format?** Edit templates.
-- **Change scoring?** Edit ranking rules.
-- **Change evaluation logic?** Edit the simulation contract (if you know what you're doing).
+A: Yes. The engine is designed to be customizable:
+- **Change output format?** Edit templates in `assets/templates/`.
+- **Change scoring?** Edit `references/ranking_rules.md`.
+- **Change evaluation logic?** Edit `references/simulation_contract.md` (if you understand the impact).
 
 ### **Q: Are simulations reproducible?**
 A: Yes. Same candidate profile + same JD = same simulation. This enables:
@@ -429,10 +487,25 @@ A: Yes. Same candidate profile + same JD = same simulation. This enables:
 - Audits (prove decisions were consistent)
 
 ### **Q: What's the difference between Copilot CLI, Claude, and Gemini versions?**
-A: All three contain identical skills with the same logic. Use whichever AI platform you prefer. The output and behavior are the same.
+A: All three contain identical skills with the same logic. Use whichever AI platform you prefer. The output and behavior are the same. Candidate reference files are mirrored across all three directories for consistency.
 
 ### **Q: How do I know if a simulation is outdated?**
 A: Check the timestamp in the filename (e.g., `2026-07-09_1245_senior-engineer.md`). The timestamp shows when the simulation was created. If your candidate profile has changed since then, the simulation may no longer reflect your current fit.
+
+### **Q: Can I have multiple candidate profiles?**
+A: The current system uses one candidate profile at a time. To maintain multiple profiles (e.g., "Data Engineer Siddharth" vs. "Backend Engineer Siddharth"), fork the repository or manually manage separate candidate files. Future versions may support profile switching.
+
+### **Q: What do I do if I get an error about missing reference files?**
+A: Run the Initialize skill: `Initialize my candidate profile`. This creates the required `candidate_resume.md`, `candidate_profile.md`, and `candidate_preferences.md` files in all three platform directories.
+
+### **Q: Should I commit my candidate files and simulations to Git?**
+A: Yes! Version-controlling them lets you:
+- Track how your profile has evolved
+- See when you applied to specific roles
+- Reproduce old simulations for comparison
+- Audit your decision-making process
+
+Treat simulations like snapshots — preserve them.
 
 ---
 
