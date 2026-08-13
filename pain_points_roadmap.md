@@ -21,7 +21,7 @@ summary table row whenever work starts, gets blocked, or merges. Add a dated ent
 ## Tier 0 — Independent, low-risk fixes
 
 ### Branch: `ranking-internship-flag`
-**Status:** Not started
+**Status:** In progress (implementation complete, pending PR/merge)
 
 **Problem:** `run_ranking.py` currently guesses internship mode via a regex on the job title/text
 (`is_internship()`), duplicating logic the Simulation skill's own Step 3 already decided
@@ -310,7 +310,7 @@ rules.
 
 | Order | Branch | Depends on | Status |
 |---|---|---|---|
-| 1 | `ranking-internship-flag` | — | Not started |
+| 1 | `ranking-internship-flag` | — | In progress |
 | 1 | `initialize-file-sync` | — | Not started |
 | 1 | `simulation-contract-versioning` | — | Not started |
 | 1 | `resume-restructure-fact-guard` | — | Not started |
@@ -332,4 +332,7 @@ in parallel.
 Add a dated entry here every time a branch's status changes (started, blocked, merged). Keep
 entries short — one line per event.
 
-- _(no entries yet)_
+- 2026-08-13: `ranking-internship-flag` implemented — added `Internship Mode` metadata field to
+  simulation output template/contract/SKILL.md; `run_ranking.py` now reads it directly with a
+  keyword-based fallback (+ warning) for older simulation files lacking the field. Verified with
+  sample files covering both paths. Ready for PR/merge.
