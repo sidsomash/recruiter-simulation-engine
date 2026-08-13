@@ -131,6 +131,12 @@ Populate:
 
 This ensures consistent formatting across all simulations.
 
+Stamp `Contract Version` in the output's Metadata section with the version number copied
+verbatim from `simulation_contract.md`'s own header (e.g., `v2.4`, from the line
+`# Simulation Contract v2.4 — ...`). Do not paraphrase or infer the version — read it directly
+from the contract file being applied in Step 4. This lets old and new simulation files be
+distinguished if the contract is revised later.
+
 ---
 
 ### **Step 6 — Save Output File**
