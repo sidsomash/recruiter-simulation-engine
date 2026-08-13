@@ -21,7 +21,7 @@ summary table row whenever work starts, gets blocked, or merges. Add a dated ent
 ## Tier 0 — Independent, low-risk fixes
 
 ### Branch: `ranking-internship-flag`
-**Status:** In progress (implementation complete, pending PR/merge)
+**Status:** Merged
 
 **Problem:** `run_ranking.py` currently guesses internship mode via a regex on the job title/text
 (`is_internship()`), duplicating logic the Simulation skill's own Step 3 already decided
@@ -46,7 +46,7 @@ false-positives as an internship role).
 ---
 
 ### Branch: `initialize-file-sync`
-**Status:** Not started
+**Status:** Implementation complete, pending PR/merge
 
 **Problem:** Step 9 of the Initialize skill has the model *regenerate* candidate files three
 separate times (once per `.github`/`.claude`/`.gemini`). Any subtle drift between passes (a
@@ -56,21 +56,27 @@ which platform later runs Simulation.
 **Depends on:** Nothing.
 
 **Checklist:**
-1. Write `sync_candidate_files.py` (stdlib-only: `shutil`, `pathlib`) at a shared location
-   (e.g., `.github/skills/initialize/sync_candidate_files.py`, copied to `.claude`/`.gemini` like
-   the ranking script). Script copies `candidate_resume.md`, `candidate_profile.md`,
-   `candidate_preferences.md` from `.github/skills/simulation/references/` to the equivalent
-   `.claude/` and `.gemini/` paths, byte-for-byte.
-2. Update `initialize/SKILL.md` Step 9 — model writes the three canonical files **once** (to
-   `.github/skills/simulation/references/` only), then invokes
-   `python3 sync_candidate_files.py` to mirror them, instead of regenerating content per directory.
-3. Add a Step 0 preflight to `initialize/SKILL.md` (same pattern as ranking) — verify
-   `python3`/`python` is available before invoking the sync script.
-4. Update `CLAUDE.md` / `GEMINI.md` — reflect that `.claude`/`.gemini` candidate files are now
-   synced copies, not independently generated.
-5. Test: run Initialize end-to-end, confirm all three directories are byte-identical
-   (`Compare-Object`/`diff`).
-6. Update `README.md` Initialize section if it describes the old per-directory generation process.
+1. ✅ Write `sync_candidate_files.py` (stdlib-only: `shutil`/`pathlib`) at
+   `.github/skills/initialize/sync_candidate_files.py`, copied identically to
+   `.claude/skills/initialize/` and `.gemini/skills/initialize/`. Script copies
+   `candidate_resume.md`, `candidate_profile.md`, `candidate_preferences.md` from
+   `.github/skills/simulation/references/` to the equivalent `.claude/` and `.gemini/` paths,
+   byte-for-byte, using self-relative path resolution (same pattern as `run_ranking.py`).
+2. ✅ Updated `initialize/SKILL.md` Step 9 (all 3 copies, renamed "Save Canonical Files, Then
+   Sync Copies") — model writes the three canonical files **once** (to
+   `.github/skills/simulation/references/` only), then invokes `python3 sync_candidate_files.py`
+   (falling back to `python`) to mirror them, instead of regenerating content per directory.
+3. ✅ Added an inline preflight to Step 9 (all 3 copies) — verify `python3`/`python` is available
+   before invoking the sync script, same pattern as the Ranking skill's Step 0.
+4. ✅ Checked `CLAUDE.md` / `GEMINI.md` — found only generic "Candidate Artifacts" references
+   without per-directory-generation language; no changes needed there.
+5. ✅ Tested: ran the sync script from all three copies against real candidate files; confirmed
+   byte-identical output across all three directories via SHA-256 hash comparison. Sync also
+   caught and fixed real pre-existing drift between `.github` and the `.claude`/`.gemini` mirrors
+   (the `.claude`/`.gemini` resume files were stale relative to `.github`), validating the exact
+   problem this branch targets.
+6. ✅ Updated `README.md` — Initialize Skill section now notes the write-once + sync approach;
+   Prerequisites now says Python is required by both Ranking and Initialize.
 
 ---
 
@@ -310,8 +316,8 @@ rules.
 
 | Order | Branch | Depends on | Status |
 |---|---|---|---|
-| 1 | `ranking-internship-flag` | — | In progress |
-| 1 | `initialize-file-sync` | — | Not started |
+| 1 | `ranking-internship-flag` | — | Merged |
+| 1 | `initialize-file-sync` | — | Implementation complete, pending PR/merge |
 | 1 | `simulation-contract-versioning` | — | Not started |
 | 1 | `resume-restructure-fact-guard` | — | Not started |
 | 1 | `golden-examples-fewshot` | — | Not started |
@@ -336,3 +342,10 @@ entries short — one line per event.
   simulation output template/contract/SKILL.md; `run_ranking.py` now reads it directly with a
   keyword-based fallback (+ warning) for older simulation files lacking the field. Verified with
   sample files covering both paths. Ready for PR/merge.
+- 2026-08-13: `ranking-internship-flag` merged into `main` (PR #3).
+- 2026-08-13: `initialize-file-sync` implemented — added `sync_candidate_files.py` (stdlib-only,
+  self-relative path resolution) to all 3 skill copies; Initialize `SKILL.md` Step 9 now writes
+  candidate files once to `.github` canonical location and invokes the sync script instead of
+  regenerating content 3x; added Python preflight inline; updated README. Verified byte-identical
+  output across all 3 directories via hash comparison — sync also fixed real pre-existing drift
+  between `.github` and the `.claude`/`.gemini` mirrors. Ready for PR/merge.
