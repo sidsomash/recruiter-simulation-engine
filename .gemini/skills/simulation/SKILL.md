@@ -19,6 +19,7 @@ This skill is deterministic in orchestration and dynamic in interpretation.
 This skill depends on the following reference files:
 
 - [simulation_contract.md](references/simulation_contract.md)  
+- [degree_domain_map.json](references/degree_domain_map.json) — authoritative degree-domain lookup table (see contract §5.3)  
 - [candidate_resume.md](references/candidate_resume.md)  
 - [candidate_profile.md](references/candidate_profile.md)  
 - [candidate_preferences.md](references/candidate_preferences.md) *(optional)*  
@@ -111,7 +112,12 @@ Follow the contract exactly:
 2. Skill & Responsibility Mapping  
 3. Skill Gaps  
 4. Years‑of‑Experience Mapping  
-5. Degree Requirement Mapping  
+5. Degree Requirement Mapping — look up the JD's required degree field in
+   `references/degree_domain_map.json` first (see contract §5.2/§5.3). Determine the candidate's
+   degree category using their degree title **plus** `candidate_profile.md` (technical strengths,
+   quantitative coursework) and `candidate_preferences.md` (stated role preferences) when the
+   title alone is ambiguous or borderline — do not classify from the degree title in isolation.
+   Fall back to Rules A–E only when the category or JD domain isn't covered by the JSON.
 6. Preference Violations  
 7. Recruiter Decision  
 8. Final Fit Summary  

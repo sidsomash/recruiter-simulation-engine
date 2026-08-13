@@ -123,6 +123,19 @@ vs.
 
 ### 5.2 Degree Mapping Rules
 
+These rules apply **only when the JD's degree domain is not found** in the authoritative JSON
+lookup table (`references/degree_domain_map.json`, see §5.3), or when the candidate's degree does
+not fall into a category the JSON covers. Always check the JSON lookup first.
+
+**Determining the candidate's degree category:** Do not classify the candidate's degree from its
+literal title alone. Cross-reference `candidate_profile.md` (technical strengths, quantitative
+coursework, domain experience) and `candidate_preferences.md` (stated preference for data/
+technical/quantitative roles) when the degree title is ambiguous or borderline — e.g., a Business
+degree paired with heavy data-analytics coursework and a stated preference for data roles may
+warrant treating the candidate closer to the `stem_quantitative` category than the title alone
+suggests, or vice versa. When skills/preferences change the categorization call, state that
+reasoning explicitly in the Degree Requirement Mapping output.
+
 **Rule A — Bachelor’s Required**  
 If JD requires a Bachelor’s in STEM, CS, Math, Engineering, Data Science, or related quantitative field:  
 → Candidate’s STEM/quantitative degree = ✔ Direct or Equivalent match
@@ -131,6 +144,13 @@ If JD requires a Bachelor’s in STEM, CS, Math, Engineering, Data Science, or r
 If JD requires a Bachelor’s in Finance, Accounting, Economics, Business:  
 → Candidate’s STEM degree = ~ Partial match  
 Unless JD explicitly allows “related quantitative field,” then → ✔ Equivalent match
+
+> **Note:** §5.3's JSON lookup table currently lists Finance/Accounting as ✘ No match (not ~
+> Partial as this rule states) for a `stem_quantitative`-category candidate, and takes precedence
+> for those domains since they appear in the table. This is a known discrepancy — Rule B still
+> governs any Finance/Accounting/Economics/Business variant not present in the JSON lookup, and
+> governs candidates whose own degree is itself in Finance/Accounting/Business (a different
+> category not covered by the current JSON).
 
 **Rule C — Master’s Required**  
 If JD requires a Master’s degree:  
@@ -146,16 +166,28 @@ If JD requires a PhD:
 
 ### 5.3 Degree Domain Mapping (Generalized)
 
-| JD Field | Candidate Degree | Match |
+**Authoritative source:** `references/degree_domain_map.json`. The model must first determine
+which candidate degree category applies (see §5.2's categorization guidance — this considers the
+candidate's degree title, skills/profile, and preferences, not the title alone), then look up the
+JD's required degree field under that category in the JSON file. If the category and domain are
+both found, use the match category from the JSON verbatim. If either is not found, fall back to
+Rules A–E in §5.2.
+
+The table below is a human-readable rendering of the JSON's `stem_quantitative` category for
+quick reference — if it ever disagrees with `degree_domain_map.json`, the JSON wins. See the
+JSON's `_meta.known_discrepancy` field for a currently tracked inconsistency with Rule B, and
+`_meta.categorization_guidance` for how skills/preferences factor into category selection.
+
+| JD Field | Candidate Degree Category | Match |
 |---------|------------------|--------|
-| Computer Science | STEM quantitative | ✔ Equivalent |
-| Data Science | STEM quantitative | ✔ Direct |
-| Applied Math / Statistics | STEM quantitative | ✔ Direct |
-| Engineering | STEM quantitative | ~ Partial |
-| Finance / Accounting | STEM quantitative | ✘ No match |
-| Economics | STEM quantitative | ~ Partial |
-| AI/ML | STEM quantitative | ✔ Equivalent |
-| Business Analytics | STEM quantitative | ✔ Equivalent |
+| Computer Science | stem_quantitative | ✔ Equivalent |
+| Data Science | stem_quantitative | ✔ Direct |
+| Applied Math / Statistics | stem_quantitative | ✔ Direct |
+| Engineering | stem_quantitative | ~ Partial |
+| Finance / Accounting | stem_quantitative | ✘ No match |
+| Economics | stem_quantitative | ~ Partial |
+| AI/ML | stem_quantitative | ✔ Equivalent |
+| Business Analytics | stem_quantitative | ✔ Equivalent |
 
 ---
 

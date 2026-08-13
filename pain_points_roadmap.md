@@ -107,7 +107,7 @@ simulation files can be silently mixed in one ranking run with incompatible scor
 ## Tier 1 — Simulation core (build on each other, do in this order)
 
 ### Branch: `simulation-degree-lookup-table`
-**Status:** Not started
+**Status:** Implementation complete, pending PR/merge
 
 **Problem:** §5.3 of `simulation_contract.md` is a static, 8-row lookup table (JD field → degree
 match category) that the model currently has to recall correctly from prose every run. This is a
@@ -118,18 +118,80 @@ frequent source of miscategorization (e.g., confusing Finance/Accounting "Partia
 `simulation-subskill-breakdown`, which build on cleaner degree logic).
 
 **Checklist:**
-1. Create `simulation/references/degree_domain_map.json` (all 3 copies) — literal structured
-   version of the §5.3 table: `{"computer science": "equivalent", "data science": "direct", ...}`.
-2. Update `simulation_contract.md` §5.3 — replace the inline markdown table with a pointer to the
-   JSON asset as the canonical source (keep a human-readable rendering of the table for reference,
-   but mark the JSON as authoritative).
-3. Update `simulation/SKILL.md` Step 4/Degree Mapping — instruct the model to look up the JD's
-   degree field in `degree_domain_map.json` first, falling back to Rules A–E judgment only for
+1. ✅ Created `simulation/references/degree_domain_map.json` (all 3 copies) — structured JSON with
+   a `candidate_degree_categories.stem_quantitative.jd_domains` lookup (JD field → match category),
+   plus `match_labels`, and `_meta` notes covering categorization guidance and a known discrepancy
+   with Rule B (see below).
+2. ✅ Updated `simulation_contract.md` §5.3 (all 3 copies) — replaced the inline table's authority
+   with a pointer to the JSON asset as canonical source; kept the markdown table as a
+   human-readable rendering only.
+3. ✅ Updated `simulation/SKILL.md` Step 4 (all 3 copies) — instructs the model to look up the
+   JD's degree field in `degree_domain_map.json` first, falling back to Rules A–E only for
    domains not present in the table.
-4. Update `references/simulation_contract.md` §5.2 Rules A–E — clarify these rules apply only when
-   the JD's degree domain isn't found in the JSON lookup.
-5. Test with 2–3 sample JDs covering table hits (CS, Finance) and a table miss (e.g., "Kinesiology")
-   to confirm fallback-to-rules behavior still works.
+4. ✅ Updated `simulation_contract.md` §5.2 (all 3 copies) — clarified Rules A–E apply only when
+   the JD's degree domain (or candidate's degree category) isn't covered by the JSON lookup.
+   Documented a known discrepancy: Rule B says Finance/Accounting = Partial for a STEM candidate,
+   but the JSON table says No match — the JSON wins per the user's explicit decision to keep the
+   table literal rather than silently changing scoring by aligning it to Rule B.
+5. ✅ Tested: JSON lookup hits (Computer Science, Finance, Economics) and a miss (Kinesiology,
+   correctly falls back to Rules A–E) verified via a Python script reading the JSON directly.
+6. **Scope note (raised during implementation):** the JSON/contract only define one candidate
+   degree category, `stem_quantitative` — non-STEM candidate backgrounds (Finance, Business,
+   Liberal Arts, etc.) aren't yet covered by structured rules. Per user decision, this is tracked
+   as its own follow-up branch, `simulation-degree-lookup-non-stem-coverage` (added to this
+   roadmap, depends on this branch), rather than expanding scope here. Also added categorization
+   guidance in this branch so degree-category placement considers `candidate_profile.md`
+   skills/coursework and `candidate_preferences.md`, not the degree title alone, for borderline
+   STEM cases.
+
+---
+
+### Branch: `simulation-degree-lookup-non-stem-coverage`
+**Status:** Not started
+
+**Problem:** `degree_domain_map.json` (introduced in `simulation-degree-lookup-table`) only
+defines a single candidate degree category, `stem_quantitative`. The engine currently has no
+explicit, structured coverage for candidates whose own degree is **not** STEM/quantitative (e.g.,
+Finance, Accounting, Business, Liberal Arts, Economics, etc.) — these candidates fall through
+entirely to §5.2 Rules A–E, which are themselves only written from the perspective of a STEM
+candidate evaluated against a non-STEM JD (Rule B), not the reverse case. This means the engine
+is not yet domain-agnostic: a non-STEM candidate applying to a matching non-STEM role, a STEM
+role, or a role requiring a related-but-different non-STEM domain has no clear, deterministic
+mapping today. Known gaps surfaced while building the STEM table:
+
+1. Non-STEM candidate + matching non-STEM JD (e.g., Finance degree candidate, Finance JD) — no
+   explicit rule states this should be a Direct match.
+2. Non-STEM candidate + STEM JD (e.g., Business degree candidate, Data Science JD) — outcome
+   (No match vs. Hard mismatch) isn't defined.
+3. Non-STEM candidate with quantitative minor/coursework (e.g., Business major with a Statistics
+   minor) — borderline category-upgrade case, same pattern as the skills/preferences guidance
+   added for STEM candidates in `simulation-degree-lookup-table`, but not yet defined for
+   non-STEM starting categories.
+4. Career switchers — non-STEM degree but substantial hands-on technical/engineering experience —
+   the degree-vs-experience interaction isn't called out (may belong partly in §6 Years-of-
+   Experience Mapping, but the cross-reference isn't documented anywhere).
+
+**Depends on:** `simulation-degree-lookup-table` (extends the same JSON structure and contract
+sections).
+
+**Checklist:**
+1. Design additional `candidate_degree_categories` entries in `degree_domain_map.json` (all 3
+   copies) for common non-STEM starting degrees (e.g., `business_finance_accounting`,
+   `liberal_arts_humanities`, `social_sciences`, etc.) — each with its own `jd_domains` match
+   table analogous to `stem_quantitative`.
+2. Update `simulation_contract.md` §5.2 — add explicit rules (or a generalized rule) covering
+   non-STEM-candidate-vs-any-JD-domain cases, not just the STEM-candidate-vs-non-STEM-JD case
+   Rule B currently covers.
+3. Update `simulation_contract.md` §5.3 — extend the authoritative-lookup instructions so the
+   model selects among *all* candidate degree categories (not just checking for
+   `stem_quantitative`), using the same skills/preferences-informed categorization guidance.
+4. Update `simulation/SKILL.md` Step 4 — reflect that category selection must consider the full
+   space of candidate backgrounds, not just detect STEM vs. not-STEM.
+5. Explicitly document the degree-vs-experience interaction for career switchers (cross-reference
+   §6 Years-of-Experience Mapping) so heavy relevant experience can offset a non-matching degree
+   consistently, rather than leaving it to ad hoc model judgment.
+6. Test with sample JDs/candidates covering: matching non-STEM domains, non-STEM candidate vs.
+   STEM JD, borderline coursework upgrades, and a career-switcher profile.
 
 ---
 
@@ -321,11 +383,12 @@ rules.
 | Order | Branch | Depends on | Status |
 |---|---|---|---|
 | 1 | `ranking-internship-flag` | — | Merged |
-| 1 | `initialize-file-sync` | — | Implementation complete, pending PR/merge |
-| 1 | `simulation-contract-versioning` | — | Implementation complete, pending PR/merge |
+| 1 | `initialize-file-sync` | — | Merged |
+| 1 | `simulation-contract-versioning` | — | Merged |
 | 1 | `resume-restructure-fact-guard` | — | Not started |
 | 1 | `golden-examples-fewshot` | — | Not started |
-| 2 | `simulation-degree-lookup-table` | — | Not started |
+| 2 | `simulation-degree-lookup-table` | — | Implementation complete, pending PR/merge |
+| 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Not started |
 | 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Not started |
 | 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Not started |
 | 5 | `simulation-output-validator` | `simulation-json-sidecar` | Not started |
@@ -359,3 +422,13 @@ entries short — one line per event.
   version verbatim from `simulation_contract.md`'s header; `run_ranking.py` reads the field and
   prints a non-blocking warning if a ranking run spans multiple contract versions. Verified with
   sample files at v2.4/v2.5 triggering the warning correctly. Ready for PR/merge.
+- 2026-08-13: `simulation-contract-versioning` merged into `main` (PR #5).
+- 2026-08-13: `simulation-degree-lookup-table` implemented — added `degree_domain_map.json` (all
+  3 copies) as authoritative source for §5.3, replacing model-recalled prose table; contract §5.2
+  now clarifies Rules A–E only apply on JSON miss; documented known Rule B vs. JSON discrepancy
+  (Finance/Accounting) per explicit user decision to keep the JSON literal. Also added
+  categorization guidance so degree-category placement weighs `candidate_profile.md` skills and
+  `candidate_preferences.md`, not just the degree title, for borderline STEM cases. Verified
+  lookup hit/miss/fallback behavior via script. Added a new follow-up branch,
+  `simulation-degree-lookup-non-stem-coverage`, to track full non-STEM-candidate support (raised
+  during implementation, scoped out of this branch per user decision). Ready for PR/merge.

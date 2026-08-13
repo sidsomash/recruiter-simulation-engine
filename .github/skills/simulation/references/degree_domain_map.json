@@ -1,0 +1,39 @@
+{
+  "_meta": {
+    "description": "Authoritative degree-domain lookup table for Simulation Contract v2.4 section 5.3. This JSON is the canonical source of truth for degree domain matching; the markdown table in simulation_contract.md is a human-readable rendering only and must stay in sync with this file.",
+    "important": "Match category depends on the CANDIDATE'S ACTUAL DEGREE on file (from candidate_resume.md / candidate_profile.md), not a fixed assumption. This table only encodes outcomes for a candidate whose degree falls in the 'stem_quantitative' category below. A Finance/Accounting JD is 'No match' for a STEM-quantitative candidate, but would be a Direct/Equivalent match for a candidate whose own degree IS in Finance/Accounting/Business. Always check which category the candidate's degree belongs to before doing the lookup.",
+    "categorization_guidance": "Determining which category the candidate belongs to is not just about the literal degree title on the resume. Also weigh candidate_profile.md (e.g., listed technical strengths, quantitative coursework, domain experience) and candidate_preferences.md (e.g., stated preference for data/technical roles) when the degree title alone is ambiguous or borderline (e.g., a Business degree with heavy data-analytics coursework and stated preference for data roles may warrant treating the candidate as closer to 'stem_quantitative' than the degree title implies, or vice versa). When skills/preferences meaningfully change the categorization call, note the reasoning in the Degree Requirement Mapping output rather than applying the table silently.",
+    "fallback_behavior": "If the candidate's degree category is not 'stem_quantitative', or the JD's degree domain is not found under that category, apply Rules A-E from simulation_contract.md section 5.2 instead using the candidate's actual degree, skills, and preferences, not this table.",
+    "known_discrepancy": "Section 5.2 Rule B states Finance/Accounting/Economics = Partial match for a STEM-quantitative candidate (unless the JD allows 'related quantitative field', then Equivalent). This table instead lists Finance/Accounting as No match and Economics as Partial for that same STEM-quantitative candidate case. Since this table is authoritative for domains it contains, Finance/Accounting will resolve to No match, not Partial, unless this is reconciled in a future update."
+  },
+  "match_labels": {
+    "direct": "\u2714 Direct match",
+    "equivalent": "\u2714 Equivalent match",
+    "partial": "~ Partial match",
+    "no_match": "\u2718 No match",
+    "hard_mismatch": "\u274c Hard mismatch"
+  },
+  "candidate_degree_categories": {
+    "stem_quantitative": {
+      "description": "Use this table only when the CANDIDATE's own degree is in a STEM/quantitative field (e.g., Computer Science, Data Science, Applied Math, Statistics, Engineering, AI/ML). Values below describe how well each JD-required domain matches THIS candidate's STEM degree.",
+      "jd_domains": {
+        "computer science": "equivalent",
+        "data science": "direct",
+        "applied math": "direct",
+        "applied mathematics": "direct",
+        "statistics": "direct",
+        "engineering": "partial",
+        "finance": "no_match",
+        "accounting": "no_match",
+        "economics": "partial",
+        "ai/ml": "equivalent",
+        "ai": "equivalent",
+        "ml": "equivalent",
+        "artificial intelligence": "equivalent",
+        "machine learning": "equivalent",
+        "business analytics": "equivalent"
+      }
+    }
+  }
+}
+
