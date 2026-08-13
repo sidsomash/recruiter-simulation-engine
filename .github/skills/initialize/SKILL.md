@@ -21,10 +21,13 @@ This skill does not depend on external reference files but creates the following
 - [candidate_preferences.md](../../simulation/references/candidate_preferences.md)  
 - [one_shot_simulation_prompt.md](../one_shot_simulation_prompt.md) ← populated with candidate data  
 
-These files are created in:
-1. `.github/skills/simulation/references/` (primary)
-2. `.claude/skills/simulation/references/` (mirror)
-3. `.gemini/skills/simulation/references/` (mirror)
+These files are written **once** to `.github/skills/simulation/references/`
+(the canonical location), then mirrored byte-for-byte into
+`.claude/skills/simulation/references/` and
+`.gemini/skills/simulation/references/` by running
+`sync_candidate_files.py` — a deterministic script, not model regeneration.
+This avoids the drift risk of the model rewriting the same content three
+separate times.
 
 The `one_shot_simulation_prompt.md` is populated once and remains in `.github/skills/simulation/` for mobile user access.
 
@@ -300,13 +303,11 @@ This creates a **pre-filled simulation prompt** that mobile users can immediatel
 
 ---
 
-### **Step 9 — Save Files Across All Directories**
+### **Step 9 — Save Canonical Files, Then Sync Copies**
 
-Write the generated files to all three locations:
+Write the generated files **once** to the canonical location:
 
 1. `.github/skills/simulation/references/`
-2. `.claude/skills/simulation/references/`
-3. `.gemini/skills/simulation/references/`
 
 **File names:**
 - `candidate_resume.md`
@@ -316,7 +317,34 @@ Write the generated files to all three locations:
 **Also update:**
 - `.github/skills/simulation/one_shot_simulation_prompt.md` (populated version)
 
-Ensure all three directories have identical copies of the first three files.
+**Preflight — verify Python is available:** the `.claude` and `.gemini`
+mirrors are produced by a deterministic script (`sync_candidate_files.py`),
+not by the model regenerating content, so a Python interpreter must be
+available before invoking it.
+- Try `python3 --version`, then fall back to `python --version` if `python3`
+  is not found.
+- If neither is available, stop and tell the user: "Python 3.8+ is required
+  to sync candidate files across skill directories. Please install Python
+  and try again." Do not attempt to hand-copy or retype the files as a
+  substitute — doing so risks subtle drift (a dropped bullet, a reworded
+  sentence) between the `.github`, `.claude`, and `.gemini` copies.
+- No virtual environment, `pip install`, or `requirements.txt` is needed —
+  `sync_candidate_files.py` uses only the Python standard library.
+
+**Run the sync script** to mirror the canonical files byte-for-byte into
+`.claude/skills/simulation/references/` and
+`.gemini/skills/simulation/references/`:
+
+```bash
+python3 .github/skills/initialize/sync_candidate_files.py
+# or, if python3 is not found:
+python .github/skills/initialize/sync_candidate_files.py
+```
+
+The script copies `candidate_resume.md`, `candidate_profile.md`, and
+`candidate_preferences.md` from the canonical `.github` location to both
+mirrors, and prints the list of files it wrote. This replaces having the
+model regenerate the same three files three separate times.
 
 ---
 
@@ -334,8 +362,10 @@ Example output:
 ```
 ✅ Candidate profile initialized successfully!
 
-📂 Files saved to:
+📂 Canonical files written to:
    • .github/skills/simulation/references/
+
+🔄 Synced (byte-for-byte) to:
    • .claude/skills/simulation/references/
    • .gemini/skills/simulation/references/
 

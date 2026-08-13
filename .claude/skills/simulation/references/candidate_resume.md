@@ -41,6 +41,7 @@ Spark, FastAPI, Spring Boot, Supabase, PostgreSQL, MySQL, JUnit, Jira, Linux, Gi
 **July 2025 – Present**
 
 - Engineered ETL pipelines for high‑volume S3 datasets using YAML configs, Spark SQL transformations, Airflow DAGs, and Bogie job configs to orchestrate Databricks jobs triggered via Jenkins and Shairflow. Delivered production data into Snowflake warehouses for a top‑5 U.S. financial institution.
+- Owned end-to-end migration of mission-critical financial datasets with regulatory compliance requirements (U.S. government fine risk if not delivered on schedule). Validated S3 source locations, configured YAML files with correct schema mappings, executed pre-write validation (Databricks notebooks for schema alignment), orchestrated Spark SQL transformations via Airflow UI, and performed post-write validation in Snowflake. Created ad-hoc pre-write validation when datasets lacked standard metadata, enabling successful ingestion. Delivered results ahead of schedule with weekend execution and zero data quality issues; communicated outcomes to PMs and DAs for end-to-end validation.
 - Deployed Snowflake DDL automation for QA and production sinks using a Python‑based Databricks script that filters NPI and credit‑sensitive attributes and generates compliant `.avsc` schemas. Reduced union‑view deployment time by 70% and drove program‑wide adoption.
 - Built a Copilot Skill–driven workflow to extract source‑table lineage from complex SQL transformations. Validated Skill performance with deterministic Python/regex scripts and produced reliability metrics used by engineering leads. Integrated into developer tooling to eliminate redundant utilities and reduce manual lineage checks from hours to minutes.
 
@@ -67,12 +68,15 @@ Spark, FastAPI, Spring Boot, Supabase, PostgreSQL, MySQL, JUnit, Jira, Linux, Gi
 
 ## Projects
 
-### **Ryoko — AI‑Powered Travel Planning Platform**  
-**Founder** — Jan 2026 – Present
+### **Recruiter Simulation Engine**  
+**Founder & Architect** — June 2026 – Present
 
-- Developing FastAPI REST backend for accounts, trip creation, and AI‑generated itineraries.
-- Designing PostgreSQL schemas on Supabase for users, trips, itineraries, flights, and hotels using efficient JSONB storage.
-- Managing service‑layer data flow, JWT decoding, and user access validation.
+- Architected a multi-agent job‑fit simulation platform with modular skills deployed across GitHub Copilot CLI, Claude, and Gemini environments. Designed deterministic simulation contracts that evaluate job descriptions against candidate profiles using structured reference files and templates.
+- Built the **Simulation Skill** — a deterministic evaluation engine that parses JDs, applies recruiter decision logic, produces skill/responsibility/degree mappings, and generates standardized simulation outputs stored for ranking and resume tailoring.
+- Engineered the **Resume-Restructure Skill** — an intelligent resume rewriting system that tailors candidate résumés for specific job opportunities by strategically reordering skills by JD relevance, rewriting experience bullets to emphasize recruiter priorities, and preserving factual accuracy while maximizing alignment. Includes comprehensive rewriting guidelines covering principles (honesty, context over content, emphasis/omission) and validation checklists.
+- Implemented the **Ranking Skill** — an aggregation engine applying weighted multi-factor scoring models to rank all simulations, enabling data-driven role prioritization.
+- Designed the **Initialize Skill** — an onboarding workflow that guides users through building candidate preferences, profiles, and resumes across all three agent platforms with structured templates and interactive prompts.
+- Produced deterministic, reproducible outputs enabling same JD + same candidate = identical simulation, ensuring consistency across all skill invocations and agent environments.
 
 ---
 
