@@ -71,7 +71,7 @@ def extract_metadata(text):
     meta = {
         "Company": "Unknown", "Title": "Unknown", "Posting": "Unknown",
         "Comp": "Unknown", "Loc": "Unknown", "Years": "Unknown",
-        "Degree": "Unknown",
+        "Degree": "Unknown", "InternshipMode": "Unknown",
     }
     block_match = re.search(r"## 0\. Metadata(.*?)(?:\n---|\Z)", text, re.S)
     block = block_match.group(1) if block_match else ""
@@ -83,6 +83,7 @@ def extract_metadata(text):
         "Loc": r"-\s*Location\(s\):\s*(.+)",
         "Years": r"-\s*Years of Experience Required:\s*(.+)",
         "Degree": r"-\s*Degree Requirement:\s*(.+)",
+        "InternshipMode": r"-\s*Internship Mode:\s*(.+)",
     }
     for key, pattern in patterns.items():
         m = re.search(pattern, block)
@@ -97,6 +98,7 @@ def extract_recruiter_interview(text):
     recruiter = int(re_m.group(1)) if re_m else 50
     interview = int(int_m.group(1)) if int_m else 50
     return recruiter, interview
+
 
 
 def extract_degree_score(text):
@@ -179,7 +181,21 @@ def extract_preference_penalty(text):
     return penalty
 
 
-def is_internship(title, text):
+def is_internship_from_metadata(internship_mode_value):
+    """Read the authoritative Internship Mode flag the Simulation skill records in
+    Metadata (per simulation_contract.md section 9). Returns True/False, or None if
+    the field is missing/unrecognized (e.g. simulation files predating this field)."""
+    value = (internship_mode_value or "").strip().lower()
+    if value in ("yes", "true", "y"):
+        return True
+    if value in ("no", "false", "n"):
+        return False
+    return None
+
+
+def is_internship_from_keywords(title, text):
+    """Fallback heuristic for simulation files that predate the Internship Mode
+    metadata field. Only used when that field is missing/unrecognized."""
     haystack = f"{title}\n{text}".lower()
     return bool(re.search(r"\bintern(ship)?\b|\bco-?op\b", haystack))
 
@@ -211,7 +227,14 @@ def score_file(path):
     composite = round(max(0.0, min(100.0, composite)), 2)
 
     hard_reject = "hard reject" in fit_category.lower()
-    internship = is_internship(meta["Title"], text)
+
+    internship = is_internship_from_metadata(meta["InternshipMode"])
+    if internship is None:
+        print(
+            f"Warning: {path.name} has no valid 'Internship Mode' metadata field; "
+            "falling back to keyword detection on title/text."
+        )
+        internship = is_internship_from_keywords(meta["Title"], text)
 
     return {
         "Role": meta["Title"],

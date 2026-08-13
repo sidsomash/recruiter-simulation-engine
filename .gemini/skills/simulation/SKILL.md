@@ -97,6 +97,10 @@ Internship Mode is activated if:
 
 No manual override is supported.
 
+Record this determination verbatim in the output's Metadata section as `Internship Mode: Yes`
+or `Internship Mode: No` — do not leave it blank, and do not let downstream tooling infer it
+from the job title later.
+
 ---
 
 ### **Step 4 — Apply Simulation Contract**

@@ -219,6 +219,10 @@ If no preferences are provided:
 ## 9. Internship Mode (Optional)
 
 If the JD is identified as an internship, the simulation must adjust the evaluation rules:
+The Step 3 mode determination (Full-Time vs. Internship) must be recorded verbatim in the
+output's Metadata section as `Internship Mode: Yes` or `Internship Mode: No` — this is the
+authoritative flag downstream tooling (e.g., the ranking skill) relies on, so it must always be
+set explicitly rather than left blank or inferred later from the job title.
 
 ### 9.1 Experience Interpretation (Internships)
 - Coursework counts as experience  
