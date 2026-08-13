@@ -72,6 +72,7 @@ def extract_metadata(text):
         "Company": "Unknown", "Title": "Unknown", "Posting": "Unknown",
         "Comp": "Unknown", "Loc": "Unknown", "Years": "Unknown",
         "Degree": "Unknown", "InternshipMode": "Unknown",
+        "ContractVersion": "Unknown",
     }
     block_match = re.search(r"## 0\. Metadata(.*?)(?:\n---|\Z)", text, re.S)
     block = block_match.group(1) if block_match else ""
@@ -84,6 +85,7 @@ def extract_metadata(text):
         "Years": r"-\s*Years of Experience Required:\s*(.+)",
         "Degree": r"-\s*Degree Requirement:\s*(.+)",
         "InternshipMode": r"-\s*Internship Mode:\s*(.+)",
+        "ContractVersion": r"-\s*Contract Version:\s*(.+)",
     }
     for key, pattern in patterns.items():
         m = re.search(pattern, block)
@@ -255,6 +257,7 @@ def score_file(path):
         "PostingDate": meta["Posting"],
         "_hard_reject": hard_reject,
         "_internship": internship,
+        "_contract_version": meta["ContractVersion"],
     }
 
 
@@ -305,6 +308,15 @@ def main():
     scored = [score_file(f) for f in files]
     full_time = [r for r in scored if not r["_internship"]]
     interns = [r for r in scored if r["_internship"]]
+
+    versions = {r["_contract_version"] for r in scored if r["_contract_version"] != "Unknown"}
+    if len(versions) > 1:
+        print(
+            "Warning: simulation files in this run span multiple Contract "
+            f"Versions ({', '.join(sorted(versions))}). Scores may not be "
+            "directly comparable across versions if scoring rules changed. "
+            "This is informational only — ranking will proceed."
+        )
 
     ranked_full_time = build_ranked_rows(full_time) if full_time else []
     ranked_interns = build_ranked_rows(interns) if interns else []

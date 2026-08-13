@@ -81,7 +81,7 @@ which platform later runs Simulation.
 ---
 
 ### Branch: `simulation-contract-versioning`
-**Status:** Not started
+**Status:** Implementation complete, pending PR/merge
 
 **Problem:** Simulation output files have no tag indicating which version of
 `simulation_contract.md` produced them. If the contract changes (e.g., v2.4 → v2.5), old and new
@@ -90,13 +90,17 @@ simulation files can be silently mixed in one ranking run with incompatible scor
 **Depends on:** Nothing.
 
 **Checklist:**
-1. Add `- Contract Version: v2.4` (or current version) to `simulation_output_template.md`
-   Metadata section (all 3 copies).
-2. Update `simulation/SKILL.md` Step 5 — instruct the model to stamp the current contract version
-   from `simulation_contract.md`'s own header into the output.
-3. Optionally: update `run_ranking.py` to surface a warning if simulation files in one run span
-   multiple contract versions (non-blocking, informational only).
-4. Update `README.md` if Metadata section example needs the new field.
+1. ✅ Added `- Contract Version: <e.g., "v2.4" — copied verbatim from the header of
+   simulation_contract.md>` to `simulation_output_template.md` Metadata section (all 3 copies).
+2. ✅ Updated `simulation/SKILL.md` Step 5 (all 3 copies) — instructs the model to stamp the
+   current contract version, read directly from `simulation_contract.md`'s own header line
+   (e.g., `# Simulation Contract v2.4 — ...`), not paraphrased or inferred.
+3. ✅ Updated `run_ranking.py` (all 3 copies) — `extract_metadata()` now reads `Contract Version`;
+   `main()` prints a non-blocking warning if simulation files in one run span multiple contract
+   versions. Field is internal-only (not added to the CSV schema), so no breaking CSV change.
+4. ✅ Checked `README.md` — no Metadata section example exists there, so no update needed.
+5. ✅ Tested: two sample simulation files stamped `v2.4` and `v2.5` correctly triggered the
+   cross-version warning; single-version runs produce no warning.
 
 ---
 
@@ -318,7 +322,7 @@ rules.
 |---|---|---|---|
 | 1 | `ranking-internship-flag` | — | Merged |
 | 1 | `initialize-file-sync` | — | Implementation complete, pending PR/merge |
-| 1 | `simulation-contract-versioning` | — | Not started |
+| 1 | `simulation-contract-versioning` | — | Implementation complete, pending PR/merge |
 | 1 | `resume-restructure-fact-guard` | — | Not started |
 | 1 | `golden-examples-fewshot` | — | Not started |
 | 2 | `simulation-degree-lookup-table` | — | Not started |
@@ -349,3 +353,9 @@ entries short — one line per event.
   regenerating content 3x; added Python preflight inline; updated README. Verified byte-identical
   output across all 3 directories via hash comparison — sync also fixed real pre-existing drift
   between `.github` and the `.claude`/`.gemini` mirrors. Ready for PR/merge.
+- 2026-08-13: `initialize-file-sync` merged into `main` (PR #4).
+- 2026-08-13: `simulation-contract-versioning` implemented — added `Contract Version` metadata
+  field to simulation output template (all 3 copies); `SKILL.md` Step 5 instructs stamping the
+  version verbatim from `simulation_contract.md`'s header; `run_ranking.py` reads the field and
+  prints a non-blocking warning if a ranking run spans multiple contract versions. Verified with
+  sample files at v2.4/v2.5 triggering the warning correctly. Ready for PR/merge.

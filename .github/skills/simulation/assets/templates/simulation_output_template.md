@@ -10,6 +10,7 @@
 - Years of Experience Required: <e.g., "3+" or "entry-level">  
 - Degree Requirement: <e.g., "Bachelor's CS" or "Not specified">  
 - Internship Mode: <Yes / No — per the Step 3 mode determination in SKILL.md>
+- Contract Version: <e.g., "v2.4" — copied verbatim from the header of simulation_contract.md>
 
 ---
 
