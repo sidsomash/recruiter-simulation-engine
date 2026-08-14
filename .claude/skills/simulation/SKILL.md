@@ -112,12 +112,18 @@ Follow the contract exactly:
 2. Skill & Responsibility Mapping  
 3. Skill Gaps  
 4. Years‑of‑Experience Mapping  
-5. Degree Requirement Mapping — look up the JD's required degree field in
-   `references/degree_domain_map.json` first (see contract §5.2/§5.3). Determine the candidate's
-   degree category using their degree title **plus** `candidate_profile.md` (technical strengths,
+5. Degree Requirement Mapping — determine which of the four candidate degree categories in
+   `references/degree_domain_map.json` applies (`stem_quantitative`,
+   `business_finance_accounting`, `liberal_arts_humanities`, `social_sciences`, or none of these),
+   using the candidate's degree title **plus** `candidate_profile.md` (technical strengths,
    quantitative coursework) and `candidate_preferences.md` (stated role preferences) when the
    title alone is ambiguous or borderline — do not classify from the degree title in isolation.
-   Fall back to Rules A–E only when the category or JD domain isn't covered by the JSON.
+   Then look up the JD's required degree field under that category (see contract §5.2/§5.3). Fall
+   back to Rules A–G only when the category or JD domain isn't covered by the JSON. If the
+   candidate's degree doesn't match the JD's field but the candidate has substantial directly
+   relevant professional/project experience (career-switcher case), apply §6.3 — state the
+   mismatch plainly, cross-reference the relevant experience, and let §8's Recruiter Decision
+   weigh both together.
 6. Preference Violations  
 7. Recruiter Decision  
 8. Final Fit Summary  

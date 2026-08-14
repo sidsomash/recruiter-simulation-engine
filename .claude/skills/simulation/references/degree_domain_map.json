@@ -1,9 +1,10 @@
 {
   "_meta": {
     "description": "Authoritative degree-domain lookup table for Simulation Contract v2.4 section 5.3. This JSON is the canonical source of truth for degree domain matching; the markdown table in simulation_contract.md is a human-readable rendering only and must stay in sync with this file.",
-    "important": "Match category depends on the CANDIDATE'S ACTUAL DEGREE on file (from candidate_resume.md / candidate_profile.md), not a fixed assumption. This table only encodes outcomes for a candidate whose degree falls in the 'stem_quantitative' category below. A Finance/Accounting JD is 'No match' for a STEM-quantitative candidate, but would be a Direct/Equivalent match for a candidate whose own degree IS in Finance/Accounting/Business. Always check which category the candidate's degree belongs to before doing the lookup.",
-    "categorization_guidance": "Determining which category the candidate belongs to is not just about the literal degree title on the resume. Also weigh candidate_profile.md (e.g., listed technical strengths, quantitative coursework, domain experience) and candidate_preferences.md (e.g., stated preference for data/technical roles) when the degree title alone is ambiguous or borderline (e.g., a Business degree with heavy data-analytics coursework and stated preference for data roles may warrant treating the candidate as closer to 'stem_quantitative' than the degree title implies, or vice versa). When skills/preferences meaningfully change the categorization call, note the reasoning in the Degree Requirement Mapping output rather than applying the table silently.",
-    "fallback_behavior": "If the candidate's degree category is not 'stem_quantitative', or the JD's degree domain is not found under that category, apply Rules A-E from simulation_contract.md section 5.2 instead using the candidate's actual degree, skills, and preferences, not this table.",
+    "important": "Match category depends on the CANDIDATE'S ACTUAL DEGREE on file (from candidate_resume.md / candidate_profile.md), not a fixed assumption. This table covers four candidate degree categories (stem_quantitative, business_finance_accounting, liberal_arts_humanities, social_sciences). A Finance/Accounting JD is 'No match' for a STEM-quantitative candidate, but 'Direct match' for a candidate whose own degree IS in business_finance_accounting. Always determine which category the candidate's degree belongs to before doing the lookup.",
+    "categorization_guidance": "Determining which category the candidate belongs to is not just about the literal degree title on the resume. Also weigh candidate_profile.md (e.g., listed technical strengths, quantitative coursework, domain experience) and candidate_preferences.md (e.g., stated preference for data/technical roles) when the degree title alone is ambiguous or borderline (e.g., a Business degree with heavy data-analytics coursework and stated preference for data roles may warrant treating the candidate as closer to 'stem_quantitative' than the degree title implies, or a Social Sciences degree with heavy statistics/research-methods coursework may warrant treating the candidate as closer to 'stem_quantitative' for quantitative JD domains). When skills/preferences meaningfully change the categorization call, note the reasoning in the Degree Requirement Mapping output rather than applying the table silently. If the candidate's degree does not clearly fit any of the four categories below, treat it as an unmapped category and fall back to Rules A-E/F/G in simulation_contract.md section 5.2.",
+    "career_switcher_guidance": "If the candidate's degree does not match the JD's required domain (in any category, including 'no_match' results from this table), but the candidate has substantial hands-on professional or project experience directly relevant to the JD's field (see simulation_contract.md section 6.3), note this explicitly in the Degree Requirement Mapping output and cross-reference the Years-of-Experience Mapping section rather than treating the degree mismatch in isolation. The degree match label itself (from this table or Rules A-E/F/G) does not change, but the Recruiter Decision in section 8 must consider both sections together.",
+    "fallback_behavior": "If the candidate's degree does not fall into any of the four categories below, or the JD's degree domain is not found under the candidate's matched category, apply Rules A-E/F/G from simulation_contract.md section 5.2 instead using the candidate's actual degree, skills, and preferences, not this table.",
     "known_discrepancy": "Section 5.2 Rule B states Finance/Accounting/Economics = Partial match for a STEM-quantitative candidate (unless the JD allows 'related quantitative field', then Equivalent). This table instead lists Finance/Accounting as No match and Economics as Partial for that same STEM-quantitative candidate case. Since this table is authoritative for domains it contains, Finance/Accounting will resolve to No match, not Partial, unless this is reconciled in a future update."
   },
   "match_labels": {
@@ -32,6 +33,76 @@
         "artificial intelligence": "equivalent",
         "machine learning": "equivalent",
         "business analytics": "equivalent"
+      }
+    },
+    "business_finance_accounting": {
+      "description": "Use this table when the CANDIDATE's own degree is in Business, Finance, Accounting, or Economics. Values below describe how well each JD-required domain matches THIS candidate's business/finance degree.",
+      "jd_domains": {
+        "finance": "direct",
+        "accounting": "direct",
+        "economics": "equivalent",
+        "business": "direct",
+        "business analytics": "equivalent",
+        "applied math": "partial",
+        "applied mathematics": "partial",
+        "statistics": "partial",
+        "computer science": "no_match",
+        "data science": "no_match",
+        "engineering": "no_match",
+        "ai/ml": "no_match",
+        "ai": "no_match",
+        "ml": "no_match",
+        "artificial intelligence": "no_match",
+        "machine learning": "no_match"
+      }
+    },
+    "liberal_arts_humanities": {
+      "description": "Use this table when the CANDIDATE's own degree is in a Liberal Arts / Humanities field (e.g., English, History, Philosophy, Communications, Journalism, Fine Arts). Values below describe how well each JD-required domain matches THIS candidate's liberal arts degree.",
+      "jd_domains": {
+        "communications": "direct",
+        "journalism": "direct",
+        "english": "direct",
+        "education": "equivalent",
+        "marketing": "partial",
+        "business": "partial",
+        "computer science": "no_match",
+        "data science": "no_match",
+        "engineering": "no_match",
+        "finance": "no_match",
+        "accounting": "no_match",
+        "applied math": "no_match",
+        "applied mathematics": "no_match",
+        "statistics": "no_match",
+        "ai/ml": "no_match",
+        "ai": "no_match",
+        "ml": "no_match",
+        "artificial intelligence": "no_match",
+        "machine learning": "no_match"
+      }
+    },
+    "social_sciences": {
+      "description": "Use this table when the CANDIDATE's own degree is in a Social Science field (e.g., Psychology, Sociology, Political Science, Anthropology, International Relations). Values below describe how well each JD-required domain matches THIS candidate's social science degree.",
+      "jd_domains": {
+        "psychology": "direct",
+        "social sciences": "direct",
+        "sociology": "direct",
+        "political science": "direct",
+        "public policy": "equivalent",
+        "data science": "partial",
+        "statistics": "partial",
+        "applied math": "no_match",
+        "applied mathematics": "no_match",
+        "business": "partial",
+        "business analytics": "no_match",
+        "computer science": "no_match",
+        "engineering": "no_match",
+        "finance": "no_match",
+        "accounting": "no_match",
+        "ai/ml": "no_match",
+        "ai": "no_match",
+        "ml": "no_match",
+        "artificial intelligence": "no_match",
+        "machine learning": "no_match"
       }
     }
   }
