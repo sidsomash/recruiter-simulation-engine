@@ -164,30 +164,81 @@ If JD requires a PhD:
 **Rule E — Degree Not Specified**  
 → No penalty, no flag.
 
+**Rule F — Non-STEM Candidate, Matching Non-STEM JD Domain**  
+If the candidate's own degree category is non-STEM (e.g., `business_finance_accounting`,
+`liberal_arts_humanities`, `social_sciences`) and the JD's required domain matches or is closely
+related to that category (e.g., a Finance degree candidate applying to a Finance JD; a
+Psychology degree candidate applying to a Psychology-adjacent JD):  
+→ ✔ Direct or Equivalent match, per the candidate's matched category table in §5.3.
+
+**Rule G — Non-STEM Candidate, Unrelated or STEM JD Domain**  
+If the candidate's own degree category is non-STEM and the JD requires a domain unrelated to
+that category (including STEM/quantitative domains such as Computer Science, Data Science, or
+Engineering):  
+→ ✘ No match, unless the candidate's profile/preferences show quantitative coursework or
+experience that upgrades the categorization per the categorization guidance above (in which
+case, apply the upgraded category's table instead). Do not apply ❌ Hard mismatch here — that
+label is reserved for the advanced-degree cases in Rules C/D (§5.1).
+
 ### 5.3 Degree Domain Mapping (Generalized)
 
 **Authoritative source:** `references/degree_domain_map.json`. The model must first determine
-which candidate degree category applies (see §5.2's categorization guidance — this considers the
-candidate's degree title, skills/profile, and preferences, not the title alone), then look up the
-JD's required degree field under that category in the JSON file. If the category and domain are
-both found, use the match category from the JSON verbatim. If either is not found, fall back to
-Rules A–E in §5.2.
+which candidate degree category applies — `stem_quantitative`, `business_finance_accounting`,
+`liberal_arts_humanities`, `social_sciences`, or none of these (see §5.2's categorization
+guidance — this considers the candidate's degree title, skills/profile, and preferences, not the
+title alone) — then look up the JD's required degree field under that category in the JSON file.
+If the category and domain are both found, use the match category from the JSON verbatim. If
+either is not found, fall back to Rules A–G in §5.2.
 
-The table below is a human-readable rendering of the JSON's `stem_quantitative` category for
-quick reference — if it ever disagrees with `degree_domain_map.json`, the JSON wins. See the
-JSON's `_meta.known_discrepancy` field for a currently tracked inconsistency with Rule B, and
-`_meta.categorization_guidance` for how skills/preferences factor into category selection.
+The tables below are human-readable renderings of the JSON's four categories for quick reference
+— if they ever disagree with `degree_domain_map.json`, the JSON wins. See the JSON's
+`_meta.known_discrepancy` field for a currently tracked inconsistency with Rule B,
+`_meta.categorization_guidance` for how skills/preferences factor into category selection, and
+`_meta.career_switcher_guidance` for how a degree mismatch interacts with relevant professional
+experience (see also §6.3).
 
-| JD Field | Candidate Degree Category | Match |
-|---------|------------------|--------|
-| Computer Science | stem_quantitative | ✔ Equivalent |
-| Data Science | stem_quantitative | ✔ Direct |
-| Applied Math / Statistics | stem_quantitative | ✔ Direct |
-| Engineering | stem_quantitative | ~ Partial |
-| Finance / Accounting | stem_quantitative | ✘ No match |
-| Economics | stem_quantitative | ~ Partial |
-| AI/ML | stem_quantitative | ✔ Equivalent |
-| Business Analytics | stem_quantitative | ✔ Equivalent |
+**stem_quantitative**
+
+| JD Field | Match |
+|---------|--------|
+| Computer Science | ✔ Equivalent |
+| Data Science | ✔ Direct |
+| Applied Math / Statistics | ✔ Direct |
+| Engineering | ~ Partial |
+| Finance / Accounting | ✘ No match |
+| Economics | ~ Partial |
+| AI/ML | ✔ Equivalent |
+| Business Analytics | ✔ Equivalent |
+
+**business_finance_accounting**
+
+| JD Field | Match |
+|---------|--------|
+| Finance | ✔ Direct |
+| Accounting | ✔ Direct |
+| Economics | ✔ Equivalent |
+| Business | ✔ Direct |
+| Business Analytics | ✔ Equivalent |
+| Applied Math / Statistics | ~ Partial |
+| Computer Science / Data Science / Engineering / AI-ML | ✘ No match |
+
+**liberal_arts_humanities**
+
+| JD Field | Match |
+|---------|--------|
+| Communications / Journalism / English | ✔ Direct |
+| Education | ✔ Equivalent |
+| Marketing / Business | ~ Partial |
+| Computer Science / Data Science / Engineering / Finance / Accounting / Applied Math / Statistics / AI-ML | ✘ No match |
+
+**social_sciences**
+
+| JD Field | Match |
+|---------|--------|
+| Psychology / Social Sciences / Sociology / Political Science | ✔ Direct |
+| Public Policy | ✔ Equivalent |
+| Data Science / Statistics / Business | ~ Partial |
+| Applied Math / Business Analytics / Computer Science / Engineering / Finance / Accounting / AI-ML | ✘ No match |
 
 ---
 
@@ -203,6 +254,28 @@ JSON's `_meta.known_discrepancy` field for a currently tracked inconsistency wit
 - ✔ Meets requirement  
 - ~ Partially meets requirement  
 - ✘ Does not meet requirement  
+
+### 6.3 Degree‑vs‑Experience Interaction (Career Switchers)
+
+A degree mismatch (per §5) and years-of-experience alignment (per §6.1/§6.2) are evaluated
+**independently** — the degree match label itself does not change based on experience. However,
+when a candidate has a non-matching or ✘ No match degree (per §5's lookup or Rules A–G) **and**
+substantial hands-on professional or project experience directly relevant to the JD's field
+(e.g., a Liberal Arts graduate with 4+ years of professional software engineering experience
+applying to a Computer Science-labeled JD), both sections must be read together in §8 Recruiter
+Decision:
+
+- State the degree mismatch plainly in §5's output (do not soften or reclassify the match label
+  itself).
+- Cross-reference the relevant professional experience in §6's output, explicitly noting that it
+  is being weighed against the degree gap.
+- The Recruiter Decision in §8 must account for both signals together rather than treating the
+  degree mismatch in isolation — heavy, directly relevant professional experience can meaningfully
+  offset a non-matching degree in the overall recruiter-realistic assessment, but does not erase
+  the mismatch from the record.
+
+See `degree_domain_map.json`'s `_meta.career_switcher_guidance` for the same rule stated from the
+degree-lookup side.
 
 ---
 
