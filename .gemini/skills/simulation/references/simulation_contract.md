@@ -295,29 +295,147 @@ If no preferences are provided:
 
 ---
 
-## 8. Recruiter Decision (Strict)
+## 8. Recruiter Decision (Deterministic Formula)
 
-### 8.1 Likelihood of Recruiter Screen
-- **Very High:** 80–95%  
-- **High:** 65–80%  
-- **Moderate:** 45–65%  
-- **Low:** 20–45%  
-- **Very Low:** 5–20%  
-- **Hard Reject:** 0–5%  
+Recruiter Screen Likelihood and Interview Likelihood are **computed**, not estimated or picked
+from a range. The same inputs must always produce the same percentages. Round only the **final**
+percentage in each formula below — do not round intermediate scores, to avoid rounding-order
+ambiguity between runs. Use **round-half-up** (e.g., 96.5 rounds to 97, not 96) — this is the
+standard arithmetic rounding convention, not "round half to even"/banker's rounding, which some
+tools default to and would otherwise produce a different, non-matching result.
 
-### 8.2 Likelihood of First‑Round Interview
-- **High:** 60–80%  
-- **Moderate:** 40–60%  
-- **Low:** 20–40%  
-- **Very Low:** 5–20%  
-- **Hard Reject:** 0–5%  
+### 8.1 Scoring Inputs (from earlier sections — do not re-derive)
 
-### 8.3 Decision Rules
-- Missing required degree → **heavy penalty**  
-- Missing required years of experience → **moderate/heavy penalty**  
-- Missing required skills → **heavy penalty**  
-- Preference violations → **moderate penalty** (only if preferences provided)  
-- Defense/clearance requirement → **penalized only if candidate preferences indicate avoidance**  
+**Skill Score (0–100):** Using only the **Required Skills** table from §4 (skill mapping) — do
+not include Preferred Skills in this formula; preferred skills inform the Recruiter Takeaway
+narrative only.
+
+```
+Skill Score = 100 × (Direct + Equivalent + 0.5 × Partial) / total_required_skills
+```
+
+If there are zero required skills listed in the JD, Skill Score = 100.
+
+**Degree Score (0–100):** From the §5 Degree Requirement Mapping match label.
+
+| Degree Match Label (§5.1) | Degree Score |
+|---|---|
+| ✔ Direct match | 100 |
+| ✔ Equivalent match | 100 |
+| ~ Partial match | 60 |
+| ✘ No match | 25 |
+| ❌ Hard mismatch | 0 (also triggers the §8.4 override) |
+| Not specified (Rule E) | 100 |
+
+**Experience Score (0–100):** From the §6 Years-of-Experience Mapping match label.
+
+| Experience Match Label (§6.2) | Experience Score |
+|---|---|
+| ✔ Meets requirement | 100 |
+| ~ Partially meets requirement | 55 |
+| ✘ Does not meet requirement | 15 |
+
+**Preference Penalty (points subtracted, only if a preferences file was provided — §7):**
+
+| Violation Severity | Penalty |
+|---|---|
+| Minor (e.g., location) | −5 |
+| Moderate (e.g., compensation, domain mismatch) | −10 |
+| Major (e.g., on-site/remote mismatch candidate strongly opposes) | −15 |
+| Defense/clearance (candidate opts out) | −20 |
+
+Sum the penalty for every applicable violation. If no preferences file was provided, Preference
+Penalty = 0.
+
+### 8.2 Recruiter Screen Likelihood Formula
+
+```
+Recruiter% = round(0.40 × Skill Score + 0.35 × Degree Score + 0.25 × Experience Score) − Preference Penalty
+```
+
+Clamp the result to the range [0, 100].
+
+### 8.3 Interview Likelihood Formula
+
+```
+Interview% = round(0.35 × Skill Score + 0.40 × Degree Score + 0.25 × Experience Score) − Preference Penalty
+```
+
+Clamp the result to [0, 100], then clamp `Interview% ≤ Recruiter%` — a candidate cannot have a
+higher interview probability than recruiter-screen probability, since the interview stage is
+conditional on passing the screen.
+
+### 8.4 Hard Reject Override
+
+If the §5 Degree Requirement Mapping label is ❌ **Hard mismatch**:
+→ Override both formulas: `Recruiter% = 2`, `Interview% = 1` (fixed, deterministic values — do
+not compute via §8.2/§8.3 in this case).
+
+### 8.5 Band Labels (derived from the computed percentage)
+
+The percentage is computed first; the band label is looked up from the percentage, never chosen
+independently. Ranges are non-overlapping.
+
+**Recruiter Screen Likelihood band:**
+
+| Range | Band |
+|---|---|
+| 80–100% | Very High |
+| 65–79% | High |
+| 45–64% | Moderate |
+| 20–44% | Low |
+| 5–19% | Very Low |
+| 0–4% | Hard Reject |
+
+**Interview Likelihood band:**
+
+| Range | Band |
+|---|---|
+| 60–100% | High |
+| 40–59% | Moderate |
+| 20–39% | Low |
+| 5–19% | Very Low |
+| 0–4% | Hard Reject |
+
+### 8.6 Decision Rules (Narrative Reference)
+
+These restate §8.1's scoring inputs in plain language for the Decision Rationale bullets in the
+output — they are descriptive of the formula above, not a separate/independent penalty system:
+- Missing required degree (No match/Hard mismatch) → reflected via a low/zero Degree Score
+- Missing required years of experience (Does not meet) → reflected via a low Experience Score
+- Missing required skills (many No Match rows) → reflected via a low Skill Score
+- Preference violations → reflected via the Preference Penalty (only if preferences provided)
+- Defense/clearance requirement → penalized only if candidate preferences indicate avoidance
+  (via the Preference Penalty table)
+
+### 8.7 Worked Examples
+
+**Example A — Strong match, no preferences file:**
+- Required skills: 5 total → Direct=3, Equivalent=1, Partial=1, No Match=0
+  → Skill Score = 100 × (3 + 1 + 0.5×1) / 5 = 100 × 4.5 / 5 = 90
+- Degree: Equivalent match → Degree Score = 100
+- Experience: Meets requirement → Experience Score = 100
+- No preferences file → Preference Penalty = 0
+- Recruiter% = round(0.40×90 + 0.35×100 + 0.25×100) − 0 = round(96) = **96%** → Very High
+- Interview% = round(0.35×90 + 0.40×100 + 0.25×100) − 0 = round(96.5) = 97, clamped to ≤96 →
+  **96%** → High
+
+**Example B — Moderate match, one moderate preference violation:**
+- Required skills: 4 total → Direct=1, Equivalent=1, Partial=1, No Match=1
+  → Skill Score = 100 × (1 + 1 + 0.5×1) / 4 = 100 × 2.5 / 4 = 62.5
+- Degree: Partial match → Degree Score = 60
+- Experience: Partially meets requirement → Experience Score = 55
+- Preferences: 1 moderate violation → Preference Penalty = −10
+- Recruiter% = round(0.40×62.5 + 0.35×60 + 0.25×55) − 10 = round(59.75) − 10 = 60 − 10 = **50%** →
+  Moderate
+- Interview% = round(0.35×62.5 + 0.40×60 + 0.25×55) − 10 = round(59.625) − 10 = 60 − 10 = 50,
+  clamped to ≤50 → **50%** → Moderate
+
+**Example C — Hard reject (PhD required, candidate has no PhD):**
+- Degree: Hard mismatch (§5.2 Rule D) → §8.4 override applies
+- Recruiter% = **2%** → Hard Reject
+- Interview% = **1%** → Hard Reject
+- (Skill/Experience scores are not computed in this case — the override is unconditional.)
 
 ---
 
