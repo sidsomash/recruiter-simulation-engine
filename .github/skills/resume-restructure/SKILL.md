@@ -17,11 +17,12 @@ This skill depends on the following reference files:
   - `../simulation/references/candidate_resume.md`  
   - `../simulation/references/candidate_profile.md`  
 
-- Target simulation output (from simulation skill), both required:
-  - `../simulation/simulations/<timestamp>_<slugified-role>.md` — human-readable narrative detail
+- Target simulation output (from simulation skill):
+  - `../simulation/simulations/<timestamp>_<slugified-role>.md` — required; human-readable
+    narrative detail
   - `../simulation/simulations/<timestamp>_<slugified-role>.json` — canonical machine-readable
-    metadata (see `simulation_contract.md` §11); preferred source for structured fields, see
-    Step 2. Falls back to `.md`-only parsing if the sidecar doesn't exist for older simulations.
+    metadata (see `simulation_contract.md` §11); preferred source for structured fields (Step 2).
+    If the sidecar is missing (legacy simulations), fall back to `.md`-only parsing.
 
 ---
 
