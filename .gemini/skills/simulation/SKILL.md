@@ -23,6 +23,7 @@ This skill depends on the following reference files:
 - [candidate_resume.md](references/candidate_resume.md)  
 - [candidate_profile.md](references/candidate_profile.md)  
 - [candidate_preferences.md](references/candidate_preferences.md) *(optional)*  
+- [validate_simulation_output.py](validate_simulation_output.py) — deterministic post-save validator (stdlib-only, see Step 6)  
 
 These files define the candidate’s background and the rules governing simulation behavior.
 
@@ -53,6 +54,22 @@ No additional parameters, flags, or overrides are supported.
 ---
 
 ## 🧠 Workflow
+
+### **Step 0 — Preflight: Verify Python Is Available**
+Output validation (Step 6) is performed by a deterministic script
+(`validate_simulation_output.py`), not by the model, so a Python interpreter
+must be available before the simulation can be considered complete.
+
+- Try `python3 --version`, then fall back to `python --version` if `python3`
+  is not found.
+- If neither is available, stop and tell the user: "Python 3.8+ is required
+  to validate the simulation output. Please install Python and try again."
+  Do not attempt to hand-validate the output as a substitute — determinism
+  depends on the script running, not the model self-checking.
+- No virtual environment, `pip install`, or `requirements.txt` is needed —
+  `validate_simulation_output.py` uses only the Python standard library.
+
+---
 
 ### **Step 1 — Load References**
 Load all required reference files:
@@ -186,16 +203,35 @@ Both files are required — do not save the Markdown file alone. If the sidecar 
 for any reason, treat this as a save failure per Step 7's error handling (do not silently save
 only the Markdown file).
 
+**Validate before treating the save as final.** From within `skills/simulation/`, run:
+
+```
+python3 validate_simulation_output.py simulations/<timestamp>_<slugified-role>.md
+```
+
+(fall back to `python validate_simulation_output.py ...` if `python3` is not the resolved
+command, consistent with Step 0's preflight).
+
+- If the script prints `VALID: ...`, the save is complete — proceed to Step 7.
+- If the script prints `INVALID: ...` with a list of issues, do **not** return the invalid files
+  as final output. Regenerate only the offending section(s)/field(s) named in the issue list
+  (re-deriving them from Step 4's analysis — do not guess new values), rewrite both files, and
+  re-run the validator. Repeat until validation passes.
+- If validation still fails after a reasonable retry, stop and return a brief error message
+  describing the persistent validation failure (no simulation content) rather than saving
+  invalid output.
+
 ---
 
 ### **Step 7 — Return Output**
 
 - Write the completed simulation output exclusively to the two files at
   `skills/simulation/simulations/<timestamp>_<slugified-role>.md` and
-  `skills/simulation/simulations/<timestamp>_<slugified-role>.json`.
+  `skills/simulation/simulations/<timestamp>_<slugified-role>.json`, after they have passed
+  Step 6's validation.
 - Do NOT print, stream, or otherwise emit any simulation content (full or partial) to the terminal, logs, or assistant response payload. All simulation details must be persisted only to the output files.
-- After successfully saving both files, terminal/assistant responses should be restricted to a concise confirmation containing ONLY the two relative file paths and a one-line status (for example: "Saved: .github/skills/simulation/simulations/20260623_093815_role.md + .json"). No simulation content, analysis, or excerpts should be included in the response.
-- If an error prevents writing either file, return a brief error message that describes the failure (no simulation content).
+- After successfully saving and validating both files, terminal/assistant responses should be restricted to a concise confirmation containing ONLY the two relative file paths and a one-line status (for example: "Saved and validated: .github/skills/simulation/simulations/20260623_093815_role.md + .json"). No simulation content, analysis, or excerpts should be included in the response.
+- If an error prevents writing either file, or validation cannot be made to pass, return a brief error message that describes the failure (no simulation content).
 
 ---
 

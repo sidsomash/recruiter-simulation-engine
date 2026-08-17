@@ -235,7 +235,7 @@ the now-deterministic degree match category as an input).
 ---
 
 ### Branch: `simulation-json-sidecar`
-**Status:** Implementation complete, pending PR/merge
+**Status:** Merged
 
 **Problem:** `run_ranking.py` depends on exact prose strings (e.g.,
 `**Match Category:** ✔ Direct`, `**Recruiter Screen Likelihood:** 85%`). If the model paraphrases
@@ -276,7 +276,7 @@ the user.
 ---
 
 ### Branch: `simulation-output-validator`
-**Status:** Not started
+**Status:** Implementation complete, pending PR/merge
 
 **Problem:** Nothing currently checks a generated simulation output against the required
 structure/enum values before it's saved — malformed output is only discovered later, downstream,
@@ -286,15 +286,27 @@ when ranking silently mis-scores it.
 secondarily).
 
 **Checklist:**
-1. Write `validate_simulation_output.py` (stdlib-only) — checks: all 8 required markdown sections
-   present; JSON sidecar has all required keys; enum fields (`degree_match`, `fit_category`, etc.)
-   match one of the allowed values; percentages are 0–100 integers.
-2. Update `simulation/SKILL.md` Step 6 (Save Output File) — instruct the model to run the
-   validator against the just-written files before returning its confirmation message; if
-   validation fails, regenerate the offending section(s) rather than saving invalid output.
-3. Add a Step 0 preflight (python3/python check) to `simulation/SKILL.md`, consistent with the
-   Ranking skill's pattern.
-4. Test with a deliberately malformed sample file to confirm the validator catches it.
+1. ✅ Wrote `validate_simulation_output.py` (stdlib-only, all 3 copies) — checks: all 8 required
+   Markdown sections present; empty Preference Violations section without the required "no
+   preferences" statement; Recruiter/Interview Likelihood are integer percentages; JSON sidecar
+   has all required keys and is valid JSON; enum fields (`degree_match`, `skill_alignment`,
+   `experience_match`, `fit_category`, violation `severity`) match one of the allowed values;
+   `recruiter_pct`/`interview_pct` are 0–100 integers with `interview_pct` not exceeding
+   `recruiter_pct` (contract §8.3); `internship_mode` is a real boolean; plus a cross-file check
+   that the Markdown's percentages/Contract Version agree exactly with the JSON sidecar (contract
+   §11's consistency rule).
+2. ✅ Updated `simulation/SKILL.md` Step 6 (Save Output Files) — instructs running the validator
+   against the just-written files before treating the save as final; on failure, regenerate only
+   the offending section(s)/field(s) (re-derived from Step 4, not guessed) and re-validate, rather
+   than saving invalid output. Step 7's confirmation message now says "Saved and validated".
+3. ✅ Added a Step 0 preflight (python3/python check) to `simulation/SKILL.md`, mirroring the
+   Ranking skill's existing Step 0 pattern exactly. Added the validator script to the References
+   list.
+4. ✅ Tested with a deliberately malformed sample `.md`+`.json` pair (missing 5 Markdown sections,
+   non-numeric percentage string, invalid `degree_match`/`severity` enums, non-boolean
+   `internship_mode`, `interview_pct` > `recruiter_pct`) — validator correctly caught all 10
+   issues with clear, specific messages. Also confirmed a valid matched pair passes cleanly. Test
+   files removed after verification.
 
 ---
 
@@ -412,8 +424,8 @@ rules.
 | 2 | `simulation-degree-lookup-table` | — | Merged |
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
 | 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Merged |
-| 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Implementation complete, pending PR/merge |
-| 5 | `simulation-output-validator` | `simulation-json-sidecar` | Not started |
+| 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Merged |
+| 5 | `simulation-output-validator` | `simulation-json-sidecar` | Implementation complete, pending PR/merge |
 | 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Not started |
 | 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | Not started |
 
@@ -495,3 +507,20 @@ entries short — one line per event.
   Verified parity: built a matched `.md`+`.json` pair and a legacy `.md`-only file with identical
   underlying data, ran `run_ranking.py`, and confirmed both rows scored identically in the output
   CSV. Ready for PR/merge.
+- 2026-08-17: `simulation-json-sidecar` merged into `main` (PR #9).
+- 2026-08-17: `simulation-output-validator` implemented — added `validate_simulation_output.py`
+  (stdlib-only, all 3 copies) checking: all 8 required Markdown sections present; empty
+  Preference Violations section without the required "no preferences" statement; Recruiter/
+  Interview Likelihood are integer percentages; JSON sidecar has all required keys and is valid
+  JSON; enum fields (`degree_match`, `skill_alignment`, `experience_match`, `fit_category`,
+  violation `severity`) match allowed values; `recruiter_pct`/`interview_pct` are 0-100 integers
+  with the §8.3 `interview_pct ≤ recruiter_pct` clamp enforced; `internship_mode` is a real
+  boolean; plus a cross-file check that Markdown percentages/Contract Version agree exactly with
+  the JSON sidecar (contract §11's consistency rule). Added a Step 0 preflight (python3/python
+  check) to `simulation/SKILL.md`, mirroring the Ranking skill's existing pattern. Updated Step 6
+  to run the validator before treating a save as final, regenerating offending section(s) on
+  failure rather than saving invalid output; Step 7's confirmation now says "Saved and
+  validated". Tested with a deliberately malformed sample pair (10 injected issues across missing
+  sections, bad enums, bad types, and the interview/recruiter clamp) — validator caught all of
+  them with specific messages; confirmed a valid pair passes cleanly. Test files removed after
+  verification. Ready for PR/merge.
