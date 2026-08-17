@@ -147,7 +147,7 @@ frequent source of miscategorization (e.g., confusing Finance/Accounting "Partia
 ---
 
 ### Branch: `simulation-degree-lookup-non-stem-coverage`
-**Status:** Implementation complete, pending PR/merge
+**Status:** Merged
 
 **Problem:** `degree_domain_map.json` (introduced in `simulation-degree-lookup-table`) only
 defines a single candidate degree category, `stem_quantitative`. The engine currently has no
@@ -204,7 +204,7 @@ sections).
 ---
 
 ### Branch: `simulation-deterministic-scoring-formula`
-**Status:** Not started
+**Status:** Implementation complete, pending PR/merge
 
 **Problem:** §8.1/§8.2 give the model a *range* to pick a number from ("Very High: 80–95%"), with
 no formula — so identical inputs can legitimately produce different percentages across runs,
@@ -214,18 +214,23 @@ breaking the contract's own "deterministic" claim and directly affecting downstr
 the now-deterministic degree match category as an input).
 
 **Checklist:**
-1. Design a point-based formula for Recruiter Screen Likelihood and Interview Likelihood, derived
-   from countable factors already produced earlier in the same simulation (# Direct/Equivalent
-   skill matches, # gaps, degree match tier, experience match tier, preference violation count) —
-   mirror the style already used in `ranking_rules.md`'s composite formula.
-2. Document the formula explicitly in `simulation_contract.md` §8 (replace "pick a value in this
-   range" language with "compute using this formula, then map the result into the corresponding
-   band label").
-3. Update `simulation/SKILL.md` Step 4 — instruct the model to compute (not guess) the percentage
-   using the documented formula.
-4. Add 2–3 worked numeric examples directly in the contract so the model has concrete
-   arithmetic to pattern-match against.
-5. Test: run the same JD/resume pair twice, confirm identical recruiter/interview percentages.
+1. ✅ Designed a point-based formula for Recruiter Screen Likelihood and Interview Likelihood,
+   derived from countable factors already produced earlier in the same simulation (Skill Score
+   from Required Skills match counts, Degree Score from the §5 match label, Experience Score from
+   the §6 match label, Preference Penalty from §7 violation severities) — mirrors the point-value
+   conventions already used in `ranking_rules.md`.
+2. ✅ Documented the formula explicitly in `simulation_contract.md` §8 (replaced "pick a value in
+   this range" language with Scoring Inputs, weighted formulas, a Hard Reject Override, and
+   redefined non-overlapping band-label lookup tables).
+3. ✅ Updated `simulation/SKILL.md` Step 4 — the Recruiter Decision bullet now instructs the model
+   to *compute* (not guess) the percentage using the documented §8 formula.
+4. ✅ Added 3 worked numeric examples directly in the contract (strong match, moderate match with
+   a preference penalty, and hard reject override) with concrete arithmetic.
+5. ✅ Verified determinism: re-ran the formula's arithmetic via a standalone script for both
+   worked examples and confirmed the computed percentages match the documented values exactly
+   (round-half-up specified explicitly to avoid banker's-rounding ambiguity). Confirmed
+   `run_ranking.py`'s `extract_recruiter_interview()` regex (`\*\*Recruiter Screen
+   Likelihood:\*\*\s*(\d+)%` / same for Interview) is unaffected — output prose format unchanged.
 
 ---
 
@@ -396,8 +401,8 @@ rules.
 | 1 | `resume-restructure-fact-guard` | — | Not started |
 | 1 | `golden-examples-fewshot` | — | Not started |
 | 2 | `simulation-degree-lookup-table` | — | Merged |
-| 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Implementation complete, pending PR/merge |
-| 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Not started |
+| 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
+| 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Implementation complete, pending PR/merge |
 | 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Not started |
 | 5 | `simulation-output-validator` | `simulation-json-sidecar` | Not started |
 | 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Not started |
@@ -450,3 +455,17 @@ entries short — one line per event.
   career switchers, cross-referenced from the JSON's `_meta.career_switcher_guidance`. Updated
   `simulation/SKILL.md` Step 4 accordingly. Verified all four categories resolve correctly for
   representative hits and a miss (correct fallback) via script. Ready for PR/merge.
+- 2026-08-14: `simulation-degree-lookup-non-stem-coverage` merged into `main` (PR #7).
+- 2026-08-14: `simulation-deterministic-scoring-formula` implemented — replaced contract §8's
+  "pick a value from this range" band language with a computed point-based formula: Skill/Degree/
+  Experience Scores (0-100) derived from existing §4/§5/§6 match labels, weighted formulas for
+  Recruiter Screen Likelihood (0.40/0.35/0.25) and Interview Likelihood (0.35/0.40/0.25, capped
+  at ≤ Recruiter%), a Preference Penalty table, a fixed Hard Reject Override (Recruiter%=2,
+  Interview%=1), redefined non-overlapping band-label tables, and an explicit round-half-up rule
+  to avoid banker's-rounding ambiguity. Added 3 worked numeric examples. Updated
+  `simulation/SKILL.md` Step 4 to instruct computing (not guessing) via the formula. Verified all
+  3 worked examples' arithmetic independently via script; confirmed `run_ranking.py`'s
+  recruiter/interview regex extraction is unaffected (output prose format unchanged). Also
+  corrected two stale "pending PR/merge" statuses in this pass for
+  `simulation-degree-lookup-non-stem-coverage` (own section + summary table), which was already
+  confirmed merged as PR #7. Ready for PR/merge.

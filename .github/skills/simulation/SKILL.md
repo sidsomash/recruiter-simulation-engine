@@ -125,7 +125,12 @@ Follow the contract exactly:
    mismatch plainly, cross-reference the relevant experience, and let §8's Recruiter Decision
    weigh both together.
 6. Preference Violations  
-7. Recruiter Decision  
+7. Recruiter Decision — **compute** Recruiter Screen Likelihood and Interview Likelihood using
+   the deterministic point-based formula in contract §8 (Skill/Degree/Experience Scores →
+   weighted formula → clamp → band lookup). Do not estimate, guess, or freely pick a percentage
+   from a range — every input above must already be known from Steps 4–6 above, so the formula
+   is fully computable. Apply the §8.4 Hard Reject Override when the Degree Match label is
+   ❌ Hard mismatch instead of running the formula.
 8. Final Fit Summary  
 
 This produces a structured evaluation of candidate fit.
