@@ -491,3 +491,49 @@ One of:
 - **Hard reject** (only if recruiter logic or candidate preferences dictate)
 
 The summary must reflect the recruiter decision logic above.
+
+---
+
+## 11. JSON Sidecar (Required Companion Output)
+
+Every simulation must produce a `.json` sidecar file alongside the Markdown output (same base
+filename, see `simulation/SKILL.md` Steps 5–6). The Markdown file remains the canonical
+**human-readable** record. The JSON sidecar is the canonical **machine-readable** record that the
+ranking skill consumes directly (see `ranking_rules.md`), instead of parsing prose strings out of
+the Markdown via regex. The sidecar is a required companion, not a replacement for the Markdown
+output — both files must always be written together.
+
+**Schema** (see `assets/templates/simulation_output_sidecar_template.json` for the literal
+template file):
+
+| Field | Type | Source | Allowed values |
+|---|---|---|---|
+| `company` | string | §0 Metadata | free text or `"Unknown"` |
+| `title` | string | §0 Metadata | free text |
+| `posting_date` | string | §0 Metadata | `YYYY-MM-DD` or `"Unknown"` |
+| `compensation` | string | §0 Metadata | free text or `"Unknown"` |
+| `location` | string | §0 Metadata | free text |
+| `years_required` | string | §0 Metadata | free text (e.g. `"3+"`, `"entry-level"`) |
+| `degree_match` | string (enum) | §5.1 Degree Match Label | `direct`, `equivalent`, `partial`, `no_match`, `hard_mismatch`, `not_specified` |
+| `skill_alignment` | string (enum) | §4.1-derived alignment tier (mirrors `ranking_rules.md` §3.4) | `high`, `moderate`, `low`, `major_gaps` |
+| `experience_match` | string (enum) | §6.2 Experience Match Label | `meets`, `partially_meets`, `does_not_meet` |
+| `preference_violations` | array of objects | §7 Preference Violations | each `{severity, description}`; `severity` ∈ `minor`, `moderate`, `major`, `clearance`; empty array if none |
+| `recruiter_pct` | integer | §8.2 (or §8.4 override) | 0–100, must equal the Markdown's `**Recruiter Screen Likelihood:**` value exactly |
+| `interview_pct` | integer | §8.3 (or §8.4 override) | 0–100, must equal the Markdown's `**Interview Likelihood:**` value exactly |
+| `fit_category` | string (enum) | §10 Final Fit Summary | `strong_match`, `moderate_match`, `weak_match`, `mismatch`, `hard_reject` |
+| `internship_mode` | boolean | §9 / §0 Metadata `Internship Mode` | `true` / `false` |
+| `contract_version` | string | this contract's own header | must equal the Markdown Metadata's `Contract Version` exactly |
+
+**Consistency rule:** every field's value must agree exactly with its corresponding Markdown
+section — the sidecar is a structured re-encoding of the same computed values, never an
+independent re-derivation. If the two ever disagree, that is a bug in output generation, not an
+acceptable discrepancy.
+
+**`skill_alignment` derivation:** since §8.1's Skill Score is a continuous 0–100 number (not an
+enum), derive the enum for this field only using the same thresholds `run_ranking.py` already
+uses for its independent skill-alignment heuristic (documented in `ranking_rules.md` §3.4): `high`
+if Skill Score reflects mostly Direct/Equivalent matches with no gaps, `major_gaps` if two or more
+required skills are No Match (or the candidate has no Direct/Equivalent/Partial matches at all),
+`moderate` or `low` otherwise based on the proportion of strong matches. This keeps the sidecar's
+categorical field consistent with the ranking skill's existing categorical scoring, independent of
+the continuous Skill Score used only inside the §8 formula.

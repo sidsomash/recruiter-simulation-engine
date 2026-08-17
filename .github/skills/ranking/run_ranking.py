@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 """Ranking skill runner.
 
-Reads all simulation outputs from ../simulation/simulations/*.md, scores them
-using the composite formula defined in references/ranking_rules.md, and
-persists a ranked CSV to assets/ranking_results.csv (overwritten each run).
+Reads all simulation outputs from ../simulation/simulations/*.md (and their
+required .json sidecars, see simulation_contract.md §11), scores them using
+the composite formula defined in references/ranking_rules.md, and persists a
+ranked CSV to assets/ranking_results.csv (overwritten each run).
 
-Stdlib-only (re, csv, pathlib, glob) - no external packages, no virtualenv
-required. Requires Python 3.8+.
+For each simulation, the .json sidecar (same base filename) is the preferred,
+canonical machine-readable source. If no sidecar exists (e.g. simulation
+files predating this feature), this script falls back to regex-parsing the
+.md file directly for backward compatibility.
+
+Stdlib-only (re, csv, json, pathlib, glob) - no external packages, no
+virtualenv required. Requires Python 3.8+.
 
 Preflight (interpreter availability) is handled by the calling skill
 (SKILL.md instructs trying `python3` then `python` before invoking this
 script); this file assumes it is already running under a valid interpreter.
 """
 import csv
+import json
 import re
 import sys
 from pathlib import Path
@@ -51,6 +58,41 @@ SKILL_RANGE = (-2, 3)     # Major gaps=-2 .. High alignment=+3
 EXPERIENCE_RANGE = (-2, 2)  # Does not meet=-2 .. Meets=+2
 
 PENALTY_POINTS = {
+    "minor": 1,
+    "moderate": 2,
+    "major": 3,
+    "clearance": 4,
+}
+
+# --- JSON sidecar enum -> (raw points, display label) maps, mirroring the
+# same point scales/labels the .md regex path produces above. ---
+JSON_DEGREE_POINTS = {
+    "direct": (3, "Direct match"),
+    "equivalent": (2, "Equivalent match"),
+    "partial": (1, "Partial match"),
+    "no_match": (-2, "No match"),
+    "hard_mismatch": (-5, "Hard mismatch"),
+    "not_specified": (0, "Not specified"),
+}
+JSON_SKILL_POINTS = {
+    "high": (3, "High alignment"),
+    "moderate": (2, "Moderate alignment"),
+    "low": (1, "Low alignment"),
+    "major_gaps": (-2, "Major skill gaps"),
+}
+JSON_EXPERIENCE_POINTS = {
+    "meets": (2, "Meets requirement"),
+    "partially_meets": (1, "Partially meets requirement"),
+    "does_not_meet": (-2, "Does not meet requirement"),
+}
+JSON_FIT_POINTS = {
+    "strong_match": (3, "Strong match"),
+    "moderate_match": (2, "Moderate match"),
+    "weak_match": (1, "Weak match"),
+    "mismatch": (-2, "Mismatch"),
+    "hard_reject": (-5, "Hard reject"),
+}
+JSON_PENALTY_POINTS = {
     "minor": 1,
     "moderate": 2,
     "major": 3,
@@ -202,15 +244,107 @@ def is_internship_from_keywords(title, text):
     return bool(re.search(r"\bintern(ship)?\b|\bco-?op\b", haystack))
 
 
+def score_from_json(json_path, md_path):
+    """Score a simulation using its .json sidecar (canonical machine-readable
+    source per simulation_contract.md §11). Falls back to None if the sidecar
+    is missing required fields, so the caller can fall back to regex parsing."""
+    try:
+        data = json.loads(json_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"Warning: {json_path.name} could not be parsed ({exc}); "
+              f"falling back to regex parsing of {md_path.name}.")
+        return None
+
+    try:
+        recruiter = int(data["recruiter_pct"])
+        interview = int(data["interview_pct"])
+    except (KeyError, TypeError, ValueError):
+        print(f"Warning: {json_path.name} missing/invalid recruiter_pct or "
+              f"interview_pct; falling back to regex parsing of {md_path.name}.")
+        return None
+
+    degree_key = str(data.get("degree_match", "")).strip().lower()
+    degree_raw, degree_label = JSON_DEGREE_POINTS.get(degree_key, (0, "Unknown"))
+
+    skill_key = str(data.get("skill_alignment", "")).strip().lower()
+    skill_raw, _ = JSON_SKILL_POINTS.get(skill_key, (0, "Unknown"))
+
+    exp_key = str(data.get("experience_match", "")).strip().lower()
+    exp_raw, _ = JSON_EXPERIENCE_POINTS.get(exp_key, (0, "Unknown"))
+
+    fit_key = str(data.get("fit_category", "")).strip().lower()
+    fit_raw, fit_category = JSON_FIT_POINTS.get(fit_key, (0, "Unknown"))
+
+    penalty = 0
+    for violation in data.get("preference_violations") or []:
+        severity = str(violation.get("severity", "")).strip().lower()
+        penalty += JSON_PENALTY_POINTS.get(severity, 0)
+
+    internship = data.get("internship_mode")
+    if not isinstance(internship, bool):
+        internship = None
+
+    return {
+        "Company": data.get("company", "Unknown"),
+        "Title": data.get("title", "Unknown"),
+        "Comp": data.get("compensation", "Unknown"),
+        "Loc": data.get("location", "Unknown"),
+        "Years": data.get("years_required", "Unknown"),
+        "Posting": data.get("posting_date", "Unknown"),
+        "ContractVersion": data.get("contract_version", "Unknown"),
+        "recruiter": recruiter,
+        "interview": interview,
+        "degree_raw": degree_raw,
+        "degree_label": degree_label,
+        "skill_raw": skill_raw,
+        "exp_raw": exp_raw,
+        "fit_raw": fit_raw,
+        "fit_category": fit_category,
+        "penalty": penalty,
+        "internship": internship,
+    }
+
+
 def score_file(path):
     text = path.read_text(encoding="utf-8")
-    meta = extract_metadata(text)
-    recruiter, interview = extract_recruiter_interview(text)
-    degree_raw, _ = extract_degree_score(text)
-    skill_raw, _ = extract_skill_score(text)
-    exp_raw, _ = extract_experience_score(text)
-    fit_raw, fit_category = extract_fit_score(text)
-    penalty = extract_preference_penalty(text)
+    json_path = path.with_suffix(".json")
+
+    from_json = score_from_json(json_path, path) if json_path.exists() else None
+
+    if from_json is not None:
+        meta = {
+            "Company": from_json["Company"], "Title": from_json["Title"],
+            "Comp": from_json["Comp"], "Loc": from_json["Loc"],
+            "Years": from_json["Years"], "Posting": from_json["Posting"],
+            "ContractVersion": from_json["ContractVersion"],
+        }
+        recruiter, interview = from_json["recruiter"], from_json["interview"]
+        degree_raw, fit_category = from_json["degree_raw"], from_json["fit_category"]
+        skill_raw, exp_raw = from_json["skill_raw"], from_json["exp_raw"]
+        fit_raw, penalty = from_json["fit_raw"], from_json["penalty"]
+        internship = from_json["internship"]
+        if internship is None:
+            print(
+                f"Warning: {json_path.name} has no valid 'internship_mode' field; "
+                "falling back to keyword detection on title/text."
+            )
+            internship = is_internship_from_keywords(meta["Title"], text)
+    else:
+        meta = extract_metadata(text)
+        recruiter, interview = extract_recruiter_interview(text)
+        degree_raw, _ = extract_degree_score(text)
+        skill_raw, _ = extract_skill_score(text)
+        exp_raw, _ = extract_experience_score(text)
+        fit_raw, fit_category = extract_fit_score(text)
+        penalty = extract_preference_penalty(text)
+
+        internship = is_internship_from_metadata(meta["InternshipMode"])
+        if internship is None:
+            print(
+                f"Warning: {path.name} has no valid 'Internship Mode' metadata field; "
+                "falling back to keyword detection on title/text."
+            )
+            internship = is_internship_from_keywords(meta["Title"], text)
 
     degree_norm = normalize(degree_raw, DEGREE_RANGE) / 100.0
     skill_norm = normalize(skill_raw, SKILL_RANGE) / 100.0
@@ -229,14 +363,6 @@ def score_file(path):
     composite = round(max(0.0, min(100.0, composite)), 2)
 
     hard_reject = "hard reject" in fit_category.lower()
-
-    internship = is_internship_from_metadata(meta["InternshipMode"])
-    if internship is None:
-        print(
-            f"Warning: {path.name} has no valid 'Internship Mode' metadata field; "
-            "falling back to keyword detection on title/text."
-        )
-        internship = is_internship_from_keywords(meta["Title"], text)
 
     return {
         "Role": meta["Title"],

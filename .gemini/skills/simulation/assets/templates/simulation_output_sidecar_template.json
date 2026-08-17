@@ -1,0 +1,17 @@
+{
+  "company": "<company name or 'Unknown'>",
+  "title": "<canonical job title>",
+  "posting_date": "<YYYY-MM-DD or 'Unknown'>",
+  "compensation": "<salary or hourly range or 'Unknown'>",
+  "location": "<city, state, remote/hybrid flags>",
+  "years_required": "<e.g. '3+' or 'entry-level'>",
+  "degree_match": "<direct | equivalent | partial | no_match | hard_mismatch | not_specified>",
+  "skill_alignment": "<high | moderate | low | major_gaps>",
+  "experience_match": "<meets | partially_meets | does_not_meet>",
+  "preference_violations": [],
+  "recruiter_pct": 0,
+  "interview_pct": 0,
+  "fit_category": "<strong_match | moderate_match | weak_match | mismatch | hard_reject>",
+  "internship_mode": false,
+  "contract_version": "<e.g. 'v2.5' — copied verbatim from simulation_contract.md's header>"
+}

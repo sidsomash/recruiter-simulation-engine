@@ -49,6 +49,14 @@ The ranking skill expects **one or more simulation outputs**, each containing:
 
 These sections must be present for ranking to function correctly.
 
+**Machine-readable source of truth:** Each simulation output has a required `.json` sidecar file
+(same base filename, see `simulation_contract.md` §11 and `simulation_output_sidecar_template.json`).
+The `.json` sidecar is the **canonical machine-readable source** the ranking skill should read
+values from directly (no parsing/regex required). The `.md` file remains the **canonical
+human-readable source** for the sections listed above. `run_ranking.py` reads the `.json` sidecar
+when present, and falls back to regex-parsing the `.md` file only for older simulation outputs
+that predate the sidecar.
+
 ---
 
 ## 3. Ranking Dimensions

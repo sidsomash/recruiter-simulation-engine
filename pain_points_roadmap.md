@@ -204,7 +204,7 @@ sections).
 ---
 
 ### Branch: `simulation-deterministic-scoring-formula`
-**Status:** Implementation complete, pending PR/merge
+**Status:** Merged
 
 **Problem:** §8.1/§8.2 give the model a *range* to pick a number from ("Very High: 80–95%"), with
 no formula — so identical inputs can legitimately produce different percentages across runs,
@@ -235,7 +235,7 @@ the now-deterministic degree match category as an input).
 ---
 
 ### Branch: `simulation-json-sidecar`
-**Status:** Not started
+**Status:** Implementation complete, pending PR/merge
 
 **Problem:** `run_ranking.py` depends on exact prose strings (e.g.,
 `**Match Category:** ✔ Direct`, `**Recruiter Screen Likelihood:** 85%`). If the model paraphrases
@@ -246,23 +246,32 @@ the user.
 (sidecar should carry the now-deterministic values from those branches).
 
 **Checklist:**
-1. Add a new required output artifact: `skills/simulation/simulations/<timestamp>_<role>.json`,
+1. ✅ Added a new required output artifact: `skills/simulation/simulations/<timestamp>_<role>.json`,
    written alongside the existing `.md` file, containing: `company`, `title`, `posting_date`,
    `compensation`, `location`, `years_required`, `degree_match` (enum), `skill_alignment` (enum),
    `experience_match` (enum), `preference_violations` (list of `{severity, description}`),
    `recruiter_pct`, `interview_pct`, `fit_category` (enum), `internship_mode` (bool),
-   `contract_version`.
-2. Update `simulation_output_template.md` — document the sidecar as a required companion file,
-   not a replacement for the markdown (markdown remains the human-readable record).
-3. Update `simulation/SKILL.md` Step 5/6 — instruct the model to write both files with matching
-   base filenames.
-4. Update `run_ranking.py` (all 3 copies) — prefer reading the `.json` sidecar when present; fall
-   back to the existing regex-on-markdown parsing only if no sidecar exists (backward
-   compatibility with pre-existing simulation files).
-5. Update `references/ranking_rules.md` — note the JSON sidecar as the canonical machine-readable
-   source of truth, markdown as the canonical human-readable source.
-6. Test: generate a sample sidecar + run `run_ranking.py`, confirm it reads JSON values directly
-   and produces identical CSV output to the regex path on the same inputs.
+   `contract_version`. Schema documented in new contract §11, with a literal template file at
+   `assets/templates/simulation_output_sidecar_template.json`.
+2. ✅ Updated `simulation_output_template.md` — added a note documenting the sidecar as a required
+   companion file, not a replacement for the markdown (markdown remains the human-readable
+   record).
+3. ✅ Updated `simulation/SKILL.md` Step 5/6/7 — Step 5 now instructs populating the sidecar
+   template alongside the markdown; Step 6 (renamed "Save Output Files") instructs writing both
+   files with matching base filenames and treating a missing sidecar as a save failure; Step 7's
+   confirmation message now references both files.
+4. ✅ Updated `run_ranking.py` (all 3 copies) — added `score_from_json()` which reads the `.json`
+   sidecar when present (mapping its enums to the same raw point scales the regex path uses);
+   falls back to the existing regex-on-markdown parsing only if no sidecar exists or it's
+   unreadable/missing required fields (backward compatibility with pre-existing simulation
+   files).
+5. ✅ Updated `references/ranking_rules.md` — added a note under §2 Required Inputs establishing
+   the JSON sidecar as the canonical machine-readable source, markdown as canonical
+   human-readable source.
+6. ✅ Tested: created a matched `.md` + `.json` pair and a legacy `.md`-only file with identical
+   underlying data, ran `run_ranking.py` — both rows produced byte-identical scores/composite in
+   the output CSV, confirming the JSON path and regex-fallback path agree exactly. Test files
+   removed after verification.
 
 ---
 
@@ -402,8 +411,8 @@ rules.
 | 1 | `golden-examples-fewshot` | — | Not started |
 | 2 | `simulation-degree-lookup-table` | — | Merged |
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
-| 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Implementation complete, pending PR/merge |
-| 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Not started |
+| 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Merged |
+| 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Implementation complete, pending PR/merge |
 | 5 | `simulation-output-validator` | `simulation-json-sidecar` | Not started |
 | 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Not started |
 | 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | Not started |
@@ -469,3 +478,20 @@ entries short — one line per event.
   corrected two stale "pending PR/merge" statuses in this pass for
   `simulation-degree-lookup-non-stem-coverage` (own section + summary table), which was already
   confirmed merged as PR #7. Ready for PR/merge.
+- 2026-08-17: `simulation-deterministic-scoring-formula` merged into `main` (PR #8).
+- 2026-08-17: `simulation-json-sidecar` implemented — added a required `.json` sidecar output
+  (same base filename as the `.md` output) documented in new contract §11 and a literal template
+  at `assets/templates/simulation_output_sidecar_template.json`; sidecar carries `company`,
+  `title`, `posting_date`, `compensation`, `location`, `years_required`, `degree_match` (enum),
+  `skill_alignment` (enum), `experience_match` (enum), `preference_violations` (list of
+  `{severity, description}`), `recruiter_pct`, `interview_pct`, `fit_category` (enum),
+  `internship_mode` (bool), `contract_version`. Updated `simulation_output_template.md` with a
+  note documenting the sidecar as a required companion, not a replacement. Updated
+  `simulation/SKILL.md` Steps 5-7 to populate/save/confirm both files together, treating a
+  missing sidecar as a save failure. Updated `run_ranking.py` (all 3 copies) with
+  `score_from_json()`, which reads the sidecar directly when present and falls back to the
+  existing regex-on-markdown parsing only when no sidecar exists or it's unreadable/incomplete.
+  Updated `ranking_rules.md` §2 to document the sidecar as the canonical machine-readable source.
+  Verified parity: built a matched `.md`+`.json` pair and a legacy `.md`-only file with identical
+  underlying data, ran `run_ranking.py`, and confirmed both rows scored identically in the output
+  CSV. Ready for PR/merge.

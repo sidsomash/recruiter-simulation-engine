@@ -33,6 +33,7 @@ These files define the candidate’s background and the rules governing simulati
 The simulation output is generated using the following templates:
 
 - [simulation_output_template.md](assets/templates/simulation_output_template.md)  
+- [simulation_output_sidecar_template.json](assets/templates/simulation_output_sidecar_template.json) — required companion JSON schema (see contract §11)  
 - [skill_mapping_template.md](assets/templates/skill_mapping_template.md)  
 - [experience_mapping_template.md](assets/templates/experience_mapping_template.md)  
 - [degree_mapping_template.md](assets/templates/degree_mapping_template.md)  
@@ -154,27 +155,47 @@ verbatim from `simulation_contract.md`'s own header (e.g., `v2.4`, from the line
 from the contract file being applied in Step 4. This lets old and new simulation files be
 distinguished if the contract is revised later.
 
+Also populate `simulation_output_sidecar_template.json` (see contract §11 for field definitions
+and enum values). Every field must be derived from data already produced while completing Steps
+4–5 above — do not re-derive or re-interpret values independently; the JSON must agree exactly
+with the corresponding Markdown output (e.g., `recruiter_pct`/`interview_pct` must equal the
+same integers stamped in §7 Recruiter Decision, `contract_version` must equal the Markdown
+Metadata's `Contract Version`).
+
 ---
 
-### **Step 6 — Save Output File**
+### **Step 6 — Save Output Files**
 
-Write the completed simulation output to: `skills/simulation/simulations/<timestamp>_<slugified-role>.md`
+Write **two files**, sharing the same base filename, to:
+
+- `skills/simulation/simulations/<timestamp>_<slugified-role>.md` (human-readable, from Step 5's
+  Markdown output)
+- `skills/simulation/simulations/<timestamp>_<slugified-role>.json` (machine-readable sidecar,
+  from Step 5's JSON output)
 
 Where:
 
-- `timestamp` = `YYYYMMDD_HHMMSS`
-- `slugified-role` = lowercase, hyphenated version of the JD role title
+- `timestamp` = `YYYYMMDD_HHMMSS` (identical value in both filenames)
+- `slugified-role` = lowercase, hyphenated version of the JD role title (identical value in both
+  filenames)
 
-Example: `skills/simulation/simulations/20260617_153022_data-engineer.md`
+Example: `skills/simulation/simulations/20260617_153022_data-engineer.md` +
+`skills/simulation/simulations/20260617_153022_data-engineer.json`
+
+Both files are required — do not save the Markdown file alone. If the sidecar cannot be written
+for any reason, treat this as a save failure per Step 7's error handling (do not silently save
+only the Markdown file).
 
 ---
 
 ### **Step 7 — Return Output**
 
-- Write the completed simulation output exclusively to the markdown file at `skills/simulation/simulations/<timestamp>_<slugified-role>.md`.
-- Do NOT print, stream, or otherwise emit any simulation content (full or partial) to the terminal, logs, or assistant response payload. All simulation details must be persisted only to the output file.
-- After successfully saving the file, terminal/assistant responses should be restricted to a concise confirmation containing ONLY the relative file path and a one-line status (for example: "Saved: .github/skills/simulation/simulations/20260623_093815_role.md"). No simulation content, analysis, or excerpts should be included in the response.
-- If an error prevents writing the file, return a brief error message that describes the failure (no simulation content).
+- Write the completed simulation output exclusively to the two files at
+  `skills/simulation/simulations/<timestamp>_<slugified-role>.md` and
+  `skills/simulation/simulations/<timestamp>_<slugified-role>.json`.
+- Do NOT print, stream, or otherwise emit any simulation content (full or partial) to the terminal, logs, or assistant response payload. All simulation details must be persisted only to the output files.
+- After successfully saving both files, terminal/assistant responses should be restricted to a concise confirmation containing ONLY the two relative file paths and a one-line status (for example: "Saved: .github/skills/simulation/simulations/20260623_093815_role.md + .json"). No simulation content, analysis, or excerpts should be included in the response.
+- If an error prevents writing either file, return a brief error message that describes the failure (no simulation content).
 
 ---
 
