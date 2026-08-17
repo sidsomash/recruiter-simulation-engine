@@ -70,8 +70,8 @@ This ensures the rewrite uses the latest candidate data and applies consistent s
 
 ### **Step 2 — Extract JD Context from Simulation**
 
-Read the simulation's required `.json` sidecar directly (same base filename as the target
-simulation `.md` file — see `simulation_contract.md` §11) for the following fields, instead of
+Read the simulation's `.json` sidecar directly, when present (same base filename as the target
+simulation `.md` file — see `simulation_contract.md` §11), for the following fields, instead of
 re-parsing them out of the Markdown prose:
 
 - **Company name** — `company`
