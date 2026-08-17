@@ -276,7 +276,7 @@ the user.
 ---
 
 ### Branch: `simulation-output-validator`
-**Status:** Implementation complete, pending PR/merge
+**Status:** Merged
 
 **Problem:** Nothing currently checks a generated simulation output against the required
 structure/enum values before it's saved — malformed output is only discovered later, downstream,
@@ -370,7 +370,7 @@ rewrite, so hallucinations aren't reliably caught.
 ---
 
 ### Branch: `resume-restructure-shared-context`
-**Status:** Not started
+**Status:** Implementation complete, pending PR/merge
 
 **Problem:** The skill currently re-derives JD context (skills, priorities, domain) from the
 simulation's *prose*, inheriting any parsing errors from that prose and duplicating extraction
@@ -380,12 +380,29 @@ logic that the Simulation skill already did once.
 truth).
 
 **Checklist:**
-1. Update `resume-restructure/SKILL.md` Step 2 ("Extract JD Context from Simulation") — read the
+1. ✅ Update `resume-restructure/SKILL.md` Step 2 ("Extract JD Context from Simulation") — read the
    simulation's `.json` sidecar directly instead of re-parsing the `.md` prose.
-2. Update `resume-restructure/references/resume_guidelines.md` if it references specific prose
-   patterns from simulation output that no longer need to be regex-matched.
-3. Test: run Resume-Restructure against a simulation with a sidecar, confirm identical or improved
-   context extraction vs. the prior prose-parsing approach.
+2. ✅ Update `resume-restructure/references/resume_guidelines.md` if it references specific prose
+   patterns from simulation output that no longer need to be regex-matched. (Reviewed in full —
+   no specific prose/regex patterns tied to simulation markdown structure were found; no edit
+   needed.)
+3. ✅ Test: run Resume-Restructure against a simulation with a sidecar, confirm identical or
+   improved context extraction vs. the prior prose-parsing approach. (Verified with a sample
+   sidecar + matching `.md` — all structured fields listed in the new Step 2 load correctly from
+   JSON.)
+
+**Implementation notes:** Also updated References (added `.json` sidecar as a required target
+simulation output, noted as canonical/preferred per `simulation_contract.md` §11), Inputs (item 1
+now notes sidecar-first extraction), and Step 1 (now loads both `.md` and `.json` sidecar).
+Step 2 explicitly documents which fields come from the sidecar (aggregate/enum fields: company,
+title, degree_match, skill_alignment, experience_match, fit_category, recruiter_pct/interview_pct,
+internship_mode, compensation/location/years_required) vs. which still require `.md` prose parsing
+(per-skill required/preferred tables, responsibility alignment, skill gaps, narrative priorities —
+none of which the sidecar carries). Includes a fallback: simulations without a sidecar (legacy,
+pre-`simulation-json-sidecar`) fall back to full `.md`-prose parsing as before, mirroring the same
+pattern used in `run_ranking.py`'s `score_from_json()` fallback. Propagated to all three platform
+copies (`.github`, `.claude`, `.gemini`), preserving each copy's own platform-specific Step 8
+example path (the one pre-existing intentional drift point in this file).
 
 ---
 
@@ -425,8 +442,8 @@ rules.
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
 | 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Merged |
 | 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Merged |
-| 5 | `simulation-output-validator` | `simulation-json-sidecar` | Implementation complete, pending PR/merge |
-| 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Not started |
+| 5 | `simulation-output-validator` | `simulation-json-sidecar` | Merged |
+| 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Implementation complete, pending PR/merge |
 | 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | Not started |
 
 Rows sharing the same "Order" number have no dependency on each other and can be branched/worked
@@ -524,3 +541,19 @@ entries short — one line per event.
   sections, bad enums, bad types, and the interview/recruiter clamp) — validator caught all of
   them with specific messages; confirmed a valid pair passes cleanly. Test files removed after
   verification. Ready for PR/merge.
+- 2026-08-17: `simulation-output-validator` merged into `main` (PR #10).
+- 2026-08-17: `resume-restructure-shared-context` implemented — rewrote Resume-Restructure Step 2
+  ("Extract JD Context from Simulation") to read the simulation's `.json` sidecar directly for
+  structured/aggregate fields (`company`, `title`, `degree_match`, `skill_alignment`,
+  `experience_match`, `fit_category`, `recruiter_pct`/`interview_pct`, `internship_mode`,
+  `compensation`/`location`/`years_required`), avoiding re-derivation from prose. Documented that
+  per-skill match tables, responsibility alignment, skill gaps, and narrative priorities/domain
+  inference still require the `.md` prose (the sidecar only stores an aggregate enum, not
+  per-skill detail), with a fallback to full `.md`-only parsing for legacy simulations lacking a
+  sidecar (mirroring `run_ranking.py`'s `score_from_json()` pattern). Updated References (added
+  `.json` sidecar as a required target simulation output), Inputs (item 1), and Step 1 (now loads
+  both files) accordingly. Reviewed `resume_guidelines.md` — no prose-pattern-specific references
+  found, no edit needed. Verified field extraction against a sample sidecar+`.md` pair (removed
+  after testing). Propagated to all 3 platform copies, preserving each copy's own
+  platform-specific Step 8 example path (the file's one pre-existing intentional drift point).
+  Ready for PR/merge.
