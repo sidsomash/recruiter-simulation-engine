@@ -17,6 +17,14 @@ This skill depends on the following reference files:
   - `../simulation/references/candidate_resume.md`  
   - `../simulation/references/candidate_profile.md`  
 
+- Target simulation output (from simulation skill):
+  - `../simulation/simulations/<timestamp>_<slugified-role>.md` — required; human-readable
+    narrative detail
+  - `../simulation/simulations/<timestamp>_<slugified-role>.json` — canonical machine-readable
+    metadata (see `../simulation/references/simulation_contract.md` Section 11, "JSON Sidecar");
+    preferred source for structured fields (Step 2). If the sidecar is missing (legacy
+    simulations), fall back to `.md`-only parsing.
+
 ---
 
 ## 🧩 Templates
@@ -32,9 +40,12 @@ The résumé output is generated using the following template:
 
 This skill requires:
 
-1. **simulation_file** (string, required): Path or filename of the completed simulation (e.g., `20260805_234550_data-engineer-mizuho.md`)
+1. **simulation_file** (string, required): Path or filename of the completed simulation's `.md`
+   file (e.g., `20260805_234550_data-engineer-mizuho.md`). Always pass/reference the `.md` file,
+   not the `.json` sidecar — the sidecar is located automatically by matching base filename.
    - The skill will auto-discover this from the simulations directory or accept explicit user input.
-   - Used to extract JD context (company, role, required skills, responsibilities, domain).
+   - Used to extract JD context (company, role, required skills, responsibilities, domain) — from
+     the matching `.json` sidecar where possible, falling back to the `.md` file (see Step 2).
 
 2. **candidate_resume.md** (string, reference): Loaded automatically from `../simulation/references/candidate_resume.md`.
 
@@ -52,7 +63,8 @@ Load all required reference and candidate files:
 
 - Original `candidate_resume.md` (source material for rewriting)  
 - `candidate_profile.md` (context for domain experience)  
-- Target simulation file (to extract JD context)  
+- Target simulation files: both the `.md` file and its matching `.json` sidecar, if present (to
+  extract JD context — see Step 2)  
 - `resume_guidelines.md` (rewriting strategy)  
 
 This ensures the rewrite uses the latest candidate data and applies consistent strategy.
@@ -61,16 +73,42 @@ This ensures the rewrite uses the latest candidate data and applies consistent s
 
 ### **Step 2 — Extract JD Context from Simulation**
 
-Parse the simulation output to extract:
+Read the simulation's `.json` sidecar directly, when present (same base filename as the target
+simulation `.md` file — see `../simulation/references/simulation_contract.md` Section 11,
+"JSON Sidecar"), for the following fields, instead of re-parsing them out of the Markdown prose:
 
-- **Company name** (e.g., "Mizuho Financial Group")  
-- **Job title** (e.g., "Data Engineer")  
-- **Key required skills** (from simulation's skill mapping)  
-- **Key responsibilities** (from simulation's responsibility alignment)  
-- **Domain/industry** (e.g., financial services, logistics, defense)  
-- **Experience level** (entry-level, mid-level, senior)  
-- **Preferred technologies/tools** (from simulation's preferred skills)  
-- **Recruiter's likely priorities** (inferred from simulation analysis)  
+- **Company name** — `company`
+- **Job title** — `title`
+- **Degree alignment** — `degree_match` (enum)
+- **Aggregate skill alignment** — `skill_alignment` (enum: `high` / `moderate` / `low` /
+  `major_gaps`)
+- **Experience alignment** — `experience_match` (enum)
+- **Overall fit category** — `fit_category` (enum)
+- **Recruiter/Interview likelihood** — `recruiter_pct`, `interview_pct`
+- **Internship mode** — `internship_mode` (bool)
+- **Compensation / Location / Years Required** — `compensation`, `location`, `years_required`
+
+The `.json` sidecar is the canonical machine-readable source for these fields (per
+`../simulation/references/simulation_contract.md` Section 11, "JSON Sidecar" and
+`../ranking/references/ranking_rules.md` Section 2, "Required Inputs") — reading it directly
+avoids re-deriving values the simulation skill already computed once, and avoids inheriting
+prose-parsing errors.
+
+**The sidecar does not carry per-skill or narrative detail.** The following must still be read
+from the simulation's `.md` file, since the sidecar only stores an aggregate `skill_alignment`
+enum, not the individual required/preferred skill list or free-text narrative:
+
+- **Key required skills** (per-skill match detail) — from `.md` Section 2 (Skill & Responsibility
+  Mapping, Required Skills table)
+- **Preferred technologies/tools** — from `.md` Section 2 (Preferred Skills table)
+- **Key responsibilities** — from `.md` Section 2 (Responsibility Alignment)
+- **Skill gaps** — from `.md` Section 3 (Skill Gaps)
+- **Domain/industry, experience level, and recruiter's likely priorities** — inferred from `.md`
+  Section 1 (Recruiter Takeaway) and Section 7 (Recruiter Decision) (these are narrative
+  judgments, not structured fields in the sidecar)
+
+If the target simulation has no `.json` sidecar (a pre-`simulation-json-sidecar` legacy file),
+fall back to parsing all of the above directly from the `.md` prose, as before.
 
 This creates a "rewrite directive" that guides all subsequent transformations.
 
