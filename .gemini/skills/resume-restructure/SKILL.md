@@ -21,9 +21,9 @@ This skill depends on the following reference files:
   - `../simulation/simulations/<timestamp>_<slugified-role>.md` — required; human-readable
     narrative detail
   - `../simulation/simulations/<timestamp>_<slugified-role>.json` — canonical machine-readable
-    metadata (see `simulation_contract.md` Section 11, "JSON Sidecar"); preferred source for
-    structured fields (Step 2). If the sidecar is missing (legacy simulations), fall back to
-    `.md`-only parsing.
+    metadata (see `../simulation/references/simulation_contract.md` Section 11, "JSON Sidecar");
+    preferred source for structured fields (Step 2). If the sidecar is missing (legacy
+    simulations), fall back to `.md`-only parsing.
 
 ---
 
@@ -74,8 +74,8 @@ This ensures the rewrite uses the latest candidate data and applies consistent s
 ### **Step 2 — Extract JD Context from Simulation**
 
 Read the simulation's `.json` sidecar directly, when present (same base filename as the target
-simulation `.md` file — see `simulation_contract.md` Section 11, "JSON Sidecar"), for the
-following fields, instead of re-parsing them out of the Markdown prose:
+simulation `.md` file — see `../simulation/references/simulation_contract.md` Section 11,
+"JSON Sidecar"), for the following fields, instead of re-parsing them out of the Markdown prose:
 
 - **Company name** — `company`
 - **Job title** — `title`
@@ -89,9 +89,10 @@ following fields, instead of re-parsing them out of the Markdown prose:
 - **Compensation / Location / Years Required** — `compensation`, `location`, `years_required`
 
 The `.json` sidecar is the canonical machine-readable source for these fields (per
-`simulation_contract.md` Section 11, "JSON Sidecar" and `ranking_rules.md` Section 2, "Required
-Inputs") — reading it directly avoids re-deriving values the simulation skill already computed
-once, and avoids inheriting prose-parsing errors.
+`../simulation/references/simulation_contract.md` Section 11, "JSON Sidecar" and
+`../ranking/references/ranking_rules.md` Section 2, "Required Inputs") — reading it directly
+avoids re-deriving values the simulation skill already computed once, and avoids inheriting
+prose-parsing errors.
 
 **The sidecar does not carry per-skill or narrative detail.** The following must still be read
 from the simulation's `.md` file, since the sidecar only stores an aggregate `skill_alignment`
