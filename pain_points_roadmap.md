@@ -392,8 +392,9 @@ truth).
    JSON.)
 
 **Implementation notes:** Also updated References (added `.json` sidecar as a required target
-simulation output, noted as canonical/preferred per `simulation_contract.md` §11), Inputs (item 1
-now notes sidecar-first extraction), and Step 1 (now loads both `.md` and `.json` sidecar).
+simulation output, noted as canonical/preferred per `simulation_contract.md` Section 11, "JSON
+Sidecar"), Inputs (item 1 now notes sidecar-first extraction), and Step 1 (now loads both `.md`
+and `.json` sidecar).
 Step 2 explicitly documents which fields come from the sidecar (aggregate/enum fields: company,
 title, degree_match, skill_alignment, experience_match, fit_category, recruiter_pct/interview_pct,
 internship_mode, compensation/location/years_required) vs. which still require `.md` prose parsing
