@@ -40,7 +40,9 @@ The résumé output is generated using the following template:
 
 This skill requires:
 
-1. **simulation_file** (string, required): Path or filename of the completed simulation (e.g., `20260805_234550_data-engineer-mizuho.md`)
+1. **simulation_file** (string, required): Path or filename of the completed simulation's `.md`
+   file (e.g., `20260805_234550_data-engineer-mizuho.md`). Always pass/reference the `.md` file,
+   not the `.json` sidecar — the sidecar is located automatically by matching base filename.
    - The skill will auto-discover this from the simulations directory or accept explicit user input.
    - Used to extract JD context (company, role, required skills, responsibilities, domain) — from
      the matching `.json` sidecar where possible, falling back to the `.md` file (see Step 2).
