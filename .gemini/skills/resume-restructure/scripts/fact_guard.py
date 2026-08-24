@@ -88,14 +88,18 @@ def find_claims(text: str):
     """Return a list of (claim_text, line_number, line_text) tuples."""
     claims = []
     for line_no, line in enumerate(text.splitlines(), start=1):
-        seen_spans = set()
+        seen_spans = []
         for pattern in CLAIM_PATTERNS:
             for match in pattern.finditer(line):
                 span = match.span()
-                # Avoid double-flagging overlapping matches on the same line.
-                if any(s[0] <= span[0] < s[1] or s[0] < span[1] <= s[1] for s in seen_spans):
+                # Avoid double-flagging overlapping matches on the same line
+                # (using a general interval-overlap test so spans that fully
+                # enclose — or are fully enclosed by — an already-seen span
+                # on either side are also caught, not just partial overlaps
+                # or shared-boundary cases).
+                if any(span[0] < s[1] and s[0] < span[1] for s in seen_spans):
                     continue
-                seen_spans.add(span)
+                seen_spans.append(span)
                 claims.append((match.group(0).strip(), line_no, line.strip()))
     return claims
 

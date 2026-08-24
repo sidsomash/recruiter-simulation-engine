@@ -589,3 +589,13 @@ entries short — one line per event.
   (fabricated 95% reliability, $2.3M savings, 3x throughput, 10M records/day — all 4 correctly
   flagged) and a faithful sample (0 false positives, exit 0); verified the script runs correctly
   from all 3 propagated copies. Ready for PR/merge.
+- 2026-08-24: `resume-restructure-fact-guard` — fixed an overlap-detection bug in
+  `scripts/fact_guard.py`'s `find_claims()` flagged by Copilot PR review: the prior boundary-based
+  check (`s[0] <= span[0] < s[1] or s[0] < span[1] <= s[1]`) missed the case where a new match span
+  fully encloses an already-seen span while extending past it on both sides (e.g., seen `(5,10)`,
+  new `(3,12)`), which could double-report the same underlying claim as two separate flagged
+  entries. Replaced with a standard general interval-overlap test
+  (`span[0] < s[1] and s[0] < span[1]`). Verified the fix directly (old check returned `False`,
+  new check returns `True`, for the enclosing-span case) and re-ran both existing regression
+  scenarios (faithful sample: 0 false positives; embellished sample: same 4 correctly flagged
+  claims) with no change in behavior. Propagated the fix to all 3 copies (byte-identical after).
