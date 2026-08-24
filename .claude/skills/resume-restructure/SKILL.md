@@ -13,6 +13,10 @@ This skill depends on the following reference files:
 - [resume_guidelines.md](references/resume_guidelines.md)  
   Defines the rewriting logic, emphasis strategies, and best practices for tailoring résumés.
 
+- [scripts/fact_guard.py](scripts/fact_guard.py)  
+  Deterministic, stdlib-only script that scans a draft tailored résumé for quantitative claims
+  not traceable to the original résumé (Step 5).
+
 - Original candidate reference files (from simulation skill):
   - `../simulation/references/candidate_resume.md`  
   - `../simulation/references/candidate_profile.md`  
@@ -56,6 +60,21 @@ No additional parameters or overrides are supported.
 ---
 
 ## 🧠 Workflow
+
+### **Step 0 — Preflight: Verify Python Is Available**
+
+Fact-checking (Step 5) is performed by a deterministic script (`scripts/fact_guard.py`), not by
+the model, so a Python interpreter must be available before invoking it.
+
+- Try `python3 --version`, then fall back to `python --version` if `python3` is not found.
+- If neither is available, stop and tell the user: "Python 3.8+ is required to run the
+  Resume-Restructure fact guard. Please install Python and try again." Do not attempt to
+  hand-verify claims as a substitute — determinism depends on the script running, not the model
+  self-grading.
+- No virtual environment, `pip install`, or `requirements.txt` is needed —
+  `scripts/fact_guard.py` uses only the Python standard library.
+
+---
 
 ### **Step 1 — Load References**
 
@@ -162,11 +181,33 @@ Follow the strategy defined in `resume_guidelines.md`:
 
 Before finalizing, ensure:
 
-- All original content is factually grounded (no fabrication)  
 - Emphasis matches recruiter's priorities (from simulation)  
 - Language and terminology align with JD domain  
-- Metrics and accomplishments are preserved (not exaggerated)  
 - Structure follows the output template  
+
+Then write the current draft (from Steps 3-4) to a temporary Markdown file and run the
+deterministic fact guard against it (do not rely on self-grading for factual accuracy — a
+hallucinated metric that "sounds right" is a classic LLM failure mode this step exists
+specifically to catch):
+
+```
+python3 scripts/fact_guard.py <path_to_draft_resume.md>
+```
+
+(fall back to `python scripts/fact_guard.py ...` if `python3` is not the resolved command)
+
+The script compares every quantitative claim (percentages, dollar amounts, multipliers, record/
+throughput counts, and "reduced/increased/grew/improved/saved/cut by ..." phrasing) in the draft
+against the candidate's original `candidate_resume.md`, flagging any claim whose numeric value
+isn't traceable to the original.
+
+- **If the script exits 0** (no flagged claims): proceed to Step 6.
+- **If the script exits 1** (one or more flagged claims): do not proceed. Either correct each
+  flagged claim so its numeric value matches the original résumé, remove the claim, or explicitly
+  ask the user to approve it as an intentional exception. Only proceed to Step 6 once no unflagged
+  (or user-approved) new claims remain.
+- **If the script exits 2** (usage/file error): resolve the underlying issue (e.g., confirm the
+  draft file path) and re-run before proceeding.
 
 ---
 
@@ -207,6 +248,8 @@ Example: `skills/resume-restructure/resumes/20260805_234550_data-engineer-mizuho
 - If simulation file is missing → return a message requesting the simulation filename or path.  
 - If original candidate_resume.md is missing → return a configuration error (Initialize skill must run first).  
 - If resume_guidelines.md is missing → return a reference file error.  
+- If Python 3.8+ is unavailable (Step 0) → stop and inform the user; do not hand-verify claims as a substitute for `scripts/fact_guard.py`.  
+- If `scripts/fact_guard.py` flags unverifiable claims (Step 5) → do not proceed to Step 6/7 until each is corrected, removed, or explicitly approved by the user as an intentional exception.  
 - If rewrite fails to preserve factual accuracy → return a warning and halt output.  
 
 ---

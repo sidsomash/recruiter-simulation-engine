@@ -46,7 +46,7 @@ false-positives as an internship role).
 ---
 
 ### Branch: `initialize-file-sync`
-**Status:** Implementation complete, pending PR/merge
+**Status:** Merged
 
 **Problem:** Step 9 of the Initialize skill has the model *regenerate* candidate files three
 separate times (once per `.github`/`.claude`/`.gemini`). Any subtle drift between passes (a
@@ -81,7 +81,7 @@ which platform later runs Simulation.
 ---
 
 ### Branch: `simulation-contract-versioning`
-**Status:** Implementation complete, pending PR/merge
+**Status:** Merged
 
 **Problem:** Simulation output files have no tag indicating which version of
 `simulation_contract.md` produced them. If the contract changes (e.g., v2.4 → v2.5), old and new
@@ -347,7 +347,7 @@ should land last, once the target schema/formulas/validation are stable).
 ## Tier 2 — Resume-Restructure
 
 ### Branch: `resume-restructure-fact-guard`
-**Status:** Not started
+**Status:** Implementation complete, pending PR/merge
 
 **Problem:** The skill's "aggressive rewrite" / "maximum recruiter signal" instructions create
 fabrication pressure — a classic LLM failure mode is inventing a metric that "sounds right." Step 5
@@ -357,20 +357,29 @@ rewrite, so hallucinations aren't reliably caught.
 **Depends on:** Nothing (standalone script, can be done in parallel with Tier 1).
 
 **Checklist:**
-1. Write `fact_guard.py` (stdlib-only: `re`) — scans the tailored resume output for quantitative
-   claims (`%`, `$`, `\d+x`, "reduced by", "increased by", "grew", etc.) and fuzzy-matches each
-   against the original `candidate_resume.md` text; flags any claim not traceable to the source.
-2. Update `resume-restructure/SKILL.md` Step 5 — replace/augment the self-graded validation with
-   an explicit invocation of `fact_guard.py` against the draft output; only proceed to Step 6/7 if
-   no unflagged (or user-approved) new claims remain.
-3. Add a Step 0 preflight (python3/python check), consistent with other scripted skills.
-4. Test with a deliberately embellished sample rewrite to confirm flags are raised correctly, and
-   with a faithful rewrite to confirm no false positives.
+1. ✅ Wrote `scripts/fact_guard.py` (stdlib-only: `re`, `sys`, `pathlib`) — scans the tailored
+   resume output for quantitative claims (`%`, `$`, `\d+x`, record/throughput counts, "reduced/
+   increased/grew/improved/saved/cut by ...") and checks each numeric token against the original
+   `candidate_resume.md` text; flags any claim not traceable to the source. Placed under
+   `scripts/` (not skill root) per the canonical skill directory structure
+   (`SKILL.md`/`scripts/`/`references/`/`assets/`), matching the convention `run_ranking.py`
+   should also follow (noted as a separate future cleanup, not in scope here).
+2. ✅ Updated `resume-restructure/SKILL.md` Step 5 — replaced the self-graded-only validation with
+   an explicit invocation of `scripts/fact_guard.py` against the draft output; only proceed to
+   Step 6/7 if no unflagged (or user-approved) new claims remain. Also updated References (added
+   the script) and Error Handling (Python-unavailable and flagged-claims cases).
+3. ✅ Added a Step 0 preflight (python3/python check), consistent with the Ranking skill's Step 0
+   pattern.
+4. ✅ Tested with a deliberately embellished sample rewrite (fabricated 95% reliability boost,
+   $2.3M savings, 3x throughput, 10M records/day) — all 4 correctly flagged; and with a faithful
+   rewrite using only claims from the original résumé — 0 false positives, exit code 0. Verified
+   the script runs correctly from all 3 propagated copies (`.github`, `.claude`, `.gemini`).
+   Test files removed after verification.
 
 ---
 
 ### Branch: `resume-restructure-shared-context`
-**Status:** Implementation complete, pending PR/merge
+**Status:** Merged
 
 **Problem:** The skill currently re-derives JD context (skills, priorities, domain) from the
 simulation's *prose*, inheriting any parsing errors from that prose and duplicating extraction
@@ -437,14 +446,14 @@ rules.
 | 1 | `ranking-internship-flag` | — | Merged |
 | 1 | `initialize-file-sync` | — | Merged |
 | 1 | `simulation-contract-versioning` | — | Merged |
-| 1 | `resume-restructure-fact-guard` | — | Not started |
+| 1 | `resume-restructure-fact-guard` | — | Implementation complete, pending PR/merge |
 | 1 | `golden-examples-fewshot` | — | Not started |
 | 2 | `simulation-degree-lookup-table` | — | Merged |
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
 | 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Merged |
 | 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Merged |
 | 5 | `simulation-output-validator` | `simulation-json-sidecar` | Merged |
-| 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Implementation complete, pending PR/merge |
+| 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Merged |
 | 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | Not started |
 
 Rows sharing the same "Order" number have no dependency on each other and can be branched/worked
@@ -558,3 +567,25 @@ entries short — one line per event.
   after testing). Propagated to all 3 platform copies, preserving each copy's own
   platform-specific Step 8 example path (the file's one pre-existing intentional drift point).
   Ready for PR/merge.
+- 2026-08-18: `resume-restructure-shared-context` merged into `main` (PR #11), after several
+  Copilot PR review rounds addressing internal contradictions ("both required" vs. legacy
+  fallback wording in References and Step 2), replacing non-standard `§N` section references with
+  the docs' actual `## N. Title` heading format, and adding explicit relative paths when citing
+  `simulation_contract.md`/`ranking_rules.md`. Also corrected two stale "pending PR/merge"
+  statuses in this pass for `initialize-file-sync` (PR #4) and `simulation-contract-versioning`
+  (PR #5), both already confirmed merged earlier in the session.
+- 2026-08-18: `resume-restructure-fact-guard` implemented — added `scripts/fact_guard.py`
+  (stdlib-only, all 3 copies) which scans a draft tailored résumé for quantitative claims
+  (percentages, dollar amounts, multipliers, record/throughput counts, and "reduced/increased/
+  grew/improved/saved/cut by ..." phrasing) and flags any whose numeric value doesn't appear in
+  the original `candidate_resume.md`. Placed under `scripts/` per the canonical skill directory
+  structure (`SKILL.md`/`scripts/`/`references/`/`assets/`) — noted that `run_ranking.py` in the
+  Ranking skill doesn't yet follow this convention (sits at skill root); scoped that move to a
+  separate future branch per user decision. Updated `resume-restructure/SKILL.md`: added Step 0
+  preflight (python3/python check, mirroring Ranking's pattern), rewrote Step 5 to write the
+  draft to a file and invoke the script (proceed only on exit 0; correct/remove/get user approval
+  on exit 1), added the script to References, and added two Error Handling entries (Python
+  unavailable; flagged claims blocking Step 6/7). Tested with a deliberately embellished sample
+  (fabricated 95% reliability, $2.3M savings, 3x throughput, 10M records/day — all 4 correctly
+  flagged) and a faithful sample (0 false positives, exit 0); verified the script runs correctly
+  from all 3 propagated copies. Ready for PR/merge.
