@@ -181,18 +181,29 @@ Follow the strategy defined in `resume_guidelines.md`:
 
 Before finalizing, ensure:
 
+- All original content is factually grounded (no fabrication) — this includes non-quantitative
+  content such as skills, responsibilities, and technologies the candidate did not actually have;
+  the fact guard script below only checks quantitative claims, so fabricated qualitative content
+  must still be caught by manual review against `candidate_resume.md`.
 - Emphasis matches recruiter's priorities (from simulation)  
 - Language and terminology align with JD domain  
+- Metrics and accomplishments are preserved (not exaggerated)  
 - Structure follows the output template  
 
 Then write the current draft (from Steps 3-4) to a temporary Markdown file and run the
-deterministic fact guard against it (do not rely on self-grading for factual accuracy — a
-hallucinated metric that "sounds right" is a classic LLM failure mode this step exists
+deterministic fact guard against it (do not rely on self-grading for quantitative-claim accuracy —
+a hallucinated metric that "sounds right" is a classic LLM failure mode this step exists
 specifically to catch):
 
 ```
 python3 scripts/fact_guard.py <path_to_draft_resume.md>
 ```
+
+Run this from the `resume-restructure` skill directory (the same directory containing this
+`SKILL.md` and the `scripts/` folder), so the script's default original-résumé path
+(`../simulation/references/candidate_resume.md`, relative to `scripts/fact_guard.py`) resolves
+correctly. If invoking from elsewhere, pass the original résumé's path explicitly as a second
+argument instead: `python3 scripts/fact_guard.py <draft> <path_to_candidate_resume.md>`.
 
 (fall back to `python scripts/fact_guard.py ...` if `python3` is not the resolved command)
 

@@ -599,3 +599,25 @@ entries short — one line per event.
   new check returns `True`, for the enclosing-span case) and re-ran both existing regression
   scenarios (faithful sample: 0 false positives; embellished sample: same 4 correctly flagged
   claims) with no change in behavior. Propagated the fix to all 3 copies (byte-identical after).
+- 2026-08-24: `resume-restructure-fact-guard` — addressed a second Copilot PR review round with
+  three fixes across all 3 copies. (1) Fixed a substring-matching false-negative in
+  `check_claims()`: the prior verification (`normalize(token) in normalized_original`) could
+  falsely "verify" a fabricated numeric token that happened to be a substring of an unrelated,
+  longer genuine number (e.g., fabricated "1M" matching inside a genuine "11M"). Replaced with a
+  new `is_verified()` helper using a digit-boundary-guarded regex search
+  (`(?<!\d)` + token + `(?!\d)`) so a match only counts if not immediately adjacent to another
+  digit. Verified directly: "1M" vs. original "11M" → correctly unverified; "11M" vs. original
+  "11M" → correctly verified; re-ran both faithful (0 flagged, exit 0) and embellished (4 flagged,
+  exit 1) regression samples with no behavior change. (2) Corrected an inaccurate exit-code
+  docstring claiming "0 - no unverifiable quantitative claims found (or resumes are empty)" —
+  an empty original résumé with claims present actually (correctly) exits 1, not 0; docstring now
+  just states "no unverifiable quantitative claims found in the tailored résumé." (3) Restored
+  Step 5's manual factual-grounding checklist bullets ("All original content is factually
+  grounded", "Metrics and accomplishments are preserved") that were dropped when Step 5 was
+  rewritten around the script invocation — the script only catches quantitative claims, so
+  non-quantitative fabrication (fake responsibilities/technologies/skills) still needs explicit
+  manual review; also added a note clarifying the script should be run from the
+  `resume-restructure` skill directory (or with an explicit original-résumé path) so its default
+  relative path resolves correctly. All fixes propagated to `.github`/`.claude`/`.gemini`,
+  verified byte-identical (`scripts/fact_guard.py`) and content-identical apart from the
+  pre-existing platform-specific Step 8 path (`SKILL.md`).

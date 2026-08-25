@@ -20,7 +20,7 @@ résumé at ../../simulation/references/candidate_resume.md (relative to this
 script).
 
 Exit codes:
-    0 - no unverifiable quantitative claims found (or resumes are empty).
+    0 - no unverifiable quantitative claims found in the tailored résumé.
     1 - one or more quantitative claims in the tailored résumé could not be
         traced to the original résumé; details are printed to stdout.
     2 - usage/file error (missing file, etc.).
@@ -108,8 +108,10 @@ def check_claims(tailored_text: str, original_text: str):
     """Return (verified, flagged) claim lists.
 
     Each entry is a dict with keys: claim, numeric_token, line_no, line_text.
-    A claim is "verified" if its normalized numeric token appears anywhere in
-    the normalized original résumé text; otherwise it's "flagged".
+    A claim is "verified" if its normalized numeric token appears in the
+    normalized original résumé text at a digit boundary (i.e. not as a
+    partial match inside a longer number, e.g. "1m" must not match inside
+    "11m"); otherwise it's "flagged".
     """
     normalized_original = normalize(original_text)
     verified, flagged = [], []
@@ -121,11 +123,25 @@ def check_claims(tailored_text: str, original_text: str):
             "line_no": line_no,
             "line_text": line_text,
         }
-        if normalize(numeric_token) and normalize(numeric_token) in normalized_original:
+        if is_verified(numeric_token, normalized_original):
             verified.append(entry)
         else:
             flagged.append(entry)
     return verified, flagged
+
+
+def is_verified(numeric_token: str, normalized_original: str) -> bool:
+    """Check whether a numeric token appears in the normalized original text.
+
+    Uses a digit-boundary guard (not preceded or followed by another digit)
+    so a token like "1m" cannot be falsely "verified" by matching inside an
+    unrelated longer number such as "11m".
+    """
+    token_norm = normalize(numeric_token)
+    if not token_norm:
+        return False
+    pattern = re.compile(r"(?<!\d)" + re.escape(token_norm) + r"(?!\d)")
+    return bool(pattern.search(normalized_original))
 
 
 def main(argv):
