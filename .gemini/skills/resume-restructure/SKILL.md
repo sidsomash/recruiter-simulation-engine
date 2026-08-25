@@ -199,11 +199,11 @@ specifically to catch):
 python3 scripts/fact_guard.py <path_to_draft_resume.md>
 ```
 
-Run this from the `resume-restructure` skill directory (the same directory containing this
-`SKILL.md` and the `scripts/` folder), so the script's default original-résumé path
-(`../simulation/references/candidate_resume.md`, relative to `scripts/fact_guard.py`) resolves
-correctly. If invoking from elsewhere, pass the original résumé's path explicitly as a second
-argument instead: `python3 scripts/fact_guard.py <draft> <path_to_candidate_resume.md>`.
+Run this from the `resume-restructure` skill directory (recommended for convenience when using
+relative draft paths). The script's default original-résumé path is
+`../../simulation/references/candidate_resume.md` (relative to `scripts/fact_guard.py`) and does
+not depend on the current working directory. To override the original résumé, pass it explicitly
+as a second argument: `python3 scripts/fact_guard.py <draft> <path_to_candidate_resume.md>`.
 
 (fall back to `python scripts/fact_guard.py ...` if `python3` is not the resolved command)
 
