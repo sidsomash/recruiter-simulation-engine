@@ -2,62 +2,69 @@
 
 ## 1. Preferred Role Domains
 The candidate prefers roles in the following domains:
+- Data Engineering
+- Machine Learning Engineering
+- AI Engineering
+- Data Science
 - Data Analyst
-- Business Analyst
-
-Secondary (moderate-fit, acceptable) domains:
-- Project Coordinator
-- Recruiting / HR Coordinator
+- Backend Engineering
+- Platform Engineering
 
 ## 2. Avoided Role Domains
 The candidate prefers to avoid:
-- Sales-heavy roles
+- Defense / DoD / clearance-required roles
+- Pure finance/accounting/business analyst roles
+- Roles with heavy business operations focus
 
 ## 3. Location Preferences
 Preferred locations:
-- New York City
-- Washington, DC
+- New York City / North Jersey
+- Washington DC / Northern Virginia (DMV)
 
 Acceptable:
-- Philadelphia
-- Boston
-- Hybrid roles in preferred regions (also open to remote or on-site)
+- Hybrid roles in preferred regions
 
 Avoided:
-- None specified beyond sales-heavy role types
+- Fully on-site roles outside preferred regions
 
 ## 4. Compensation Preferences
 Minimum acceptable base salary:
-- $75,000
+- $110,000–$115,000 (flexible)
 
 Target compensation:
-- $75,000–$100,000
+- $125,000–$150,000+
 
 Compensation below minimum threshold should be flagged as a preference violation.
 
 ## 5. Work Environment Preferences
 Preferred:
 - Hybrid
-
-Acceptable:
+- In-office (within preferred regions)
 - Remote
-- On-site
 
 Avoided:
-- None specified
+- Fully on-site roles outside preferred regions
+- Roles requiring overly frequent travel
 
 ## 6. Role Level Preferences
 Preferred:
-- Entry-level / new grad roles
+- Full-time roles
+- New grad roles
+- Early-career engineering roles
 
 Avoided:
-- Senior-level roles requiring extensive prior experience
+- Senior-level roles requiring 5+ years experience
+- Managerial roles
 
 ## 7. Defense / Clearance Stance
-Willing to work on defense/clearance-required roles (US Citizen).
+The candidate prefers to avoid:
+- Defense contractors
+- DoD/IC roles
+- Roles requiring security clearance
+
+If a JD requires clearance or is defense-oriented, this should be flagged as a preference violation.
 
 ## 8. Additional Notes
 - Candidate is a US Citizen.
-- Looking for entry-level / new grad roles specifically.
-- Comfortable competing for Project Coordinator or Recruiting/HR Coordinator roles based on degree/experience alignment, even though primary target is Data Analyst / Business Analyst.
-- Light technical/coding background; not targeting software engineering roles.
+- Candidate is open to AI/agentic systems roles, data platforms, backend engineering, and data science.
+- Candidate prefers roles with strong engineering or data depth rather than business analytics.

@@ -1,85 +1,88 @@
 # Candidate Profile
 
 ## Summary
-Psychology major (concentration in Political Science) looking to break into tech through Data Analyst / Business Analyst roles, with a comfortable secondary fit for project coordination or recruiting/HR coordinator positions based on degree and experience alignment. Light technical/coding background (SQL, SQLite, FastAPI, React via a personal project) paired with strong stakeholder communication, performance reporting, and photography/editing/social media experience.
+Data Engineer and AI‑focused backend engineer with experience in ETL pipelines, Databricks/Snowflake ecosystems, agentic AI systems, RAG pipelines, and cloud platforms (AWS, GCP, Azure). Strong background in Python, Spark, FastAPI, and distributed data systems. Experience spans financial services, logistics, defense‑adjacent analytics, and AI tooling.
 
 ---
 
 ## Technical Strengths
 
 ### Core Competencies
-- Data & Performance Reporting (KPI tracking, CVR/ROAS reporting, trend analysis)
-- Stakeholder Communication & Cross-functional Coordination
-- Project/Timeline Coordination (managed 150+ concurrent initiatives)
-- Budget Tracking & Compliance Reporting
-- Data Visualization (Tableau, Power BI, Excel)
-- Social Media / Digital Analytics (Meta Analytics, TikTok data)
-- Light software development (SQLite, FastAPI, React)
+- Data Engineering (ETL, pipelines, orchestration)
+- Distributed Computing (Spark, Databricks)
+- Cloud Engineering (AWS, GCP, Azure)
+- Backend Engineering (FastAPI, Spring Boot)
+- AI/ML Systems (RAG, agentic workflows, evaluation frameworks)
+- Database Engineering (PostgreSQL, MySQL, Snowflake)
 
 ### Languages
-No professional programming languages listed; light personal-project exposure to SQL/SQLite
+Python (advanced), SQL (advanced), Java, R, C#, C
 
 ### Tools & Platforms
-SQL, Tableau, Power BI, Excel, Google Sheets, JIRA, Trello, Notion, Slack, Microsoft Office, Google Workspace, Adobe Creative Suite, Claude, Gemini
+Databricks, Snowflake, Airflow, Jenkins, Docker, Supabase, LlamaIndex, Vertex AI, Azure OpenAI
 
 ---
 
 ## Domain Experience
-- Retail sales & performance analytics (Best Buy)
-- Higher-education administration / student affairs communications
-- Student organization finance & operations (SBU Strength Club)
-- Academic/psychology research (quasi-experimental design, statistics)
+- Financial services (top‑5 U.S. institution/bank)
+- Logistics / supply chain (UPS)
+- Defense‑adjacent analytics (ExoAnalytic)
+- AI platform engineering
+- Travel tech (Ryoko)
 
 ---
 
 ## Work History Summary
 
-### Best Buy Inc. — TCL Specialist (June 2026–Present)
-- Grew monthly TCL sales revenue ~75% via Excel-based performance tracking; delivered data-driven recommendations to management.
+### CapTech — Data Engineer (2025–Present)
+- ETL pipelines, Databricks orchestration, Snowflake automation, lineage extraction tooling, agentic workflow development.
 
-### SBU Student Affairs — Assistant Photographer/Videographer (Oct 2023–May 2025)
-- Produced branded digital assets and campaigns (+25% earned media reach); managed timelines across 150+ concurrent initiatives; partnered with senior directors on campus-wide campaigns.
+### UPS — Enterprise Data Analytics Intern (2024, 2025)
+- AI tooling, agentic evaluation frameworks, MLOps workflows, cloud development.
 
-### SBU Strength Club — Treasurer (June 2023–May 2024)
-- Managed club budget/compliance via Blackbaud; analyzed social/event performance data to drive 15–20% attendance increase; presented funding proposals to university committee.
+### ExoAnalytic Solutions — Software Developer Intern (2023)
+- Satellite image anomaly detection, multiprocessing pipelines, DoD‑facing analytics.
 
 ---
 
 ## Education
-- B.A. in Psychology (concentration in Political Science)
-- School: Stony Brook University
-- Graduation: Expected August 2026
-- Classification: Liberal Arts / Social Science (non-STEM)
+- B.S. Computational Modeling & Data Analytics (CMDA) — STEM
+- Minor: Mathematics
+- Degree Level: Bachelor’s
+- Classification: Quantitative / Data Science / Applied Math
 
 ---
 
 ## Experience Depth (Years)
-- Data/Performance Reporting: ~1 year (Best Buy role)
-- Project/Stakeholder Coordination: ~2 years (Student Affairs + Strength Club)
-- Budget/Compliance Tracking: ~1 year (Strength Club)
-- Light software development: personal project only (Gaia Plant Tracker), no professional experience
+- Data Engineering: 1–2 years (internships + full‑time)
+- AI/ML Systems: 1–2 years (projects + internships)
+- Backend Engineering: 1–2 years
+- Cloud Engineering: 1–2 years
+- Software Engineering: 2+ years (combined)
 
 ---
 
 ## Role Alignment
 Strong alignment with:
-- Data Analyst
-- Business Analyst
+- Data Engineer  
+- Machine Learning Engineer  
+- AI Engineer  
+- Backend Engineer  
+- Platform Engineer  
 
 Moderate alignment with:
-- Project Coordinator
-- Recruiting / HR Coordinator
+- Software Engineer (generalist)
+- Analytics Engineer
 
 Weak alignment with:
-- Software Engineer / Developer roles (light technical background only)
-- Sales-heavy roles
+- Finance/Accounting roles
+- Business Analyst roles
 
 ---
 
 ## Location
-- NYC / DC preferred
-- Open to Philadelphia / Boston
-- Prefers hybrid; open to remote or on-site
+- NYC  
+- Washington DC / Northern Virginia  
 
 ---
 

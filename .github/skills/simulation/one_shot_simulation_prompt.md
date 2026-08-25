@@ -89,78 +89,98 @@ Only evaluate if candidate provides preferences:
 ### Candidate Résumé
 
 <!-- BEGIN_CANDIDATE_RESUME -->
-**Contact:** Fizar Hossen | fizarhossen81@gmail.com | (201) 403-1085 | US Citizen | LinkedIn: linkedin.com/in/fizar-hossen
+[CANDIDATE RESUME — This will be auto-populated by the Initialize Skill]
 
-**Education:** B.A. in Psychology (concentration in Political Science), Stony Brook University — Expected Graduation: August 2026. Classification: Liberal Arts / Social Science (non-STEM). Degree Level: Bachelor's.
+When using the Initialize Skill, this section will be populated with:
+```
+Contact Information
+- Name, Email, Phone, Locations, Citizenship, LinkedIn
 
-**Skills:**
-- Data & Analytics: SQL, Tableau, Excel, Google Sheets, KPI Tracking, Performance Reporting (CVR, ROAS), Trend Analysis, Power BI, Database Management
-- Analytics & Reporting Tools: JIRA, Trello, Notion, Slack, Microsoft Office, Google Workspace, Stakeholder Communication, Cross-functional Coordination
-- Technical Foundations: Adobe Creative Suite, Claude, Gemini
-- Light personal-project technologies: SQLite, FastAPI, React, Vite
+Education
+- Degree name, School, Graduation date, Minor, Classification, Degree Level
 
-**Work Experience:**
-- Best Buy Inc. — TCL Specialist, Paramus, NJ (June 2026–Present): Grew monthly TCL sales revenue ~75% using Excel-based performance tracking; delivered performance reports and data-driven recommendations to management.
-- SBU Student Affairs, Division of Student Affairs — Assistant Photographer/Videographer, Stony Brook, NY (Oct 2023–May 2025): Designed branded digital assets/campaigns (+25% earned media reach); managed timelines across 150+ concurrent initiatives; partnered with senior directors on campus-wide campaigns.
-- SBU Strength Club — Treasurer, Stony Brook, NY (June 2023–May 2024): Tracked budget/compliance via Blackbaud; analyzed social/event performance data driving 15–20% attendance increase; presented funding proposals to university committee.
+Skills
+- Languages: [extracted]
+- Cloud/Platforms: [extracted]
+- Frameworks/Tools: [extracted]
 
-**Projects:**
-- Gaia, Plant Tracker (Personal Project, Aug 2026): Structured SQLite database, built FastAPI endpoints, and a React/Vite dashboard to track plant ownership/watering schedules; documented setup/architecture.
-- Capstone Research Project — PSY 310 (Jan 2026–May 2026): Designed and conducted independent quasi-experimental research study (N=100); applied t-tests and Cohen's d; authored APA-style paper and delivered presentation.
+Work Experience
+- Company, Role, Location, Dates, Key achievements/bullets
+
+Projects
+- Project name, Role, Duration, Technologies, Outcomes
+```
 <!-- END_CANDIDATE_RESUME -->
 
 ### Candidate Profile
 
 <!-- BEGIN_CANDIDATE_PROFILE -->
-**Summary:** Psychology major (concentration in Political Science) looking to break into tech through Data Analyst / Business Analyst roles, with a comfortable secondary fit for project coordination or recruiting/HR coordinator positions based on degree and experience alignment. Light technical/coding background paired with strong stakeholder communication, performance reporting, and photography/editing/social media experience.
+[CANDIDATE PROFILE — This will be auto-populated by the Initialize Skill]
 
-**Technical Strengths**
-- Core Competencies: Data & Performance Reporting (KPI/CVR/ROAS, trend analysis), Stakeholder Communication & Cross-functional Coordination, Project/Timeline Coordination, Budget Tracking & Compliance, Data Visualization (Tableau, Power BI, Excel), Social Media/Digital Analytics, light software development (SQLite, FastAPI, React)
-- Languages: No professional programming languages; light personal-project SQL/SQLite exposure
-- Tools & Platforms: SQL, Tableau, Power BI, Excel, Google Sheets, JIRA, Trello, Notion, Slack, MS Office, Google Workspace, Adobe Creative Suite, Claude, Gemini
+When using the Initialize Skill, this section will be populated with:
+```
+Summary: [1–3 sentences of technical focus and background]
 
-**Domain Experience:** Retail sales & performance analytics, higher-education administration/communications, student organization finance/operations, academic psychology research
+Technical Strengths
+- Core Competencies: [inferred from resume]
+- Languages: [ranked by proficiency]
+- Tools & Platforms: [key technologies]
 
-**Work History Summary:**
-- Best Buy Inc. — TCL Specialist (2026–Present): sales performance tracking/reporting
-- SBU Student Affairs — Asst. Photographer/Videographer (2023–2025): branded campaigns, stakeholder coordination
-- SBU Strength Club — Treasurer (2023–2024): budget/compliance tracking, performance analysis
+Domain Experience
+- [Industries and problem spaces]
 
-**Education:** B.A. Psychology (concentration Political Science), Stony Brook University, Expected Aug 2026, non-STEM/Liberal Arts
+Work History Summary
+- [Brief overview of key roles and achievements]
 
-**Experience Depth (Years):** Data/Performance Reporting ~1 yr; Project/Stakeholder Coordination ~2 yrs; Budget/Compliance Tracking ~1 yr; Light software development — personal project only
+Education
+- Degree level, field, school, graduation, classification
 
-**Role Alignment**
-- Strong fit: Data Analyst, Business Analyst
-- Moderate fit: Project Coordinator, Recruiting/HR Coordinator
-- Weak fit: Software Engineer/Developer, Sales-heavy roles
+Experience Depth (Years)
+- [Key skills with years of experience]
 
-**Location & Citizenship:** NYC/DC preferred (open to Philly/Boston), prefers hybrid but open to remote/on-site; US Citizen
+Role Alignment
+- Strong fit: [role types]
+- Moderate fit: [role types]
+- Weak fit: [role types]
+
+Location & Citizenship
+- [Preferred regions and citizenship status]
+```
 <!-- END_CANDIDATE_PROFILE -->
 
 ### Candidate Degree Information
 
 <!-- BEGIN_CANDIDATE_DEGREE -->
-Degree: Bachelor's in Psychology (concentration in Political Science)
-Major: Psychology
-Minor: None (concentration in Political Science)
-Classification: Non-STEM (Liberal Arts / Social Science)
-Degree Level: Bachelor's
-Enrollment Status: Enrolled
-Expected Graduation: August 2026
+[CANDIDATE DEGREE INFO — This will be auto-populated by the Initialize Skill]
+
+When using the Initialize Skill, this section will be populated with:
+```
+Degree: [e.g., Bachelor's in Computer Science]
+Major: [Major name]
+Minor: [Minor name or "None"]
+Classification: [STEM / Non-STEM]
+Degree Level: [Bachelor's / Master's / PhD]
+Enrollment Status (if applicable): [Enrolled / Completed]
+Expected Graduation: [Date or "Already completed"]
+```
 <!-- END_CANDIDATE_DEGREE -->
 
 ### Candidate Preferences
 
 <!-- BEGIN_CANDIDATE_PREFERENCES -->
-Preferred Role Domains: Data Analyst, Business Analyst (primary); Project Coordinator, Recruiting/HR Coordinator (secondary, moderate-fit)
-Avoided Roles: Sales-heavy roles
-Location Preferences: NYC, Washington DC (preferred); Philadelphia, Boston (acceptable)
-Work Environment: Hybrid preferred; open to Remote or On-site
-Compensation Minimum: $75,000 (target range $75,000–$100,000)
-Role Level: Entry-level / new grad
-Defense/Clearance Stance: Willing (US Citizen)
-Additional Notes: Comfortable competing for Project Coordinator or Recruiting/HR Coordinator roles based on degree/experience alignment even though primary target is Data/Business Analyst; light technical/coding background, not targeting software engineering roles.
+[CANDIDATE PREFERENCES — This will be auto-populated by the Initialize Skill]
+
+When using the Initialize Skill, this section will be populated with:
+```
+Preferred Role Domains: [Data Engineering, ML, Backend, etc.]
+Avoided Roles: [Defense/DoD, Pure Finance, Sales, etc.]
+Location Preferences: [Preferred cities/regions]
+Work Environment: [Remote / Hybrid / On-site]
+Compensation Minimum: [Salary floor]
+Role Level: [Entry-level, Mid-level, Senior, etc.]
+Defense/Clearance Stance: [Willing / Unwilling / Required]
+Additional Notes: [Any other constraints or opportunities]
+```
 <!-- END_CANDIDATE_PREFERENCES -->
 
 ---
