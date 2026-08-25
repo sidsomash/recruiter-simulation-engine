@@ -1,89 +1,90 @@
 # Candidate Résumé
 
 ## Contact
-- Name: Siddharth Somashekar
-- Email: sidsomash@gmail.com
-- Phone: (201) 870-8763
-- Locations: NYC, Washington DC
+- Name: Fizar Hossen
+- Email: fizarhossen81@gmail.com
+- Phone: (201) 403-1085
+- Locations: NYC/DC preferred, open to Philly/Boston
 - Citizenship: US Citizen
-- LinkedIn: https://www.linkedin.com/in/siddharth-somashekar-8394aa220/
+- LinkedIn: https://www.linkedin.com/in/fizar-hossen/
 
 ---
 
 ## Education
-**B.S. in Computational Modeling & Data Analytics (CMDA)**  
-Minor: Mathematics  
-Virginia Tech — Blacksburg, VA  
-Graduation: May 2025
+**B.A. in Psychology (concentration in Political Science)**  
+Stony Brook University — Stony Brook, NY  
+Graduation: Expected August 2026
 
-Classification: STEM, quantitative, data‑science‑aligned  
-Degree Level: Bachelor’s
+Classification: Liberal Arts / Social Science (non-STEM)  
+Degree Level: Bachelor's
 
 ---
 
 ## Skills
 
 ### Languages
-Python, Java, R, SQL, C#, C
+None listed (no programming languages on resume)
 
-### Cloud / Platforms
-AWS, GCP, Azure, Databricks, Snowflake, Docker
+### Data & Analytics
+SQL, Tableau, Excel, Google Sheets, KPI Tracking, Performance Reporting (CVR, ROAS), Trend Analysis, Power BI, Database Management
 
-### Frameworks / Tools
-Spark, FastAPI, Spring Boot, Supabase, PostgreSQL, MySQL, JUnit, Jira, Linux, Git, Jenkins, Airflow
+### Analytics & Reporting Tools
+JIRA, Trello, Notion, Slack, Microsoft Office, Google Workspace, Stakeholder Communication, Cross-functional Coordination
+
+### Technical Foundations
+Adobe Creative Suite, Claude, Gemini
+
+### Personal Project Technologies (light technical background)
+SQLite, FastAPI, React, Vite
 
 ---
 
 ## Work Experience
 
-### **CapTech**  
-**Data Engineer** — Reston, VA  
-**July 2025 – Present**
+### **Best Buy Inc.**
+**TCL Specialist** — Paramus, NJ
+**June 2026 – Present**
 
-- Engineered ETL pipelines for high‑volume S3 datasets using YAML configs, Spark SQL transformations, Airflow DAGs, and Bogie job configs to orchestrate Databricks jobs triggered via Jenkins and Shairflow. Delivered production data into Snowflake warehouses for a top‑5 U.S. financial institution.
-- Owned end-to-end migration of mission-critical financial datasets with regulatory compliance requirements (U.S. government fine risk if not delivered on schedule). Validated S3 source locations, configured YAML files with correct schema mappings, executed pre-write validation (Databricks notebooks for schema alignment), orchestrated Spark SQL transformations via Airflow UI, and performed post-write validation in Snowflake. Created ad-hoc pre-write validation when datasets lacked standard metadata, enabling successful ingestion. Delivered results ahead of schedule with weekend execution and zero data quality issues; communicated outcomes to PMs and DAs for end-to-end validation.
-- Deployed Snowflake DDL automation for QA and production sinks using a Python‑based Databricks script that filters NPI and credit‑sensitive attributes and generates compliant `.avsc` schemas. Reduced union‑view deployment time by 70% and drove program‑wide adoption.
-- Built a Copilot Skill–driven workflow to extract source‑table lineage from complex SQL transformations. Validated Skill performance with deterministic Python/regex scripts and produced reliability metrics used by engineering leads. Integrated into developer tooling to eliminate redundant utilities and reduce manual lineage checks from hours to minutes.
+- Grew monthly TCL sales revenue by approximately 75%, using Excel-based performance tracking to monitor progress against quota targets and inform strategy adjustments
+- Delivered regular performance reports and data-driven recommendations to store management on sales strategy, inventory positioning, and membership/application quota attainment
 
 ---
 
-### **UPS**  
-**Enterprise Data Analytics Intern** — Mahwah, NJ  
-**June 2024 – Aug 2024; June 2025 – July 2025**
+### **SBU Student Affairs, Division of Student Affairs**
+**Assistant Photographer/Videographer** — Stony Brook, NY
+**Oct 2023 – May 2025**
 
-- Developed an AI tool using Google Agent Builder in Vertex AI Studio for MLOps, enabling retrieval from 1000+ page documents via a Flask app deployed on Google Cloud Run.
-- Created the Agentic Testing Framework (ATF) — a recursive decision‑tree agent system using Google ADK to evaluate GenAI API responses for accuracy, safety, and policy compliance. Identified problematic LLM behaviors enabling model tuning before production deployment. Designed to scale across live customer test cases and adapt to LLM updates.
+- Designed branded digital assets and integrated campaigns that contributed to a 25% increase in earned media reach, applying audience insights to optimize strategy
+- Managed timelines and deliverables across 150+ concurrent initiatives, coordinating with stakeholders across departments to maintain consistent on-time delivery in a fast-paced, deadline-driven environment
+- Partnered directly with department directors, including the Director of Communications and President of Student Affairs, to plan and execute campus-wide campaigns, including social justice initiatives and public health awareness efforts
 
 ---
 
-### **ExoAnalytic Solutions**  
-**Software Developer Intern** — Arlington, VA  
-**May 2023 – Aug 2023**
+### **SBU Strength Club**
+**Treasurer** — Stony Brook, NY
+**June 2023 – May 2024**
 
-- Developed satellite image anomaly‑detection algorithms using NumPy, Pandas, Pillow, and multiprocessing to support high‑volume preprocessing for GAN training pipelines.
-- Improved image‑processing throughput by 55% through parallelization, enabling faster dataset generation for ML experimentation.
-- Collaborated with senior engineers and Intelligence Community analysts to validate model outputs and brief DoD teams on findings and operational implications.
+- Tracked club expenses via Blackbaud to meet budget compliance targets for university oversight committee (USG), while building relationships with club advisors to streamline event approvals and vendor/regulatory requirements (FDA food certifications)
+- Analyzed event and social media performance via Meta Analytics and TikTok data to inform outreach strategy, driving a 15–20% increase in attendance
+- Coordinated with USPL to send athletes to official competitions, managing travel logistics and expenses, and presented budget proposals at hearings that secured increased funding for the next e-board
 
 ---
 
 ## Projects
 
-### **Recruiter Simulation Engine**  
-**Founder & Architect** — June 2026 – Present
+### **Gaia, Plant Tracker**
+**Personal Project** — August 2026
 
-- Architected a multi-agent job‑fit simulation platform with modular skills deployed across GitHub Copilot CLI, Claude, and Gemini environments. Designed deterministic simulation contracts that evaluate job descriptions against candidate profiles using structured reference files and templates.
-- Built the **Simulation Skill** — a deterministic evaluation engine that parses JDs, applies recruiter decision logic, produces skill/responsibility/degree mappings, and generates standardized simulation outputs stored for ranking and resume tailoring.
-- Engineered the **Resume-Restructure Skill** — an intelligent resume rewriting system that tailors candidate résumés for specific job opportunities by strategically reordering skills by JD relevance, rewriting experience bullets to emphasize recruiter priorities, and preserving factual accuracy while maximizing alignment. Includes comprehensive rewriting guidelines covering principles (honesty, context over content, emphasis/omission) and validation checklists.
-- Implemented the **Ranking Skill** — an aggregation engine applying weighted multi-factor scoring models to rank all simulations, enabling data-driven role prioritization.
-- Designed the **Initialize Skill** — an onboarding workflow that guides users through building candidate preferences, profiles, and resumes across all three agent platforms with structured templates and interactive prompts.
-- Produced deterministic, reproducible outputs enabling same JD + same candidate = identical simulation, ensuring consistency across all skill invocations and agent environments.
+- Structured a SQLite database to track plant ownership and watering schedules, building FastAPI endpoints to handle data entry and retrieval for each plant record
+- Built a React/Vite dashboard to surface tracked plant data to end users, translating backend data into a clean, usable interface
+- Documented setup and architecture in a project README for clear onboarding and long-term maintainability
 
 ---
 
-### **Mini Wikipedia RAG Q&A System**  
-**CapTech — March 2026**
+### **Capstone Research Project**
+**PSY 310: Research and Writing in Psychology** — Stony Brook, NY
+**January 2026 – May 2026**
 
-- Built a 3‑stage RAG pipeline using HuggingFace Wikipedia passages, LlamaIndex StorageContext, and Azure OpenAI GPT‑4o.
-- Delivered 6 FastAPI endpoints for ingestion, retrieval, generation, and workflow execution with observability and Jupyter notebooks for debugging.
-- Achieved 86/86 passing pytest tests across unit, API, workflow, and integration layers.
+- Designed and conducted an independent quasi-experimental research study (N=100), using NotebookLM & Claude to support literature review and synthesis of academic sources
+- Applied independent-samples t-tests and effect size calculations (Cohen's d) to survey data, authoring an APA-style paper and delivering a capstone presentation on the findings
 

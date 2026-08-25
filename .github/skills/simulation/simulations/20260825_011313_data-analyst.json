@@ -1,0 +1,22 @@
+{
+  "company": "CapTech",
+  "title": "Data Analyst",
+  "posting_date": "Unknown",
+  "compensation": "Unknown",
+  "location": "Richmond, VA (onsite as requested; remote allowed when compatible with CapTech and client needs)",
+  "years_required": "Not specified",
+  "degree_match": "not_specified",
+  "skill_alignment": "major_gaps",
+  "experience_match": "partially_meets",
+  "preference_violations": [
+    {
+      "severity": "minor",
+      "description": "Job located in Richmond, VA, which falls outside candidate's preferred (NYC, DC) and acceptable (Philadelphia, Boston) regions."
+    }
+  ],
+  "recruiter_pct": 64,
+  "interview_pct": 64,
+  "fit_category": "moderate_match",
+  "internship_mode": false,
+  "contract_version": "v2.4"
+}

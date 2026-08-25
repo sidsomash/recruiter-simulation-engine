@@ -1,3 +1,8 @@
+---
+name: resume-restructure
+description: Rewrites the candidate's résumé to target a specific job description, using a completed simulation's JD context, then validates quantitative claims with a deterministic fact guard.
+---
+
 # Resume-Restructure Skill
 
 A deterministic resume rewriting engine that adapts the candidate's résumé to target a specific job description (JD), emphasizing skills, responsibilities, and experiences most relevant to that particular recruiter's needs.
