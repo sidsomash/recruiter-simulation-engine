@@ -347,7 +347,7 @@ should land last, once the target schema/formulas/validation are stable).
 ## Tier 2 — Resume-Restructure
 
 ### Branch: `resume-restructure-fact-guard`
-**Status:** Implementation complete, pending PR/merge
+**Status:** Merged (PR #12; follow-up doc fix PR #13)
 
 **Problem:** The skill's "aggressive rewrite" / "maximum recruiter signal" instructions create
 fabrication pressure — a classic LLM failure mode is inventing a metric that "sounds right." Step 5
@@ -446,7 +446,7 @@ rules.
 | 1 | `ranking-internship-flag` | — | Merged |
 | 1 | `initialize-file-sync` | — | Merged |
 | 1 | `simulation-contract-versioning` | — | Merged |
-| 1 | `resume-restructure-fact-guard` | — | Implementation complete, pending PR/merge |
+| 1 | `resume-restructure-fact-guard` | — | Merged |
 | 1 | `golden-examples-fewshot` | — | Not started |
 | 2 | `simulation-degree-lookup-table` | — | Merged |
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
@@ -621,3 +621,12 @@ entries short — one line per event.
   relative path resolves correctly. All fixes propagated to `.github`/`.claude`/`.gemini`,
   verified byte-identical (`scripts/fact_guard.py`) and content-identical apart from the
   pre-existing platform-specific Step 8 path (`SKILL.md`).
+- 2026-08-25: `resume-restructure-fact-guard` merged (PR #12). A final post-merge Copilot review
+  found Step 5's documented default original-résumé path was wrong
+  (`../simulation/references/candidate_resume.md` instead of the actual
+  `../../simulation/references/candidate_resume.md`, per `SCRIPT_DIR.parent.parent` in the
+  script) and misleadingly implied the default depends on the current working directory, when in
+  fact `Path(__file__).resolve()` makes it directory-independent. Fixed the wording in all 3
+  copies on branch `resume-restructure-fact-guard-path-doc-fix` (doc-only, no script logic
+  changed); merged as PR #13. Local `main` synced, both feature branches deleted. Branch and
+  todo now closed.
