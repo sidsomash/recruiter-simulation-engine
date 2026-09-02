@@ -23,7 +23,7 @@ This skill depends on the following reference files:
 - [candidate_resume.md](references/candidate_resume.md)  
 - [candidate_profile.md](references/candidate_profile.md)  
 - [candidate_preferences.md](references/candidate_preferences.md) *(optional)*  
-- [validate_simulation_output.py](validate_simulation_output.py) — deterministic post-save validator (stdlib-only, see Step 6)  
+- [validate_simulation_output.py](validate_simulation_output.py) — deterministic post-save validator (stdlib-only, see Step 5)  
 
 These files define the candidate’s background and the rules governing simulation behavior.
 
@@ -56,7 +56,7 @@ No additional parameters, flags, or overrides are supported.
 ## 🧠 Workflow
 
 ### **Step 0 — Preflight: Verify Python Is Available**
-Output validation (Step 6) is performed by a deterministic script
+Output validation (Step 5) is performed by a deterministic script
 (`validate_simulation_output.py`), not by the model, so a Python interpreter
 must be available before the simulation can be considered complete.
 
@@ -124,71 +124,114 @@ from the job title later.
 
 ### **Step 4 — Apply Simulation Contract**
 
-Follow the contract exactly:
+Apply the contract as a sequence of discrete, checkable sub-steps, in this exact order. Each
+sub-step must produce its stated **output checkpoint** before moving to the next — do not skip
+ahead, blend multiple sub-steps into a single unstructured pass, or revisit an earlier
+checkpoint once it's locked. This sequencing exists specifically to prevent rule-blending errors:
+performing all 8 of the contract's analyses in one pass is the single biggest source of mistakes,
+especially for smaller/cheaper models.
 
-1. Recruiter Takeaway  
-2. Skill & Responsibility Mapping  
-3. Skill Gaps  
-4. Years‑of‑Experience Mapping  
-5. Degree Requirement Mapping — determine which of the four candidate degree categories in
-   `references/degree_domain_map.json` applies (`stem_quantitative`,
-   `business_finance_accounting`, `liberal_arts_humanities`, `social_sciences`, or none of these),
-   using the candidate's degree title **plus** `candidate_profile.md` (technical strengths,
-   quantitative coursework) and `candidate_preferences.md` (stated role preferences) when the
-   title alone is ambiguous or borderline — do not classify from the degree title in isolation.
-   Then look up the JD's required degree field under that category (see contract §5.2/§5.3). Fall
-   back to Rules A–G only when the category or JD domain isn't covered by the JSON. If the
-   candidate's degree doesn't match the JD's field but the candidate has substantial directly
-   relevant professional/project experience (career-switcher case), apply §6.3 — state the
-   mismatch plainly, cross-reference the relevant experience, and let §8's Recruiter Decision
-   weigh both together.
-6. Preference Violations  
-7. Recruiter Decision — **compute** Recruiter Screen Likelihood and Interview Likelihood using
-   the deterministic point-based formula in contract §8 (Skill/Degree/Experience Scores →
-   weighted formula → clamp → band lookup). Do not estimate, guess, or freely pick a percentage
-   from a range — every input above must already be known from Steps 4–6 above, so the formula
-   is fully computable. Apply the §8.4 Hard Reject Override when the Degree Match label is
-   ❌ Hard mismatch instead of running the formula.
-8. Final Fit Summary  
+#### 4a — Confirm JD Structured Metadata
+Finalize the structured JD metadata object built in Step 2 (company, title, compensation,
+location, years required, degree requirement, required/preferred skills, responsibilities,
+clearance/defense flags, internship indicators, remote/onsite/hybrid, seniority).
 
-This produces a structured evaluation of candidate fit.
+**Output checkpoint:** the locked JD metadata object. Every sub-step below reads from this object
+only — do not re-parse or second-guess the JD text again after this point.
+
+#### 4b — Confirm Mode
+Restate the Step 3 Full-Time vs. Internship determination.
+
+**Output checkpoint:** the locked `Internship Mode: Yes/No` flag. This must not be revisited or
+re-derived later — 4d (Degree Mapping) and 4e (Experience Mapping) must apply the §9 Internship
+Mode adjustments if and only if this flag is `Yes`.
+
+#### 4c — Skill & Responsibility Mapping + Skill Gaps
+Produce:
+- Required Skills table (JD skill → Direct / Equivalent / Partial / No Match → evidence)
+- Preferred Skills table (same structure)
+- Responsibility Alignment table (JD responsibility → Strong / Moderate / Weak → evidence)
+- Skill Gaps list (skills with No Match, or Partial matches worth flagging)
+
+**Output checkpoint:** explicit counts of Direct / Equivalent / Partial / No Match required
+skills. These counts are the direct input to 4g's Skill Score — do not recompute or re-derive
+them later.
+
+#### 4d — Degree Requirement Mapping
+Determine which of the four candidate degree categories in `references/degree_domain_map.json`
+applies (`stem_quantitative`, `business_finance_accounting`, `liberal_arts_humanities`,
+`social_sciences`, or none of these), using the candidate's degree title **plus**
+`candidate_profile.md` (technical strengths, quantitative coursework) and
+`candidate_preferences.md` (stated role preferences) when the title alone is ambiguous or
+borderline — do not classify from the degree title in isolation. Then look up the JD's required
+degree field under that category (see contract §5.2/§5.3). Fall back to Rules A–G only when the
+category or JD domain isn't covered by the JSON. If the candidate's degree doesn't match the
+JD's field but the candidate has substantial directly relevant professional/project experience
+(career-switcher case), apply §6.3 — state the mismatch plainly and cross-reference the relevant
+experience.
+
+**Output checkpoint:** a single Match Category label (✅ Direct / ✅ Equivalent / 🟡 Partial /
+❌ No match / ❌ Hard mismatch / ➖ Not specified). This label alone drives both 4g's Degree Score
+lookup and the §8.4 Hard Reject Override check.
+
+#### 4e — Years-of-Experience Mapping
+Compare the JD's stated (or absent) years-of-experience requirement against the candidate's work
+history, applying §9.1 Internship Mode adjustments if 4b's flag is `Yes`.
+
+**Output checkpoint:** a single Experience Match label (Meets / Partially Meets / Does Not Meet).
+This label alone drives 4g's Experience Score lookup.
+
+#### 4f — Preference Violations
+Compare the JD against `candidate_preferences.md` (if present) and identify every violation.
+
+**Output checkpoint:** an itemized list of violations, each tagged `minor` / `moderate` / `major`
+/ `clearance` (empty list if none, or if no preferences file was provided). This list alone drives
+4g's Preference Penalty sum.
+
+#### 4g — Recruiter Decision Synthesis
+Using only the checkpoint outputs from 4c–4f (do not re-derive any of them), compute, in order:
+1. Skill Score, Degree Score, Experience Score (contract §8.1, from 4c/4d/4e's checkpoints)
+2. Preference Penalty (sum of 4f's violation list, per §7)
+3. Recruiter% and Interview% via the §8.2/§8.3 formulas, clamped per §8.3 — **or**, if 4d's label
+   is ❌ Hard mismatch, apply the §8.4 Hard Reject Override instead (skip the formula entirely)
+4. The Recruiter/Interview band labels (§8.5), looked up from the computed percentages
+5. The Recruiter Takeaway narrative (output Section 1) — write this **last**, after steps 1–4
+   above are complete, even though it is *displayed first* in the final output document. It must
+   summarize conclusions already reached in 4c–4g, not introduce new judgments unsupported by
+   those checkpoints.
+
+**Output checkpoint:** Recruiter%, Interview%, their band labels, and the Recruiter Takeaway text
+— locked inputs to 4h.
+
+#### 4h — Final Fit Summary + Output Assembly
+1. Derive the Final Fit Summary category (§10: Strong match / Moderate match / Weak match /
+   Mismatch / Hard reject) from 4g's computed percentages — never chosen independently of them.
+2. Populate `simulation_output_template.md`, `skill_mapping_template.md`,
+   `experience_mapping_template.md`, and `degree_mapping_template.md` using the checkpoint
+   outputs from 4a–4g. This is pure formatting/assembly — no new analysis happens at this stage.
+3. Stamp `Contract Version` in the output's Metadata section with the version number copied
+   verbatim from `simulation_contract.md`'s own header (e.g., `v2.4`, from the line
+   `# Simulation Contract v2.4 — ...`). Do not paraphrase or infer the version — read it directly
+   from the contract file being applied in this Step 4.
+4. Populate `simulation_output_sidecar_template.json` (see contract §11 for field definitions and
+   enum values). Every field must be derived from the 4a–4g checkpoint outputs already produced —
+   do not re-derive or re-interpret values independently; the JSON must agree exactly with the
+   corresponding Markdown output (e.g., `recruiter_pct`/`interview_pct` must equal the same
+   integers from 4g, `contract_version` must equal the Markdown Metadata's `Contract Version`).
+
+**Output checkpoint:** the complete, validation-ready Markdown + JSON sidecar pair, ready for
+Step 5.
 
 ---
 
-### **Step 5 — Generate Output Using Templates**
-
-Populate:
-
-- simulation_output_template.md  
-- skill_mapping_template.md  
-- experience_mapping_template.md  
-- degree_mapping_template.md  
-
-This ensures consistent formatting across all simulations.
-
-Stamp `Contract Version` in the output's Metadata section with the version number copied
-verbatim from `simulation_contract.md`'s own header (e.g., `v2.4`, from the line
-`# Simulation Contract v2.4 — ...`). Do not paraphrase or infer the version — read it directly
-from the contract file being applied in Step 4. This lets old and new simulation files be
-distinguished if the contract is revised later.
-
-Also populate `simulation_output_sidecar_template.json` (see contract §11 for field definitions
-and enum values). Every field must be derived from data already produced while completing Steps
-4–5 above — do not re-derive or re-interpret values independently; the JSON must agree exactly
-with the corresponding Markdown output (e.g., `recruiter_pct`/`interview_pct` must equal the
-same integers stamped in §7 Recruiter Decision, `contract_version` must equal the Markdown
-Metadata's `Contract Version`).
-
----
-
-### **Step 6 — Save Output Files**
+### **Step 5 — Save Output Files**
 
 Write **two files**, sharing the same base filename, to:
 
-- `skills/simulation/simulations/<timestamp>_<slugified-role>.md` (human-readable, from Step 5's
+- `skills/simulation/simulations/<timestamp>_<slugified-role>.md` (human-readable, from Step 4h's
   Markdown output)
 - `skills/simulation/simulations/<timestamp>_<slugified-role>.json` (machine-readable sidecar,
-  from Step 5's JSON output)
+  from Step 4h's JSON output)
 
 Where:
 
@@ -200,7 +243,7 @@ Example: `skills/simulation/simulations/20260617_153022_data-engineer.md` +
 `skills/simulation/simulations/20260617_153022_data-engineer.json`
 
 Both files are required — do not save the Markdown file alone. If the sidecar cannot be written
-for any reason, treat this as a save failure per Step 7's error handling (do not silently save
+for any reason, treat this as a save failure per Step 6's error handling (do not silently save
 only the Markdown file).
 
 **Validate before treating the save as final.** From within `skills/simulation/`, run:
@@ -212,23 +255,23 @@ python3 validate_simulation_output.py simulations/<timestamp>_<slugified-role>.m
 (fall back to `python validate_simulation_output.py ...` if `python3` is not the resolved
 command, consistent with Step 0's preflight).
 
-- If the script prints `VALID: ...`, the save is complete — proceed to Step 7.
+- If the script prints `VALID: ...`, the save is complete — proceed to Step 6.
 - If the script prints `INVALID: ...` with a list of issues, do **not** return the invalid files
   as final output. Regenerate only the offending section(s)/field(s) named in the issue list
-  (re-deriving them from Step 4's analysis — do not guess new values), rewrite both files, and
-  re-run the validator. Repeat until validation passes.
+  (re-deriving them from the relevant Step 4 sub-step's checkpoint — do not guess new values),
+  rewrite both files, and re-run the validator. Repeat until validation passes.
 - If validation still fails after a reasonable retry, stop and return a brief error message
   describing the persistent validation failure (no simulation content) rather than saving
   invalid output.
 
 ---
 
-### **Step 7 — Return Output**
+### **Step 6 — Return Output**
 
 - Write the completed simulation output exclusively to the two files at
   `skills/simulation/simulations/<timestamp>_<slugified-role>.md` and
   `skills/simulation/simulations/<timestamp>_<slugified-role>.json`, after they have passed
-  Step 6's validation.
+  Step 5's validation.
 - Do NOT print, stream, or otherwise emit any simulation content (full or partial) to the terminal, logs, or assistant response payload. All simulation details must be persisted only to the output files.
 - After successfully saving and validating both files, terminal/assistant responses should be restricted to a concise confirmation containing ONLY the two relative file paths and a one-line status (for example: "Saved and validated: .github/skills/simulation/simulations/20260623_093815_role.md + .json"). No simulation content, analysis, or excerpts should be included in the response.
 - If an error prevents writing either file, or validation cannot be made to pass, return a brief error message that describes the failure (no simulation content).
