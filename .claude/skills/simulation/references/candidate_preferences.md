@@ -1,70 +1,50 @@
 # Candidate Preferences
 
 ## 1. Preferred Role Domains
-The candidate prefers roles in the following domains:
-- Data Engineering
-- Machine Learning Engineering
-- AI Engineering
-- Data Science
-- Data Analyst
-- Backend Engineering
-- Platform Engineering
+- (Role domain 1)
+- (Role domain 2)
+- (etc.)
 
 ## 2. Avoided Role Domains
-The candidate prefers to avoid:
-- Defense / DoD / clearance-required roles
-- Pure finance/accounting/business analyst roles
-- Roles with heavy business operations focus
+- (Domain to avoid 1)
+- (Domain to avoid 2)
 
 ## 3. Location Preferences
-Preferred locations:
-- New York City / North Jersey
-- Washington DC / Northern Virginia (DMV)
+Preferred:
+- (City / Region 1)
+- (City / Region 2)
 
 Acceptable:
-- Hybrid roles in preferred regions
+- (Remote, hybrid, etc.)
 
 Avoided:
-- Fully on-site roles outside preferred regions
+- (Full-time onsite outside preferred regions, etc.)
 
 ## 4. Compensation Preferences
 Minimum acceptable base salary:
-- $110,000–$115,000 (flexible)
+- $(Amount)
 
 Target compensation:
-- $125,000–$150,000+
-
-Compensation below minimum threshold should be flagged as a preference violation.
+- $(Amount)–$(Amount)+
 
 ## 5. Work Environment Preferences
 Preferred:
-- Hybrid
-- In-office (within preferred regions)
-- Remote
+- (Remote, hybrid, onsite, etc.)
 
 Avoided:
-- Fully on-site roles outside preferred regions
-- Roles requiring overly frequent travel
+- (High travel, etc.)
 
 ## 6. Role Level Preferences
 Preferred:
-- Full-time roles
-- New grad roles
-- Early-career engineering roles
+- (Full-time, new grad, early career, etc.)
 
 Avoided:
-- Senior-level roles requiring 5+ years experience
-- Managerial roles
+- (Senior 5+, managerial, etc.)
 
 ## 7. Defense / Clearance Stance
-The candidate prefers to avoid:
-- Defense contractors
-- DoD/IC roles
-- Roles requiring security clearance
+(Willing / Unwilling / Requires clearance)
 
-If a JD requires clearance or is defense-oriented, this should be flagged as a preference violation.
+If unwilling: Flag defense-oriented JDs as preference violations.
 
 ## 8. Additional Notes
-- Candidate is a US Citizen.
-- Candidate is open to AI/agentic systems roles, data platforms, backend engineering, and data science.
-- Candidate prefers roles with strong engineering or data depth rather than business analytics.
+(Any other constraints, preferences, or opportunities)

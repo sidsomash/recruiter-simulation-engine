@@ -311,7 +311,8 @@ secondarily).
 ---
 
 ### Branch: `simulation-subskill-breakdown`
-**Status:** Not started
+**Status:** In progress (restructure implemented and committed on the branch; end-to-end
+testing against varied JDs still pending — see checklist item 4)
 
 **Problem:** Step 4 ("Apply Simulation Contract") asks the model to perform 8 distinct analyses in
 one pass, each with its own branching rules — the single biggest source of rule-blending errors,
@@ -322,8 +323,8 @@ especially for smaller/cheaper models.
 should land last, once the target schema/formulas/validation are stable).
 
 **Checklist:**
-1. Restructure `simulation/SKILL.md` Step 4 into explicit sequential sub-steps, each producing a
-   discrete, checkable output before moving to the next:
+1. ✅ Restructured `simulation/SKILL.md` Step 4 into explicit sequential sub-steps, each producing
+   a discrete, checkable output before moving to the next:
    - 4a. JD parser → structured metadata (already partially Step 2; formalize as JSON)
    - 4b. Mode classifier (Full-time vs. Internship) — isolated decision, recorded before anything
      else depends on it
@@ -333,14 +334,17 @@ should land last, once the target schema/formulas/validation are stable).
    - 4f. Preference violation check
    - 4g. Recruiter decision synthesis (using the deterministic formula)
    - 4h. Final fit summary + output assembly (markdown + JSON sidecar)
-2. Update `simulation_contract.md` to explicitly reference this sub-step ordering (contract logic
-   itself doesn't change, only the orchestration granularity).
+   Old Step 5 (Generate Output) folded into 4h; old Steps 6/7 renumbered to 5/6. Propagated
+   identically to all three platform copies.
+2. ✅ Updated `simulation_contract.md`'s cross-reference to the new step numbering ("Steps 5–6" →
+   "Steps 4h–5" for the JSON sidecar description).
 3. Consider whether any sub-steps warrant becoming their own slash-invocable skills vs. remaining
    internal steps of one skill — default recommendation is to keep them as one skill with
    explicit internal checkpoints (simpler UX), only splitting into separate skills if a sub-step
-   needs independent reuse (e.g., the JD parser being reused by Resume-Restructure).
-4. Test end-to-end with 2–3 varied JDs (full-time, internship, ambiguous degree) to confirm output
-   parity with the pre-refactor monolithic version.
+   needs independent reuse (e.g., the JD parser being reused by Resume-Restructure). (Not
+   pursued — kept as one skill per the default recommendation.)
+4. **Not yet done:** Test end-to-end with 2–3 varied JDs (full-time, internship, ambiguous
+   degree) to confirm output parity with the pre-refactor monolithic version.
 
 ---
 
@@ -418,6 +422,71 @@ example path (the one pre-existing intentional drift point in this file).
 
 ## Tier 3 — Cross-cutting (independent, can be done anytime)
 
+### Branch: `candidate-branch-isolation`
+**Status:** In progress
+
+**Problem:** Candidate PII (résumé, profile, preferences, and by extension simulation/résumé
+outputs derived from them) has historically been committed directly onto `main` and other
+shared branches, with no enforcement preventing it. This has already caused real incidents this
+session: two different candidates' data got mixed into uncommitted changes on `main`, requiring
+manual git archaeology to untangle into separate branches after the fact. There was also no
+structural guarantee that a skill-development branch (like `simulation-subskill-breakdown`)
+couldn't accidentally inherit or carry real candidate PII.
+
+**Depends on:** Nothing (independent of Simulation/Ranking/Resume-Restructure internals).
+
+**Checklist:**
+1. ✅ Wrote `initialize/ensure_candidate_branch.py` (stdlib-only: `re`, `subprocess`, `sys`) — a
+   deterministic git-branch guard. Given a candidate's name, it slugifies it into
+   `candidate/<slug>`, and:
+   - No-ops if already on that exact branch.
+   - Refuses (exit 1) if the current branch isn't `main` (prevents writing candidate data onto
+     a feature branch or a *different* candidate's branch).
+   - Refuses (exit 1) if `main` has uncommitted changes (prevents carrying unrelated work onto
+     a new candidate branch).
+   - Otherwise checks out the branch if it already exists, or creates it fresh off `main`.
+   - Never pushes, merges, fetches, or deletes branches — purely local checkout/creation.
+   Propagated identically to all three platform copies (`.github`, `.claude`, `.gemini`).
+2. ✅ Updated `initialize/SKILL.md` — added new **Step 8.5** (runs after the candidate's name is
+   known from Step 3/4, before any file writes in Step 9) that invokes the script and handles
+   all three outcomes (`OK`/`REFUSED`/`GIT ERROR`). Updated References (added the script),
+   Error Handling (three new bullet points for the guard's failure modes), and Notes (documents
+   the `candidate/<slug>` branch strategy and that branches are local-only unless the user
+   explicitly pushes). Propagated identically to all three platform copies.
+3. ✅ Reset `simulation/references/candidate_resume.md`, `candidate_profile.md`, and
+   `candidate_preferences.md` on `main` (all three platform copies) back to the blank
+   fill-in-the-blank templates from `initialize/SKILL.md`'s own Input Templates section,
+   removing real candidate PII that had been committed directly to `main`. Confirmed
+   `one_shot_simulation_prompt.md` and the `simulations/`/`resumes/` output directories on
+   `main` were already free of committed candidate data (verified via `git show HEAD:<path>`
+   before making changes).
+4. ✅ Updated root `README.md`: new "Candidate Branch" concept entry, new "🌿 Candidate Data &
+   Git Branches" section explaining the full workflow (why, how it works, publishing is opt-in),
+   updated Quick Start Step 2 / First-Time Workflow / Intended Workflow to reflect the
+   branch-per-candidate flow, updated Prerequisites (git required), updated the Initialize Skill
+   summary bullet list, and rewrote two now-outdated FAQ answers ("Can I have multiple candidate
+   profiles?", "Should I commit my candidate files to Git?") plus added a new FAQ entry
+   explaining the `REFUSED` error states.
+5. **Not yet done:** apply the same candidate-file template reset to any other pre-existing
+   non-candidate branches that inherited PII before this branch existed (e.g.
+   `simulation-subskill-breakdown`, which branched off `main` prior to this cleanup) — needs a
+   small follow-up commit on that branch directly, since it predates this fix.
+6. **Not yet done:** end-to-end test of `ensure_candidate_branch.py` — create a scratch/throwaway
+   candidate branch via the full Initialize flow, confirm the three refusal paths (wrong branch,
+   dirty `main`, git error) all behave as documented, then delete the scratch branch. (An ad hoc
+   smoke test was run during implementation confirming the three code paths behave as designed;
+   a full Initialize-skill dry run has not yet been done.)
+
+**Implementation notes:** This branch does **not** rewrite existing git history — old commits on
+`main` prior to this branch still contain the previously-committed PII in their diffs/blobs.
+Purging that would require a history rewrite (`git filter-repo` or similar), which is invasive
+(breaks any existing local clones/forks) and out of scope here; flagged as a possible future
+follow-up if full historical purge is ever required. This branch only ensures **going forward**,
+`main`'s current/working-tree state stays clean and Initialize can't write real data anywhere but
+a dedicated candidate branch.
+
+---
+
 ### Branch: `golden-examples-fewshot`
 **Status:** Not started
 
@@ -448,13 +517,14 @@ rules.
 | 1 | `simulation-contract-versioning` | — | Merged |
 | 1 | `resume-restructure-fact-guard` | — | Merged |
 | 1 | `golden-examples-fewshot` | — | Not started |
+| 1 | `candidate-branch-isolation` | — | In progress |
 | 2 | `simulation-degree-lookup-table` | — | Merged |
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
 | 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Merged |
 | 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Merged |
 | 5 | `simulation-output-validator` | `simulation-json-sidecar` | Merged |
 | 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Merged |
-| 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | Not started |
+| 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | In progress |
 
 Rows sharing the same "Order" number have no dependency on each other and can be branched/worked
 in parallel.
@@ -630,3 +700,18 @@ entries short — one line per event.
   copies on branch `resume-restructure-fact-guard-path-doc-fix` (doc-only, no script logic
   changed); merged as PR #13. Local `main` synced, both feature branches deleted. Branch and
   todo now closed.
+- 2026-09-02: `simulation-subskill-breakdown` implemented (uncommitted on branch → committed):
+  restructured `simulation/SKILL.md` Step 4 into checkpointed sub-steps 4a–4h, folded old Step 5
+  into 4h, renumbered old Steps 6/7 to 5/6, updated `simulation_contract.md`'s cross-reference.
+  Propagated to all 3 platform copies. End-to-end JD testing still pending; status set to
+  "In progress".
+- 2026-09-02: Started `candidate-branch-isolation` (new Tier 3 branch, added to roadmap). Wrote
+  `initialize/ensure_candidate_branch.py` (deterministic git-branch guard: creates/checks out
+  `candidate/<slug>` off `main`, refuses on any other branch or a dirty `main`). Updated
+  `initialize/SKILL.md` with new Step 8.5 invoking the guard before any candidate file writes.
+  Reset `main`'s `candidate_resume.md`/`candidate_profile.md`/`candidate_preferences.md` (all 3
+  platform copies) to blank templates, removing previously-committed real candidate PII. Updated
+  root `README.md` with a new "Candidate Data & Git Branches" section and refreshed related
+  FAQ/workflow text. All changes propagated to `.github`/`.claude`/`.gemini`. Remaining: apply
+  the same template reset to `simulation-subskill-breakdown` (which branched off the pre-cleanup
+  `main`), and run a full Initialize-skill dry run to validate the branch guard end-to-end.
