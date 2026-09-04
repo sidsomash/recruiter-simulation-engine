@@ -436,8 +436,9 @@ couldn't accidentally inherit or carry real candidate PII.
 **Depends on:** Nothing (independent of Simulation/Ranking/Resume-Restructure internals).
 
 **Checklist:**
-1. ✅ Wrote `initialize/ensure_candidate_branch.py` (stdlib-only, no external packages) — a
-   deterministic git-branch guard. Given a candidate's name, it slugifies it into
+1. ✅ Wrote `.github/skills/initialize/ensure_candidate_branch.py` (mirrored identically to
+   `.claude/skills/initialize/` and `.gemini/skills/initialize/`; stdlib-only, no external
+   packages) — a deterministic git-branch guard. Given a candidate's name, it slugifies it into
    `candidate/<slug>`, and:
    - No-ops if already on that exact branch.
    - Refuses (exit 1) if the current branch isn't `main` (prevents writing candidate data onto
@@ -447,15 +448,16 @@ couldn't accidentally inherit or carry real candidate PII.
    - Otherwise checks out the branch if it already exists, or creates it fresh off `main`.
    - Never pushes, merges, fetches, or deletes branches — purely local checkout/creation.
    Propagated identically to all three platform copies (`.github`, `.claude`, `.gemini`).
-2. ✅ Updated `initialize/SKILL.md` — added new **Step 8.5** (runs after the candidate's name is
-   known from Step 3/4, before any file writes in Step 9) that invokes the script and handles
-   all three outcomes (`OK`/`REFUSED`/`GIT ERROR`). Updated References (added the script),
-   Error Handling (three new bullet points for the guard's failure modes), and Notes (documents
-   the `candidate/<slug>` branch strategy and that branches are local-only unless the user
-   explicitly pushes). Propagated identically to all three platform copies.
-3. ✅ Reset `simulation/references/candidate_resume.md`, `candidate_profile.md`, and
-   `candidate_preferences.md` on `main` (all three platform copies) back to the blank
-   fill-in-the-blank templates from `initialize/SKILL.md`'s own Input Templates section,
+2. ✅ Updated `.github/skills/initialize/SKILL.md` (and its `.claude`/`.gemini` mirrors) — added
+   new **Step 5.5** (runs immediately after Step 5's supplemental questioning, before Step 6
+   starts building any file content) that invokes the script and handles all three outcomes
+   (`OK`/`REFUSED`/`GIT ERROR`). Updated References (added the script), Error Handling (three
+   new bullet points for the guard's failure modes), and Notes (documents the `candidate/<slug>`
+   branch strategy and that branches are local-only unless the user explicitly pushes).
+   Propagated identically to all three platform copies.
+3. ✅ Reset `.github/skills/simulation/references/candidate_resume.md`, `candidate_profile.md`,
+   and `candidate_preferences.md` on `main` (and the `.claude`/`.gemini` mirrors) back to the
+   blank fill-in-the-blank templates from `initialize/SKILL.md`'s own Input Templates section,
    removing real candidate PII that had been committed directly to `main`. Confirmed
    `one_shot_simulation_prompt.md` and the `simulations/`/`resumes/` output directories on
    `main` were already free of committed candidate data (verified via `git show HEAD:<path>`
@@ -716,3 +718,18 @@ entries short — one line per event.
   FAQ/workflow text. All changes propagated to `.github`/`.claude`/`.gemini`. Remaining: apply
   the same template reset to `simulation-subskill-breakdown` (which branched off the pre-cleanup
   `main`), and run a full Initialize-skill dry run to validate the branch guard end-to-end.
+- 2026-09-03: `candidate-branch-isolation` completed remaining items — applied the PII template
+  reset to `simulation-subskill-breakdown`, and end-to-end tested `ensure_candidate_branch.py`
+  in an isolated scratch repo (all 5 code paths verified). Status set to "Ready for review".
+  Two Copilot review rounds followed, both addressed on the branch: (1) fixed a slug-collision
+  risk (non-ASCII/all-punctuation names falling back to a shared `candidate/candidate` branch —
+  now hashes to a unique slug instead), corrected README wording implying the guard blocks *any*
+  non-`main` branch (it's actually a no-op on the candidate's own branch), and fixed a stale
+  roadmap checklist module list; (2) fixed `ensure_candidate_branch.py` crashing with an
+  unhandled `FileNotFoundError` when git isn't on PATH (now returns a deterministic `GIT ERROR`),
+  fixed silent truncation of unquoted multi-word candidate names (now joins all of `sys.argv[1:]`
+  instead of reading only `argv[1]`), moved the branch guard from Step 8.5 to **Step 5.5** in
+  `initialize/SKILL.md` so it unambiguously precedes Step 8's file-writing instructions, and
+  corrected a README example that said `candidate/<your-name>` instead of `candidate/<slug>`.
+  All fixes verified with dedicated scratch-repo tests (git hidden from PATH, unquoted name,
+  two colliding non-ASCII names) and propagated identically to `.github`/`.claude`/`.gemini`.
