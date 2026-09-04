@@ -35,6 +35,7 @@ import hashlib
 import re
 import subprocess
 import sys
+import unicodedata
 
 
 def run(args):
@@ -48,18 +49,35 @@ def run(args):
 
 
 def slugify(name: str) -> str:
-    slug = name.strip().lower()
+    original = name.strip()
+    # Decompose accented/composed characters to their closest ASCII base
+    # (e.g. "José" -> "Jose") instead of dropping them outright.
+    ascii_folded = unicodedata.normalize("NFKD", original).encode("ascii", "ignore").decode("ascii")
+    slug = ascii_folded.lower()
     slug = re.sub(r"[^a-z0-9]+", "-", slug)
     slug = slug.strip("-")
-    if slug:
-        return slug
-    # Non-ASCII or all-punctuation names (e.g. "李雷", "@@@") sanitize down to an
-    # empty string. Falling back to a fixed literal like "candidate" would let
-    # multiple such candidates collide onto the same candidate/candidate branch
-    # and mix their data. Use a short stable hash of the original name instead,
-    # so each distinct input still gets its own unique branch.
-    digest = hashlib.sha1(name.strip().encode("utf-8")).hexdigest()[:8]
-    return f"candidate-{digest}"
+    has_non_ascii = any(ord(ch) > 127 for ch in original)
+
+    if not slug:
+        # Non-ASCII or all-punctuation names (e.g. "李雷", "@@@") sanitize down to
+        # an empty string. Falling back to a fixed literal like "candidate"
+        # would let multiple such candidates collide onto the same
+        # candidate/candidate branch and mix their data. Use a short stable
+        # hash of the original name instead, so each distinct input still
+        # gets its own unique branch.
+        digest = hashlib.sha1(original.encode("utf-8")).hexdigest()[:8]
+        return f"candidate-{digest}"
+
+    if has_non_ascii:
+        # ASCII-folding is lossy (diacritics/marks are dropped during
+        # normalization), so two distinct non-ASCII names can still fold to
+        # the same base slug (e.g. differently-accented names both folding
+        # to "jose"). Append a short stable hash of the original name to
+        # guarantee uniqueness rather than silently colliding.
+        digest = hashlib.sha1(original.encode("utf-8")).hexdigest()[:6]
+        return f"{slug}-{digest}"
+
+    return slug
 
 
 def branch_exists(branch: str) -> bool:
