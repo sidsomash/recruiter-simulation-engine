@@ -150,7 +150,10 @@ Mode adjustments if and only if this flag is `Yes`.
 Produce:
 - Required Skills table (JD skill → Direct / Equivalent / Partial / No Match → evidence)
 - Preferred Skills table (same structure)
-- Responsibility Alignment table (JD responsibility → Strong / Moderate / Weak → evidence)
+- Responsibility Alignment table (JD responsibility → Strong / Moderate / Weak → evidence),
+  applying §9.2 Internship Mode adjustments if 4b's flag is `Yes` (responsibilities may map to
+  coursework/projects/internships, lack of ownership or leadership is not penalized, and depth
+  expectations are reduced)
 - Skill Gaps list (skills with No Match, or Partial matches worth flagging)
 
 **Output checkpoint:** explicit counts of Direct / Equivalent / Partial / No Match required
@@ -193,7 +196,10 @@ Using only the checkpoint outputs from 4c–4f (do not re-derive any of them), c
 1. Skill Score, Degree Score, Experience Score (contract §8.1, from 4c/4d/4e's checkpoints)
 2. Preference Penalty (sum of 4f's violation list, per §7)
 3. Recruiter% and Interview% via the §8.2/§8.3 formulas, clamped per §8.3 — **or**, if 4d's label
-   is ❌ Hard mismatch, apply the §8.4 Hard Reject Override instead (skip the formula entirely)
+   is ❌ Hard mismatch, apply the §8.4 Hard Reject Override instead (skip the formula entirely).
+   If 4b's flag is `Yes`, apply the §9.4 Internship Mode penalty adjustments before/within this
+   step (missing required skills → moderate not heavy penalty; missing required experience →
+   light penalty; degree mismatch evaluated based on enrollment, not completion, per §9.3)
 4. The Recruiter/Interview band labels (§8.5), looked up from the computed percentages
 5. The Recruiter Takeaway narrative (output Section 1) — write this **last**, after steps 1–4
    above are complete, even though it is *displayed first* in the final output document. It must
