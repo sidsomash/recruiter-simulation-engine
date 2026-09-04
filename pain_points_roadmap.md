@@ -423,7 +423,7 @@ example path (the one pre-existing intentional drift point in this file).
 ## Tier 3 — Cross-cutting (independent, can be done anytime)
 
 ### Branch: `candidate-branch-isolation`
-**Status:** Ready for review (all checklist items complete)
+**Status:** Merged
 
 **Problem:** Candidate PII (résumé, profile, preferences, and by extension simulation/résumé
 outputs derived from them) has historically been committed directly onto `main` and other
@@ -520,7 +520,7 @@ rules.
 | 1 | `simulation-contract-versioning` | — | Merged |
 | 1 | `resume-restructure-fact-guard` | — | Merged |
 | 1 | `golden-examples-fewshot` | — | Not started |
-| 1 | `candidate-branch-isolation` | — | Ready for review |
+| 1 | `candidate-branch-isolation` | — | Merged |
 | 2 | `simulation-degree-lookup-table` | — | Merged |
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
 | 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Merged |
@@ -733,3 +733,16 @@ entries short — one line per event.
   corrected a README example that said `candidate/<your-name>` instead of `candidate/<slug>`.
   All fixes verified with dedicated scratch-repo tests (git hidden from PATH, unquoted name,
   two colliding non-ASCII names) and propagated identically to `.github`/`.claude`/`.gemini`.
+- 2026-09-03: `candidate-branch-isolation` — two more Copilot review rounds addressed: (3) fixed
+  `git status --porcelain`'s exit code being silently discarded in the dirty-`main` check (a
+  failing git command was treated as "clean" and let the guard proceed anyway), fixed a
+  residual Unicode slug-collision risk where ASCII-folding via a plain regex silently dropped
+  diacritics (e.g. differently-accented names could fold to the same base slug) — now uses
+  `unicodedata.normalize("NFKD", ...)` plus a stable hash suffix appended whenever the input
+  contains any non-ASCII character, and closed an unclosed Markdown backtick span plus reworded
+  a guard-behavior description in `README.md` that contradicted the no-op-on-candidate-branch
+  behavior. Several subsequent review comments (backtick fix, anchor-link warnings) were
+  confirmed stale/false-positive: the intra-README anchors (`#-candidate-data--git-branches`)
+  were verified correct against GitHub's actual slug-generation algorithm (emoji-prefixed
+  headings get a leading `-`; `&` surrounded by spaces produces a double hyphen). PR merged;
+  remote branch deleted. Status set to **Merged**.
