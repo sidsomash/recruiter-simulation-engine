@@ -168,14 +168,16 @@ branch per candidate: `candidate/<slug>` (e.g., `candidate/jane-doe`), branched 
   `main`) versus which are personal data stores that should stay local.
 
 ### **How it works**
-1. Running `/initialize` while on `main` triggers a deterministic git-branch guard
-   (`ensure_candidate_branch.py`, stdlib-only — no venv needed) that:
+1. Running `/initialize` triggers a deterministic git-branch guard (`ensure_candidate_branch.py`,
+   stdlib-only — no venv needed) that:
    - Slugifies the candidate's name (e.g., "Jane Doe" → `jane-doe`)
-   - If `candidate/jane-doe` already exists locally, checks it out as-is (picking up right
-     where that candidate's history left off); otherwise creates it fresh off the current
-     `main` tip
-   - **Refuses** if you're on any branch other than `main` (a feature branch, or a *different*
-     candidate's branch) — you must `git checkout main` first
+   - **No-ops** if you're already on the matching `candidate/<slug>` branch for that name — safe
+     to re-run Initialize without switching branches first
+   - If run from `main`: if `candidate/jane-doe` already exists locally, checks it out as-is
+     (picking up right where that candidate's history left off); otherwise creates it fresh off
+     the current `main` tip
+   - **Refuses** if you're on any other branch (a feature branch, or a *different* candidate's
+     branch) — you must `git checkout main` first
    - **Refuses** if `main` has uncommitted changes, so nothing unrelated gets carried onto the
      new candidate branch
 2. All of Initialize's file writes (and every later Simulation / Resume-Restructure run for
