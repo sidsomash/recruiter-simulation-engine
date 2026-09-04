@@ -1,1 +1,55 @@
-# Candidate Résumé## Contact- Name: - Email: - Phone: - Locations: - Citizenship: - LinkedIn: (optional)---## Education**Degree & Field**  School — Location  Graduation: Month YearClassification: (e.g., STEM, quantitative, liberal arts)Degree Level: (Bachelor's, Master's, etc.)Minor/Focus: (optional)---## Skills### Languages(Comma-separated: Python, Java, etc.)### Cloud / Platforms(AWS, GCP, Azure, etc.)### Frameworks / Tools(FastAPI, Docker, SQL, etc.)---## Work Experience### **Company Name****Role Title** — Location  **Dates**- Bullet point achievement 1- Bullet point achievement 2- Bullet point achievement 3---## Projects### **Project Name****Role** — Dates- Brief description of project- Key technologies or outcomes
+# Candidate Résumé
+
+## Contact
+- Name: 
+- Email: 
+- Phone: 
+- Locations: 
+- Citizenship: 
+- LinkedIn: (optional)
+
+---
+
+## Education
+**Degree & Field**  
+School — Location  
+Graduation: Month Year
+
+Classification: (e.g., STEM, quantitative, liberal arts)
+Degree Level: (Bachelor's, Master's, etc.)
+Minor/Focus: (optional)
+
+---
+
+## Skills
+
+### Languages
+(Comma-separated: Python, Java, etc.)
+
+### Cloud / Platforms
+(AWS, GCP, Azure, etc.)
+
+### Frameworks / Tools
+(FastAPI, Docker, SQL, etc.)
+
+---
+
+## Work Experience
+
+### **Company Name**
+**Role Title** — Location  
+**Dates**
+
+- Bullet point achievement 1
+- Bullet point achievement 2
+- Bullet point achievement 3
+
+---
+
+## Projects
+
+### **Project Name**
+**Role** — Dates
+
+- Brief description of project
+- Key technologies or outcomes
