@@ -29,6 +29,12 @@ These files are written **once** to `.github/skills/simulation/references/`
 This avoids the drift risk of the model rewriting the same content three
 separate times.
 
+- [ensure_candidate_branch.py](ensure_candidate_branch.py) — deterministic,
+  stdlib-only git-branch guard (see Step 5.5). Ensures candidate files are
+  only ever written on a dedicated `candidate/<slug>` branch, never on
+  `main` or any other shared/feature branch, keeping `main` a clean,
+  PII-free template.
+
 The `one_shot_simulation_prompt.md` is populated once and remains in `.github/skills/simulation/` for mobile user access.
 
 ---
@@ -192,6 +198,52 @@ Based on gaps identified in Step 3, ask **targeted questions only**. Do NOT ask 
 
 ---
 
+### **Step 5.5 — Ensure Candidate Git Branch (Required Before Any File Is Written or Updated)**
+
+No candidate-related file (`candidate_resume.md`, `candidate_profile.md`,
+`candidate_preferences.md`, or `one_shot_simulation_prompt.md`) may be written or updated on
+disk until this step passes. Everything in Steps 1–5 above happens in conversation only (parsing
+the pasted résumé, displaying it back, asking supplemental questions) — no files are touched yet.
+
+Candidate reference files must never be written directly onto `main` or any other shared/
+feature branch — `main` stays a clean, generic template with no real candidate PII, and each
+candidate's full data/simulation/résumé history lives on its own dedicated local
+`candidate/<slug>` branch (branched off `main`, never pushed unless the user explicitly asks
+to do so).
+
+**Preflight — verify Python is available** (same as Step 9's preflight below; check once,
+Python is needed for both this script and `sync_candidate_files.py`).
+
+Run the branch guard, passing the candidate's full name as extracted in Step 3/confirmed in
+Step 4:
+
+```bash
+python3 .github/skills/initialize/ensure_candidate_branch.py "<Candidate Full Name>"
+# or, if python3 is not found:
+python .github/skills/initialize/ensure_candidate_branch.py "<Candidate Full Name>"
+```
+
+- **If the script prints `OK: ...`**: the working copy is now on the correct
+  `candidate/<slug>` branch (created fresh off `main`, or an existing one that was checked
+  out). Proceed to Step 6 — every file write from here through Step 9 happens on this branch,
+  not on `main`.
+- **If the script prints `REFUSED: ...` because the current branch isn't `main`**: stop and
+  relay the message to the user verbatim — they must switch to `main` themselves (or confirm
+  which branch they intended) before Initialize can proceed. Do not attempt to write candidate
+  files anyway as a workaround.
+- **If the script prints `REFUSED: ...` because `main` has uncommitted changes**: stop and
+  ask the user to commit, stash, or discard those changes first, so nothing unrelated gets
+  carried onto the new candidate branch.
+- **If the script prints `GIT ERROR: git not found ...` (or exits non-zero with any other
+  `GIT ERROR`)**: relay the message; this usually means git isn't installed or isn't on PATH.
+  Do not proceed without a working git branch guard — do not fall back to writing files on
+  whatever branch happens to be checked out.
+- This skill never pushes, merges, or deletes branches — it only creates/checks out a local
+  `candidate/<slug>` branch. Publishing (pushing, opening a PR) is always the user's explicit,
+  separate decision.
+
+---
+
 ### **Step 6 — Build Candidate Profile**
 
 From the resume and supplemental answers, construct `candidate_profile.md`:
@@ -305,7 +357,8 @@ This creates a **pre-filled simulation prompt** that mobile users can immediatel
 
 ### **Step 9 — Save Canonical Files, Then Sync Copies**
 
-Write the generated files **once** to the canonical location:
+Write the generated files **once** to the canonical location, on the `candidate/<slug>`
+branch confirmed in Step 5.5 (never on `main`):
 
 1. `.github/skills/simulation/references/`
 
@@ -584,7 +637,10 @@ If unwilling: Flag defense-oriented JDs as preference violations.
 - If user cancels at any phase → abort gracefully and explain that they can re-run the skill later.  
 - If a required field is missing → prompt again or mark as incomplete.  
 - If file write fails → return an error and suggest manual creation.  
-- If files already exist → ask user if they want to overwrite or update.  
+- If files already exist on the current candidate branch → ask user if they want to overwrite or update.  
+- If `ensure_candidate_branch.py` (Step 5.5) refuses because the current branch isn't `main` → relay the message verbatim and stop; do not write candidate files on a non-candidate branch as a workaround.  
+- If `ensure_candidate_branch.py` refuses because `main` has uncommitted changes → ask the user to commit/stash/discard them first, then re-run.  
+- If git is not installed/initialized (`GIT ERROR` from the script) → stop and inform the user; do not fall back to writing files on whatever branch happens to be checked out.  
 
 ---
 
@@ -595,4 +651,9 @@ If unwilling: Flag defense-oriented JDs as preference violations.
 - Files created by this skill become the foundation for all other skills (simulation, ranking).  
 - Users can re-run this skill to update their profile; existing files are overwritten.  
 - No validation of resume content is performed; users are trusted to provide accurate information.  
+- **Candidate data lives on `candidate/<slug>` branches, never on `main`.** Each candidate gets
+  their own local branch (created/checked out automatically by Step 5.5), keeping `main` a
+  clean, generic template safe to branch skill-development work from without carrying anyone's
+  PII along. These candidate branches are local-only by default — pushing/publishing them is
+  always a separate, explicit user decision, not something this skill does automatically.  
 
