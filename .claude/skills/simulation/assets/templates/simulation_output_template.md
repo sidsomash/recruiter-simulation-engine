@@ -1,7 +1,7 @@
 # Simulation Output
 
 > **Companion JSON sidecar (required):** Every simulation output must be accompanied by a
-> `.json` sidecar file with the **same base filename** (see `simulation/SKILL.md` Steps 5–6 and
+> `.json` sidecar file with the **same base filename** (see `simulation/SKILL.md` Steps 4h–5 and
 > `simulation_output_sidecar_template.json`). The Markdown file below remains the canonical
 > **human-readable** record; the JSON sidecar is the canonical **machine-readable** record
 > consumed by the ranking skill (see `ranking_rules.md`). The sidecar is a companion, not a

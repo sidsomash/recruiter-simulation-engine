@@ -497,7 +497,7 @@ The summary must reflect the recruiter decision logic above.
 ## 11. JSON Sidecar (Required Companion Output)
 
 Every simulation must produce a `.json` sidecar file alongside the Markdown output (same base
-filename, see `simulation/SKILL.md` Steps 5–6). The Markdown file remains the canonical
+filename, see `simulation/SKILL.md` Steps 4h–5). The Markdown file remains the canonical
 **human-readable** record. The JSON sidecar is the canonical **machine-readable** record that the
 ranking skill consumes directly (see `ranking_rules.md`), instead of parsing prose strings out of
 the Markdown via regex. The sidecar is a required companion, not a replacement for the Markdown

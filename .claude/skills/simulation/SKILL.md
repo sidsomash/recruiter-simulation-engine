@@ -243,7 +243,7 @@ Example: `skills/simulation/simulations/20260617_153022_data-engineer.md` +
 `skills/simulation/simulations/20260617_153022_data-engineer.json`
 
 Both files are required — do not save the Markdown file alone. If the sidecar cannot be written
-for any reason, treat this as a save failure per Step 6's error handling (do not silently save
+for any reason, treat this as a save failure per this Step's error handling (do not silently save
 only the Markdown file).
 
 **Validate before treating the save as final.** From within `skills/simulation/`, run:
@@ -273,7 +273,7 @@ command, consistent with Step 0's preflight).
   `skills/simulation/simulations/<timestamp>_<slugified-role>.json`, after they have passed
   Step 5's validation.
 - Do NOT print, stream, or otherwise emit any simulation content (full or partial) to the terminal, logs, or assistant response payload. All simulation details must be persisted only to the output files.
-- After successfully saving and validating both files, terminal/assistant responses should be restricted to a concise confirmation containing ONLY the two relative file paths and a one-line status (for example: "Saved and validated: .github/skills/simulation/simulations/20260623_093815_role.md + .json"). No simulation content, analysis, or excerpts should be included in the response.
+- After successfully saving and validating both files, terminal/assistant responses should be restricted to a concise confirmation containing ONLY the two relative file paths and a one-line status (for example: "Saved and validated: skills/simulation/simulations/20260623_093815_role.md + .json"). No simulation content, analysis, or excerpts should be included in the response.
 - If an error prevents writing either file, or validation cannot be made to pass, return a brief error message that describes the failure (no simulation content).
 
 ---
