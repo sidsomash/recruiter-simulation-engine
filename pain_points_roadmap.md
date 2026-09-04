@@ -467,10 +467,10 @@ couldn't accidentally inherit or carry real candidate PII.
    summary bullet list, and rewrote two now-outdated FAQ answers ("Can I have multiple candidate
    profiles?", "Should I commit my candidate files to Git?") plus added a new FAQ entry
    explaining the `REFUSED` error states.
-5. **Not yet done:** apply the same candidate-file template reset to any other pre-existing
-   non-candidate branches that inherited PII before this branch existed (e.g.
-   `simulation-subskill-breakdown`, which branched off `main` prior to this cleanup) — needs a
-   small follow-up commit on that branch directly, since it predates this fix.
+5. ✅ Applied the same candidate-file template reset to `simulation-subskill-breakdown`, the one
+   pre-existing non-candidate branch that had inherited PII before this branch existed (it
+   branched off `main` prior to this cleanup) — done as a follow-up commit directly on that
+   branch (`50955f8`).
 6. ✅ End-to-end tested `ensure_candidate_branch.py` in an isolated scratch git repo (outside this
    repository, to avoid touching real `main`/candidate branches): verified all 5 code paths —
    (1) happy-path branch creation from `main`, (2) no-op when already on the target branch,

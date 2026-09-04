@@ -31,6 +31,7 @@ Behavior:
       branch creation/checkout, scoped to this repository's working copy.
 """
 
+import hashlib
 import re
 import subprocess
 import sys
@@ -45,7 +46,15 @@ def slugify(name: str) -> str:
     slug = name.strip().lower()
     slug = re.sub(r"[^a-z0-9]+", "-", slug)
     slug = slug.strip("-")
-    return slug or "candidate"
+    if slug:
+        return slug
+    # Non-ASCII or all-punctuation names (e.g. "李雷", "@@@") sanitize down to an
+    # empty string. Falling back to a fixed literal like "candidate" would let
+    # multiple such candidates collide onto the same candidate/candidate branch
+    # and mix their data. Use a short stable hash of the original name instead,
+    # so each distinct input still gets its own unique branch.
+    digest = hashlib.sha1(name.strip().encode("utf-8")).hexdigest()[:8]
+    return f"candidate-{digest}"
 
 
 def branch_exists(branch: str) -> bool:
