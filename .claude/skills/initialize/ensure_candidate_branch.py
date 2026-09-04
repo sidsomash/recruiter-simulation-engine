@@ -38,7 +38,12 @@ import sys
 
 
 def run(args):
-    result = subprocess.run(["git", *args], capture_output=True, text=True)
+    try:
+        result = subprocess.run(["git", *args], capture_output=True, text=True)
+    except FileNotFoundError:
+        return 127, "", "git executable not found on PATH"
+    except OSError as exc:
+        return 127, "", f"could not invoke git ({exc})"
     return result.returncode, result.stdout.strip(), result.stderr.strip()
 
 
@@ -63,7 +68,7 @@ def branch_exists(branch: str) -> bool:
 
 
 def main() -> int:
-    if len(sys.argv) < 2 or not sys.argv[1].strip():
+    if len(sys.argv) < 2 or not "".join(sys.argv[1:]).strip():
         print(
             "USAGE ERROR: candidate name is required, e.g.\n"
             '  python3 ensure_candidate_branch.py "Jane Doe"',
@@ -71,11 +76,17 @@ def main() -> int:
         )
         return 2
 
-    candidate_name = sys.argv[1].strip()
+    # Join all remaining args (not just argv[1]) so an unquoted name typed as
+    # `python ensure_candidate_branch.py Jane Doe` still resolves to the full
+    # "Jane Doe" instead of silently truncating to just "Jane".
+    candidate_name = " ".join(sys.argv[1:]).strip()
     slug = slugify(candidate_name)
     target_branch = f"candidate/{slug}"
 
     code, _, err = run(["rev-parse", "--is-inside-work-tree"])
+    if code == 127:
+        print(f"GIT ERROR: {err}. Please install git and ensure it is on PATH.", file=sys.stderr)
+        return 2
     if code != 0:
         print(f"GIT ERROR: not inside a git repository ({err})", file=sys.stderr)
         return 2

@@ -171,8 +171,9 @@ branch per candidate: `candidate/<slug>` (e.g., `candidate/jane-doe`), branched 
 1. Running `/initialize` while on `main` triggers a deterministic git-branch guard
    (`ensure_candidate_branch.py`, stdlib-only — no venv needed) that:
    - Slugifies the candidate's name (e.g., "Jane Doe" → `jane-doe`)
-   - Creates (or checks out, if it already exists) `candidate/jane-doe` off the current `main`
-     tip
+   - If `candidate/jane-doe` already exists locally, checks it out as-is (picking up right
+     where that candidate's history left off); otherwise creates it fresh off the current
+     `main` tip
    - **Refuses** if you're on any branch other than `main` (a feature branch, or a *different*
      candidate's branch) — you must `git checkout main` first
    - **Refuses** if `main` has uncommitted changes, so nothing unrelated gets carried onto the

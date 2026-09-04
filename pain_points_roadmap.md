@@ -436,7 +436,7 @@ couldn't accidentally inherit or carry real candidate PII.
 **Depends on:** Nothing (independent of Simulation/Ranking/Resume-Restructure internals).
 
 **Checklist:**
-1. ✅ Wrote `initialize/ensure_candidate_branch.py` (stdlib-only: `re`, `subprocess`, `sys`) — a
+1. ✅ Wrote `initialize/ensure_candidate_branch.py` (stdlib-only, no external packages) — a
    deterministic git-branch guard. Given a candidate's name, it slugifies it into
    `candidate/<slug>`, and:
    - No-ops if already on that exact branch.
