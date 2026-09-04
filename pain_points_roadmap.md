@@ -423,7 +423,7 @@ example path (the one pre-existing intentional drift point in this file).
 ## Tier 3 — Cross-cutting (independent, can be done anytime)
 
 ### Branch: `candidate-branch-isolation`
-**Status:** In progress
+**Status:** Ready for review (all checklist items complete)
 
 **Problem:** Candidate PII (résumé, profile, preferences, and by extension simulation/résumé
 outputs derived from them) has historically been committed directly onto `main` and other
@@ -471,11 +471,12 @@ couldn't accidentally inherit or carry real candidate PII.
    non-candidate branches that inherited PII before this branch existed (e.g.
    `simulation-subskill-breakdown`, which branched off `main` prior to this cleanup) — needs a
    small follow-up commit on that branch directly, since it predates this fix.
-6. **Not yet done:** end-to-end test of `ensure_candidate_branch.py` — create a scratch/throwaway
-   candidate branch via the full Initialize flow, confirm the three refusal paths (wrong branch,
-   dirty `main`, git error) all behave as documented, then delete the scratch branch. (An ad hoc
-   smoke test was run during implementation confirming the three code paths behave as designed;
-   a full Initialize-skill dry run has not yet been done.)
+6. ✅ End-to-end tested `ensure_candidate_branch.py` in an isolated scratch git repo (outside this
+   repository, to avoid touching real `main`/candidate branches): verified all 5 code paths —
+   (1) happy-path branch creation from `main`, (2) no-op when already on the target branch,
+   (3) checkout of an already-existing candidate branch from `main`, (4) refusal when run from a
+   non-`main`/non-candidate branch, (5) refusal when `main` has uncommitted changes. All 5
+   behaved exactly as documented.
 
 **Implementation notes:** This branch does **not** rewrite existing git history — old commits on
 `main` prior to this branch still contain the previously-committed PII in their diffs/blobs.
@@ -517,7 +518,7 @@ rules.
 | 1 | `simulation-contract-versioning` | — | Merged |
 | 1 | `resume-restructure-fact-guard` | — | Merged |
 | 1 | `golden-examples-fewshot` | — | Not started |
-| 1 | `candidate-branch-isolation` | — | In progress |
+| 1 | `candidate-branch-isolation` | — | Ready for review |
 | 2 | `simulation-degree-lookup-table` | — | Merged |
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
 | 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Merged |
