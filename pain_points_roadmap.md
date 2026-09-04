@@ -311,8 +311,7 @@ secondarily).
 ---
 
 ### Branch: `simulation-subskill-breakdown`
-**Status:** In progress (restructure implemented and committed on the branch; end-to-end
-testing against varied JDs still pending — see checklist item 4)
+**Status:** Ready for review (all checklist items complete)
 
 **Problem:** Step 4 ("Apply Simulation Contract") asks the model to perform 8 distinct analyses in
 one pass, each with its own branching rules — the single biggest source of rule-blending errors,
@@ -343,8 +342,31 @@ should land last, once the target schema/formulas/validation are stable).
    explicit internal checkpoints (simpler UX), only splitting into separate skills if a sub-step
    needs independent reuse (e.g., the JD parser being reused by Resume-Restructure). (Not
    pursued — kept as one skill per the default recommendation.)
-4. **Not yet done:** Test end-to-end with 2–3 varied JDs (full-time, internship, ambiguous
-   degree) to confirm output parity with the pre-refactor monolithic version.
+4. ✅ Tested end-to-end with 3 real, varied JDs against the candidate's actual (if slightly
+   outdated) résumé data on `candidate/sid-somashekar`, applying the restructured 4a-4h
+   sub-steps by hand and validating the resulting Markdown + JSON sidecar pairs with the
+   unchanged `validate_simulation_output.py`:
+   - **Mizuho Data Engineer** (full-time, direct STEM-degree/skill match, one moderate
+     compensation preference violation) → Strong match, Recruiter 90% / Interview 90%.
+   - **Amazon Automation Engineer Intern** (internship; JD requires *current* enrollment
+     through a Dec 2027-Aug 2028 graduation window, but the candidate already graduated and
+     is employed full-time) → classified as ❌ Hard mismatch (closest analogous rule to
+     §5.1's Master's/PhD case, since the JD's specific "already-graduated-but-JD-requires-
+     ongoing-enrollment" scenario isn't explicitly named in the contract — flagged as a
+     future contract-refinement candidate), triggering the §8.4 override → Hard reject,
+     Recruiter 2% / Interview 1%.
+   - **ICF Early Talent Acquisition Associate** (full-time, unspecified degree field per
+     Rule E, but a full domain shift into HR/recruiting with a 2+ year recruiting-specific
+     experience requirement the candidate doesn't meet, plus an explicit avoided-domain
+     preference violation) → Weak match, Recruiter 35% / Interview 35%.
+   All three pairs passed `validate_simulation_output.py` (structural sections, enum values,
+   percentage ranges, and cross-file Markdown/JSON consistency). Independently recomputed all
+   three Recruiter%/Interview% formulas in a separate script and confirmed exact agreement
+   (90/90, 2/1, 35/35) with no rounding-order discrepancies. Test artifacts were scratch-only
+   (not committed to any branch) since the resume used was known to be somewhat outdated;
+   confirms output parity and correct checkpoint-sequencing behavior across a full-time
+   direct-match case, an internship hard-reject edge case, and a full-time domain-mismatch
+   case.
 
 ---
 
@@ -423,7 +445,7 @@ example path (the one pre-existing intentional drift point in this file).
 ## Tier 3 — Cross-cutting (independent, can be done anytime)
 
 ### Branch: `candidate-branch-isolation`
-**Status:** Ready for review (all checklist items complete)
+**Status:** Merged
 
 **Problem:** Candidate PII (résumé, profile, preferences, and by extension simulation/résumé
 outputs derived from them) has historically been committed directly onto `main` and other
@@ -520,14 +542,14 @@ rules.
 | 1 | `simulation-contract-versioning` | — | Merged |
 | 1 | `resume-restructure-fact-guard` | — | Merged |
 | 1 | `golden-examples-fewshot` | — | Not started |
-| 1 | `candidate-branch-isolation` | — | Ready for review |
+| 1 | `candidate-branch-isolation` | — | Merged |
 | 2 | `simulation-degree-lookup-table` | — | Merged |
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
 | 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Merged |
 | 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Merged |
 | 5 | `simulation-output-validator` | `simulation-json-sidecar` | Merged |
 | 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Merged |
-| 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | In progress |
+| 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | Ready for review |
 
 Rows sharing the same "Order" number have no dependency on each other and can be branched/worked
 in parallel.
@@ -733,3 +755,29 @@ entries short — one line per event.
   corrected a README example that said `candidate/<your-name>` instead of `candidate/<slug>`.
   All fixes verified with dedicated scratch-repo tests (git hidden from PATH, unquoted name,
   two colliding non-ASCII names) and propagated identically to `.github`/`.claude`/`.gemini`.
+- 2026-09-03: `candidate-branch-isolation` — two more Copilot review rounds addressed: (3) fixed
+  `git status --porcelain`'s exit code being silently discarded in the dirty-`main` check (a
+  failing git command was treated as "clean" and let the guard proceed anyway), fixed a
+  residual Unicode slug-collision risk where ASCII-folding via a plain regex silently dropped
+  diacritics (e.g. differently-accented names could fold to the same base slug) — now uses
+  `unicodedata.normalize("NFKD", ...)` plus a stable hash suffix appended whenever the input
+  contains any non-ASCII character, and closed an unclosed Markdown backtick span plus reworded
+  a guard-behavior description in `README.md` that contradicted the no-op-on-candidate-branch
+  behavior. Several subsequent review comments (backtick fix, anchor-link warnings) were
+  confirmed stale/false-positive: the intra-README anchors (`#-candidate-data--git-branches`)
+  were verified correct against GitHub's actual slug-generation algorithm (emoji-prefixed
+  headings get a leading `-`; `&` surrounded by spaces produces a double hyphen). PR merged;
+  remote branch deleted. Status set to **Merged**.
+- 2026-09-04: `simulation-subskill-breakdown` — closed the last remaining checklist item
+  (end-to-end testing). Ran 3 real, varied JDs (Mizuho Data Engineer full-time, Amazon
+  Automation Engineer Intern, ICF Early Talent Acquisition Associate) through the restructured
+  4a-4h sub-steps against the candidate's real (if slightly outdated) résumé/profile/
+  preferences on `candidate/sid-somashekar`, producing Strong match / Hard reject / Weak match
+  results respectively. All three Markdown+JSON sidecar pairs passed
+  `validate_simulation_output.py`, and the Recruiter%/Interview% formulas were independently
+  recomputed and matched exactly (90/90, 2/1, 35/35). The Amazon internship case surfaced a
+  genuine contract gap worth a future follow-up: §5.1's Hard Mismatch definition only names the
+  Master's/PhD scenario explicitly, not "JD requires ongoing enrollment through a future
+  graduation window, candidate already graduated" — handled by analogy this round, flagged for
+  a possible future contract refinement rather than silently resolved. Status set to
+  **Ready for review**.
