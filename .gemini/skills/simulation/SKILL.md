@@ -173,16 +173,20 @@ JD's field but the candidate has substantial directly relevant professional/proj
 (career-switcher case), apply §6.3 — state the mismatch plainly and cross-reference the relevant
 experience.
 
-**Output checkpoint:** a single Match Category label (✅ Direct / ✅ Equivalent / 🟡 Partial /
-❌ No match / ❌ Hard mismatch / ➖ Not specified). This label alone drives both 4g's Degree Score
-lookup and the §8.4 Hard Reject Override check.
+**Output checkpoint:** a single Match Category label using the contract §5.1 canonical wording
+(✔ Direct match / ✔ Equivalent match / ~ Partial match / ✘ No match / ❌ Hard mismatch /
+Not specified (Rule E)) — the same labels used in `degree_mapping_template.md` and the §8.1
+Degree Score lookup table. This label alone drives both 4g's Degree Score lookup and the §8.4
+Hard Reject Override check.
 
 #### 4e — Years-of-Experience Mapping
 Compare the JD's stated (or absent) years-of-experience requirement against the candidate's work
 history, applying §9.1 Internship Mode adjustments if 4b's flag is `Yes`.
 
-**Output checkpoint:** a single Experience Match label (Meets / Partially Meets / Does Not Meet).
-This label alone drives 4g's Experience Score lookup.
+**Output checkpoint:** a single Experience Match label using the contract §6.2 canonical wording
+(✔ Meets requirement / ~ Partially meets requirement / ✘ Does not meet requirement) — the same
+labels used in `experience_mapping_template.md` and the §8.1 Experience Score lookup table. This
+label alone drives 4g's Experience Score lookup.
 
 #### 4f — Preference Violations
 Compare the JD against `candidate_preferences.md` (if present) and identify every violation.
