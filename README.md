@@ -349,9 +349,9 @@ copilot
 ```
 You: (on `main`) "Initialize my candidate profile"
 Engine: Creates/checks out `candidate/<slug>` branch (e.g., `candidate/jane-doe`
-        for "Jane Doe"), guides you through 3 interactive prompts, and creates
-        candidate_resume.md, candidate_profile.md, candidate_preferences.md on
-        that branch.
+        for "Jane Doe"), guides you through 3 interactive prompts, and
+        creates candidate_resume.md, candidate_profile.md,
+        candidate_preferences.md on that branch.
 ```
 
 ### **Day 1-2: Simulate Multiple Jobs**

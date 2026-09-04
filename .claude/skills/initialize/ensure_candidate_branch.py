@@ -112,7 +112,10 @@ def main() -> int:
         )
         return 1
 
-    code, status_out, _ = run(["status", "--porcelain"])
+    code, status_out, err = run(["status", "--porcelain"])
+    if code != 0:
+        print(f"GIT ERROR: could not check working tree status ({err})", file=sys.stderr)
+        return 2
     if status_out.strip():
         print(
             "REFUSED: `main` has uncommitted changes. Commit, stash, or "
