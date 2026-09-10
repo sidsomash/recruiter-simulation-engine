@@ -132,9 +132,10 @@ performing all 8 of the contract's analyses in one pass is the single biggest so
 especially for smaller/cheaper models.
 
 #### 4a — Confirm JD Structured Metadata
-Finalize the structured JD metadata object built in Step 2 (company, title, compensation,
-location, years required, degree requirement, required/preferred skills, responsibilities,
-clearance/defense flags, internship indicators, remote/onsite/hybrid, seniority).
+Finalize the structured JD metadata object built in Step 2 (company, title, posting date/JD
+timestamp, job URL/source reference, compensation, location, years required, degree requirement,
+required/preferred skills, responsibilities, clearance/defense flags, internship indicators,
+remote/onsite/hybrid, seniority).
 
 **Output checkpoint:** the locked JD metadata object. Every sub-step below reads from this object
 only — do not re-parse or second-guess the JD text again after this point.
@@ -157,8 +158,11 @@ Produce:
 - Skill Gaps list (skills with No Match, or Partial matches worth flagging)
 
 **Output checkpoint:** explicit counts of Direct / Equivalent / Partial / No Match required
-skills. These counts are the direct input to 4g's Skill Score — do not recompute or re-derive
-them later.
+skills, plus a single `skill_alignment` tier (`high` / `moderate` / `low` / `major_gaps`) derived
+deterministically from those counts per contract §11's thresholds. Both the counts and the tier
+are locked here — they are the direct input to 4g's Skill Score and the sidecar's
+`skill_alignment` field respectively; do not recompute, re-derive, or second-guess either one
+later.
 
 #### 4d — Degree Requirement Mapping
 Determine which of the four candidate degree categories in `references/degree_domain_map.json`
@@ -196,26 +200,33 @@ Compare the JD against `candidate_preferences.md` (if present) and identify ever
 4g's Preference Penalty sum.
 
 #### 4g — Recruiter Decision Synthesis
-Using only the checkpoint outputs from 4c–4f (do not re-derive any of them), compute, in order:
-1. Skill Score, Degree Score, Experience Score (contract §8.1, from 4c/4d/4e's checkpoints)
-2. Preference Penalty (sum of 4f's violation list, per §7)
-3. Recruiter% and Interview% via the §8.2/§8.3 formulas, clamped per §8.3 — **or**, if 4d's label
-   is ❌ Hard mismatch, apply the §8.4 Hard Reject Override instead (skip the formula entirely).
-   If 4b's flag is `Yes`, apply the §9.4 Internship Mode penalty adjustments before/within this
-   step (missing required skills → moderate not heavy penalty; missing required experience →
-   light penalty; degree mismatch evaluated based on enrollment, not completion, per §9.3)
-4. The Recruiter/Interview band labels (§8.5), looked up from the computed percentages
-5. The Recruiter Takeaway narrative (output Section 1) — write this **last**, after steps 1–4
+Using only the checkpoint outputs from 4b–4f (do not re-derive any of them), compute, in order:
+1. Check 4d's Match Category label first: if it is ❌ Hard mismatch, apply the §8.4 Hard Reject
+   Override — `Recruiter% = 2`, `Interview% = 1` (fixed, deterministic values) — and skip directly
+   to step 4 below. Per contract §8.7 Example C, Skill Score and Experience Score are **not
+   computed** in this case; the override is unconditional and independent of them.
+2. Otherwise, compute Skill Score, Degree Score, Experience Score (contract §8.1, from
+   4c/4d/4e's checkpoints). If 4b's flag is `Yes`, no separate internship penalty is applied here
+   — the internship-adjusted labels 4c/4d/4e already locked (per §9.1/§9.2/§9.3) naturally
+   produce the correct (lighter) scores; §9.4 is descriptive of that effect, not an additional
+   step (see contract §9.4's note).
+3. Preference Penalty: sum the positive point magnitude (5/10/15/20) from the §8.1 Preference
+   Penalty table for every violation in 4f's list — this sum is a non-negative number that the
+   §8.2/§8.3 formulas subtract directly, per the §8.7 worked examples.
+4. Recruiter% and Interview% via the §8.2/§8.3 formulas, clamped per §8.3 (skip this step
+   entirely if step 1's Hard Reject Override already applied).
+5. The Recruiter/Interview band labels (§8.5), looked up from the computed percentages.
+6. The Recruiter Takeaway narrative (output Section 1) — write this **last**, after steps 1–5
    above are complete, even though it is *displayed first* in the final output document. It must
-   summarize conclusions already reached in 4c–4g, not introduce new judgments unsupported by
+   summarize conclusions already reached in 4b–4g, not introduce new judgments unsupported by
    those checkpoints.
 
 **Output checkpoint:** Recruiter%, Interview%, their band labels, and the Recruiter Takeaway text
 — locked inputs to 4h.
 
 #### 4h — Final Fit Summary + Output Assembly
-1. Derive the Final Fit Summary category (§10: Strong match / Moderate match / Weak match /
-   Mismatch / Hard reject) from 4g's computed percentages — never chosen independently of them.
+1. Derive the Final Fit Summary category by looking up 4g's computed Recruiter% band in contract
+   §10.1's deterministic mapping table — this is a lookup, never chosen independently of it.
 2. Populate `simulation_output_template.md`, `skill_mapping_template.md`,
    `experience_mapping_template.md`, and `degree_mapping_template.md` using the checkpoint
    outputs from 4a–4g. This is pure formatting/assembly — no new analysis happens at this stage.

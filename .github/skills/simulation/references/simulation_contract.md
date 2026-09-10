@@ -339,13 +339,16 @@ If there are zero required skills listed in the JD, Skill Score = 100.
 
 | Violation Severity | Penalty |
 |---|---|
-| Minor (e.g., location) | −5 |
-| Moderate (e.g., compensation, domain mismatch) | −10 |
-| Major (e.g., on-site/remote mismatch candidate strongly opposes) | −15 |
-| Defense/clearance (candidate opts out) | −20 |
+| Minor (e.g., location) | 5 |
+| Moderate (e.g., compensation, domain mismatch) | 10 |
+| Major (e.g., on-site/remote mismatch candidate strongly opposes) | 15 |
+| Defense/clearance (candidate opts out) | 20 |
 
-Sum the penalty for every applicable violation. If no preferences file was provided, Preference
-Penalty = 0.
+Sum the penalty magnitudes for every applicable violation to get the Preference Penalty — a
+non-negative number. If no preferences file was provided, Preference Penalty = 0. The formulas
+below (§8.2/§8.3) subtract this value directly, exactly as shown in the §8.7 worked examples
+(e.g., a single moderate violation subtracts 10, not −10) — never store or apply it as a negative
+number.
 
 ### 8.2 Recruiter Screen Likelihood Formula
 
@@ -468,9 +471,17 @@ set explicitly rather than left blank or inferred later from the job title.
 - Degree completion is **not required**  
 
 ### 9.4 Recruiter Decision Adjustments (Internships)
-- Missing required skills → moderate penalty (not heavy)  
-- Missing required experience → light penalty  
-- Degree mismatch → evaluated based on enrollment, not completion  
+These restate how §9.1–§9.3's internship-adjusted labels (already locked by 4c/4d/4e in
+`simulation/SKILL.md`) naturally reduce Skill/Degree/Experience Score penalties for internship
+candidates — they are descriptive of that already-applied effect, not a separate additive penalty
+computed inside §8's formula (same framing as §8.6's Decision Rules):
+- Missing required skills → moderate penalty (not heavy), because §9.2's leniency keeps the
+  Responsibility Alignment (and thus Skill Score) from dropping as sharply as it would full-time
+- Missing required experience → light penalty, because §9.1 already lets coursework/projects/
+  research count as experience, raising the Experience Match label (and Experience Score) that
+  would otherwise apply
+- Degree mismatch → evaluated based on enrollment, not completion, per §9.3's Match Category
+  rules (already reflected in 4d's locked label)
 
 ### 9.5 Internship Fit Summary Labels
 - Strong internship match  
@@ -491,6 +502,21 @@ One of:
 - **Hard reject** (only if recruiter logic or candidate preferences dictate)
 
 The summary must reflect the recruiter decision logic above.
+
+### 10.1 Deterministic Category Mapping
+
+The Final Fit Summary category is looked up from the computed Recruiter% band (§8.5) — it is a
+lookup, never an independent judgment call. The same Recruiter% always produces the same Final
+Fit Summary category:
+
+| Recruiter% Band (§8.5) | Final Fit Summary |
+|---|---|
+| Very High (80–100%) | Strong match |
+| High (65–79%) | Strong match |
+| Moderate (45–64%) | Moderate match |
+| Low (20–44%) | Weak match |
+| Very Low (5–19%) | Mismatch |
+| Hard Reject (0–4%) | Hard reject |
 
 ---
 
@@ -530,10 +556,15 @@ independent re-derivation. If the two ever disagree, that is a bug in output gen
 acceptable discrepancy.
 
 **`skill_alignment` derivation:** since §8.1's Skill Score is a continuous 0–100 number (not an
-enum), derive the enum for this field only using the same thresholds `run_ranking.py` already
-uses for its independent skill-alignment heuristic (documented in `ranking_rules.md` §3.4): `high`
-if Skill Score reflects mostly Direct/Equivalent matches with no gaps, `major_gaps` if two or more
-required skills are No Match (or the candidate has no Direct/Equivalent/Partial matches at all),
-`moderate` or `low` otherwise based on the proportion of strong matches. This keeps the sidecar's
-categorical field consistent with the ranking skill's existing categorical scoring, independent of
-the continuous Skill Score used only inside the §8 formula.
+enum), derive this field deterministically from 4c's locked Direct/Equivalent/Partial/No Match
+counts, using the same tiers `run_ranking.py` already scores (`ranking_rules.md` §3.4), via these
+explicit, non-overlapping thresholds (evaluated in this order):
+1. `major_gaps` — No Match count ≥ 2, or the candidate has zero Direct/Equivalent/Partial matches
+   at all
+2. `high` — No Match count = 0 **and** (Direct + Equivalent) / total_required_skills ≥ 0.8
+3. `moderate` — not `major_gaps`, and (Direct + Equivalent) / total_required_skills ≥ 0.5
+4. `low` — none of the above (some matches exist, but below the `moderate` threshold)
+
+This tier must be locked once, during `simulation/SKILL.md` Step 4c (alongside the Direct/
+Equivalent/Partial/No Match counts) — 4h only copies this already-locked value into the sidecar,
+it must never derive or second-guess it during output assembly.
