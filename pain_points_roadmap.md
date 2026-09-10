@@ -512,6 +512,49 @@ a dedicated candidate branch.
 
 ---
 
+### Branch: `skill-sync-checker-tooling`
+**Status:** In progress
+
+**Problem:** Skill-definition files (`SKILL.md`, `references/*`, `assets/templates/*`) must be
+byte-for-byte identical across `.github/skills/`, `.claude/skills/`, and `.gemini/skills/`, since
+each AI platform reads its own copy independently. Unlike candidate data files (mirrored
+automatically by `initialize/sync_candidate_files.py`), there has been **no equivalent tooling for
+skill-definition files** — every propagation has been fully manual (edit x3, then eyeball- or
+`Compare-Object`-diff). This has been a recurring, repeated source of PR review findings across
+multiple Copilot review rounds on `simulation-subskill-breakdown` (stale cross-references,
+inconsistent step numbering, mismatched wording caught only after the fact).
+
+**Depends on:** Nothing.
+
+**Checklist:**
+1. ✅ Added `tools/check_skill_sync.py` — a stdlib-only, repo-root-level script with three modes:
+   - `python3 tools/check_skill_sync.py` — report-only: scans every skill file across all 3
+     platform copies and reports any that are missing from one/two copies or whose content
+     differs; exits non-zero on any drift (usable as a manual pre-commit check).
+   - `python3 tools/check_skill_sync.py --sync <relative-path>` — mirrors one file byte-for-byte
+     from the canonical `.github` copy to `.claude`/`.gemini`.
+   - `python3 tools/check_skill_sync.py --sync-all` — mirrors every non-excluded file from
+     `.github` to `.claude`/`.gemini` in one pass.
+   - Maintains an explicit, justified `ALLOWED_EXCEPTIONS` list (currently just
+     `simulation/one_shot_simulation_prompt.md`, which is canonical-`.github`-only by design) plus
+     exclusions for generated/non-definition content (`simulations/` output dirs,
+     `ranking_results.csv`, `__pycache__`/`.pyc`).
+2. ✅ Validated the script against the current repo state: correctly ignores generated artifacts
+   and the mobile-prompt exception, and correctly surfaces genuine pre-existing drift in
+   `resume-restructure` (`SKILL.md`, `references/resume_guidelines.md` differ across copies; two
+   templates under `assets/templates/` are `.github`-only) — confirming the tool catches real
+   drift, not just the specific case it was built for. That pre-existing `resume-restructure`
+   drift is tracked separately and is out of scope for this branch to fix.
+3. Update `README.md` (`Contributing & Customization` and/or `Directory Structure` sections) to
+   document the script and make 3-way propagation an explicit, discoverable part of the
+   contribution workflow instead of tribal knowledge.
+4. Consider wiring `--check` mode into a CI workflow (e.g., a GitHub Actions step on PRs touching
+   `.github/skills/`, `.claude/skills/`, or `.gemini/skills/`) as a follow-up, once the script has
+   proven itself in manual use for a few PRs. Not pursued yet — flagged as a future enhancement,
+   not a blocker for this branch.
+
+---
+
 ### Branch: `golden-examples-fewshot`
 **Status:** Not started
 
@@ -543,6 +586,7 @@ rules.
 | 1 | `resume-restructure-fact-guard` | — | Merged |
 | 1 | `golden-examples-fewshot` | — | Not started |
 | 1 | `candidate-branch-isolation` | — | Merged |
+| 1 | `skill-sync-checker-tooling` | — | In progress |
 | 2 | `simulation-degree-lookup-table` | — | Merged |
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
 | 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Merged |
@@ -781,3 +825,44 @@ entries short — one line per event.
   graduation window, candidate already graduated" — handled by analogy this round, flagged for
   a possible future contract refinement rather than silently resolved. Status set to
   **Ready for review**.
+- 2026-09-04–2026-09-10: `simulation-subskill-breakdown` — 4 Copilot review rounds addressed on
+  the open PR: (1) removed a hardcoded `.github/` path prefix from Step 6's example confirmation
+  message and propagated the "Steps 5–6" → "Steps 4h–5" cross-reference fix to `.claude`/
+  `.gemini` copies of `simulation_contract.md` and (previously missed entirely) all 3 copies of
+  `simulation_output_template.md`; also fixed a mislabeled "Step 6's error handling" reference
+  inside Step 5's own text. (2) Anchored the previously-missing §9.2 (Responsibility Mapping) and
+  §9.4 (Recruiter Decision Adjustments) Internship Mode rules to 4c/4g respectively (only 4d/4e
+  had anchored §9.1/§9.3). (3) Aligned 4d/4e's checkpoint label wording/glyphs with the contract's
+  actual §5.1/§6.2 canonical labels and the mapping templates (checkpoints had invented their own
+  wording). (4) A substantive round: reordered 4g so the §8.4 Hard Reject Override is checked
+  *before* computing Skill/Experience Score (contract §8.7 Example C says those scores are never
+  computed for a Hard mismatch); fixed the contract's own internal inconsistency where the §8.1
+  Preference Penalty table listed negative point values (`−5`/`−10`/etc.) while the formulas and
+  worked examples treat the penalty as a positive magnitude to subtract (now the table uses
+  positive values and the sign convention is stated explicitly); clarified §9.4 as descriptive of
+  §9.1–§9.3's already-applied effects rather than a separate, non-deterministic additive penalty;
+  added a new contract §10.1 with an explicit Recruiter%-band → Final Fit Summary lookup table
+  (previously §10 only enumerated the 5 labels with no deterministic mapping) — verified this
+  mapping against all 3 real JD test results from the prior round (90%→Strong match, 2%→Hard
+  reject, 35%→Weak match all match); tightened the JSON sidecar's `skill_alignment` derivation
+  into explicit, ordered numeric thresholds and moved its locking into 4c (previously 4h would
+  have had to invent the tier, violating 4h's "no new analysis" rule); added the missing posting
+  date/JD-timestamp and job-URL/source-reference fields to 4a's checkpoint (Step 2 already
+  required them, 4a's checkpoint just didn't list them); and fixed 4g's stated input scope
+  ("4c–4f") to include 4b, since the internship-mode flag it reads is locked there. All fixes
+  applied identically to `.github`/`.claude`/`.gemini` and verified byte-identical after each
+  round. One review-round item (a claimed Step 5/6 output-path inconsistency) was re-confirmed as
+  a false positive — both steps already use the same relative-path convention used elsewhere in
+  the repo (`ranking/SKILL.md`, `resume-restructure` templates), and `run_ranking.py` resolves
+  the simulations directory script-relatively, not by string-matching the docs.
+- 2026-09-10: Added `skill-sync-checker-tooling` (new Tier 3 branch) after noticing the repeated
+  propagation-drift findings above had no tooling support — only candidate data files have an
+  automated mirror script (`sync_candidate_files.py`); skill-definition files have always been
+  synced by hand. Added `tools/check_skill_sync.py` (stdlib-only) with report-only, `--sync
+  <path>`, and `--sync-all` modes, plus an explicit `ALLOWED_EXCEPTIONS` list and exclusions for
+  generated content (`simulations/` outputs, `ranking_results.csv`, `__pycache__`). Validated
+  against the current repo: correctly ignored known exceptions/generated files, and correctly
+  surfaced genuine **pre-existing, unrelated** drift in `resume-restructure` (`SKILL.md` and
+  `references/resume_guidelines.md` differ across copies; two templates are `.github`-only) —
+  that drift is out of scope for this branch and tracked separately. README documentation update
+  and a decision on optional CI wiring still remain. Status: **In progress**.

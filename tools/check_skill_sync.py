@@ -1,0 +1,222 @@
+#!/usr/bin/env python3
+"""Verify (and optionally fix) that skill-definition files are mirrored
+identically across the .github, .claude, and .gemini platform copies.
+
+Every skill's logic (SKILL.md, references/*, assets/templates/*, and any
+deterministic helper scripts) must be byte-for-byte identical across all
+three platform directories, since each AI platform (GitHub Copilot CLI,
+Claude, Gemini) reads its own copy independently. There is currently no
+automatic propagation for these files (unlike candidate data files, which
+are synced by initialize/sync_candidate_files.py) - skill-file edits must be
+applied to all three copies by hand, and drift between copies has been a
+recurring source of bugs (stale cross-references, inconsistent wording,
+etc.). This script exists to catch that drift instead of relying on manual
+`Compare-Object`/`diff` calls after every edit.
+
+Usage:
+    # Report-only: scan every skill file and print any drift. Exits 1 if
+    # any file differs across copies or is missing from some copy (unless
+    # explicitly allowed - see ALLOWED_EXCEPTIONS below). Safe to run in CI
+    # or as a pre-commit check.
+    python3 tools/check_skill_sync.py
+
+    # Fix ONE specific file: mirror it byte-for-byte from the canonical
+    # .github copy to .claude and .gemini.
+    python3 tools/check_skill_sync.py --sync skills/simulation/SKILL.md
+
+    # Fix EVERY drifted/missing file in one pass (canonical = .github).
+    # Use with care - review the diff before committing.
+    python3 tools/check_skill_sync.py --sync-all
+
+Stdlib-only (pathlib, sys, argparse) - no external packages, no virtualenv
+required. Requires Python 3.8+.
+"""
+import argparse
+import sys
+from pathlib import Path
+
+PLATFORM_DIRS = (".github", ".claude", ".gemini")
+CANONICAL_DIR = ".github"
+
+# Files/patterns that are *intentionally* not mirrored across all three
+# copies. Anything matched here is skipped by both --check and --sync-all.
+# Keep this list short and well-justified - if in doubt, a file should be
+# mirrored, not excluded.
+ALLOWED_EXCEPTIONS = (
+    # Mobile one-shot prompt: canonical-only by design (see initialize
+    # SKILL.md Step 8/9) - Claude/Gemini users don't need their own copy.
+    "simulation/one_shot_simulation_prompt.md",
+)
+
+# Generated/output directories - never part of the skill *definition*, so
+# they're excluded from sync checks entirely (their contents are expected
+# to differ per-platform-copy, per-run, or be entirely absent).
+EXCLUDED_DIR_PARTS = (
+    "simulations",  # generated simulation Markdown/JSON pairs
+)
+EXCLUDED_FILENAMES = (
+    "ranking_results.csv",  # generated ranking output, overwritten per run
+)
+
+
+def is_excluded(rel_path: Path) -> bool:
+    if str(rel_path).replace("\\", "/") in ALLOWED_EXCEPTIONS:
+        return True
+    if rel_path.name in EXCLUDED_FILENAMES:
+        return True
+    if any(part in EXCLUDED_DIR_PARTS for part in rel_path.parts):
+        return True
+    # Python bytecode caches are interpreter/version-specific artifacts, not
+    # skill-definition source - never part of the sync contract.
+    if "__pycache__" in rel_path.parts or rel_path.suffix == ".pyc":
+        return True
+    return False
+
+
+def find_repo_root(start: Path):
+    """Walk up from this script's location to find the repo root."""
+    for parent in [start] + list(start.parents):
+        if all((parent / d).is_dir() for d in (".github", ".claude", ".gemini")):
+            return parent
+    return None
+
+
+def collect_relative_paths(repo_root: Path):
+    """All skill-relative paths (relative to <platform>/skills/) that exist
+    in at least one platform copy, excluding generated/excluded content."""
+    rel_paths = set()
+    for platform in PLATFORM_DIRS:
+        skills_dir = repo_root / platform / "skills"
+        if not skills_dir.is_dir():
+            continue
+        for path in skills_dir.rglob("*"):
+            if path.is_dir():
+                continue
+            rel = path.relative_to(skills_dir)
+            if is_excluded(rel):
+                continue
+            rel_paths.add(rel)
+    return sorted(rel_paths, key=lambda p: str(p))
+
+
+def check(repo_root: Path):
+    rel_paths = collect_relative_paths(repo_root)
+    missing_issues = []
+    diff_issues = []
+
+    for rel in rel_paths:
+        full_paths = {
+            platform: repo_root / platform / "skills" / rel for platform in PLATFORM_DIRS
+        }
+        existing = {p: fp for p, fp in full_paths.items() if fp.exists()}
+
+        if len(existing) < len(PLATFORM_DIRS):
+            missing_from = [p for p in PLATFORM_DIRS if p not in existing]
+            missing_issues.append((rel, missing_from))
+            continue
+
+        contents = {p: fp.read_bytes() for p, fp in existing.items()}
+        if len(set(contents.values())) > 1:
+            diff_issues.append(rel)
+
+    if missing_issues:
+        print(f"MISSING in some copy ({len(missing_issues)}):")
+        for rel, missing_from in missing_issues:
+            print(f"  - skills/{rel}  (absent from: {', '.join(missing_from)})")
+
+    if diff_issues:
+        print(f"CONTENT DIFFERS across copies ({len(diff_issues)}):")
+        for rel in diff_issues:
+            print(f"  - skills/{rel}")
+
+    if not missing_issues and not diff_issues:
+        print(f"OK - {len(rel_paths)} skill files checked, all copies identical.")
+        return 0
+
+    print(
+        "\nIf this drift is intentional, add the path to ALLOWED_EXCEPTIONS in "
+        "tools/check_skill_sync.py. Otherwise fix it with:\n"
+        "  python3 tools/check_skill_sync.py --sync <relative-path>\n"
+        "  python3 tools/check_skill_sync.py --sync-all"
+    )
+    return 1
+
+
+def sync_one(repo_root: Path, rel: Path):
+    source = repo_root / CANONICAL_DIR / "skills" / rel
+    if not source.exists():
+        print(f"Error: canonical source file does not exist: {source}")
+        return 1
+    content = source.read_bytes()
+    synced = []
+    for platform in PLATFORM_DIRS:
+        if platform == CANONICAL_DIR:
+            continue
+        target = repo_root / platform / "skills" / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+        synced.append(str(target.relative_to(repo_root)))
+    print(f"Synced {rel} to:")
+    for path in synced:
+        print(f"  - {path}")
+    return 0
+
+
+def sync_all(repo_root: Path):
+    canonical_skills_dir = repo_root / CANONICAL_DIR / "skills"
+    rel_paths = [
+        p.relative_to(canonical_skills_dir)
+        for p in canonical_skills_dir.rglob("*")
+        if p.is_file() and not is_excluded(p.relative_to(canonical_skills_dir))
+    ]
+    total_synced = 0
+    for rel in sorted(rel_paths, key=str):
+        source = canonical_skills_dir / rel
+        content = source.read_bytes()
+        for platform in PLATFORM_DIRS:
+            if platform == CANONICAL_DIR:
+                continue
+            target = repo_root / platform / "skills" / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if target.exists() and target.read_bytes() == content:
+                continue
+            target.write_bytes(content)
+            total_synced += 1
+            print(f"  - wrote {target.relative_to(repo_root)}")
+    print(f"Done. {total_synced} file(s) written/updated from {CANONICAL_DIR}.")
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--sync",
+        metavar="RELATIVE_PATH",
+        help="Mirror one file (relative to skills/, e.g. simulation/SKILL.md) "
+        "from the canonical .github copy to .claude and .gemini.",
+    )
+    parser.add_argument(
+        "--sync-all",
+        action="store_true",
+        help="Mirror every non-excluded file from the canonical .github copy "
+        "to .claude and .gemini in one pass.",
+    )
+    args = parser.parse_args()
+
+    repo_root = find_repo_root(Path(__file__).resolve().parent)
+    if repo_root is None:
+        print(
+            "Error: could not locate repo root (expected .github/, .claude/, "
+            "and .gemini/ directories as siblings)."
+        )
+        return 1
+
+    if args.sync:
+        return sync_one(repo_root, Path(args.sync))
+    if args.sync_all:
+        return sync_all(repo_root)
+    return check(repo_root)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
