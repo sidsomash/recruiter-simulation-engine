@@ -576,6 +576,35 @@ rules.
 
 ---
 
+### Branch: `mobile-prompt-4a-4h-sync`
+**Status:** Not started
+
+**Problem:** `simulation/one_shot_simulation_prompt.md` (the pre-populated mobile prompt built by
+the Initialize skill) still reflects the pre-`simulation-subskill-breakdown` workflow — it uses
+the old 0–5% band language and has no awareness of the 4a–4h checkpoint sequencing, the §10.1
+deterministic Final Fit Summary lookup, or the JSON sidecar requirement. Flagged during a
+`simulation-subskill-breakdown` PR review round and explicitly deferred (per user decision) to its
+own branch rather than folding a bigger-scope prompt rewrite into that PR.
+
+**Depends on:** `simulation-subskill-breakdown` (must be merged first, since this branch mirrors
+its finalized 4a–4h structure and §10.1 mapping into the mobile prompt).
+
+**Checklist:**
+1. Rewrite the mobile prompt's embedded scoring/workflow instructions to match the current
+   `simulation_contract.md` (positive Preference Penalty convention, §8.1 formulas, §10.1
+   Recruiter%-band lookup table, §9.4/§9.5 internship label mapping).
+2. Add the 4a–4h checkpoint sequencing (or an equivalently faithful condensed version suitable for
+   a single mobile-friendly prompt) so a standalone AI app run stays consistent with the CLI-skill
+   run.
+3. Confirm the prompt still instructs producing both the Markdown output and JSON sidecar (or
+   explicitly scopes mobile-only runs out of sidecar production, if infeasible for that context —
+   needs a decision).
+4. Re-run the Initialize skill's Step 8 population logic (or its manual equivalent) against the
+   updated template to confirm placeholders still populate correctly.
+5. Propagate to all 3 platform copies and verify byte-identical.
+
+---
+
 ## Suggested Branch Order Summary
 
 | Order | Branch | Depends on | Status |
@@ -594,9 +623,11 @@ rules.
 | 5 | `simulation-output-validator` | `simulation-json-sidecar` | Merged |
 | 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Merged |
 | 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | Ready for review |
+| 7 | `mobile-prompt-4a-4h-sync` | `simulation-subskill-breakdown` | Not started |
 
 Rows sharing the same "Order" number have no dependency on each other and can be branched/worked
 in parallel.
+
 
 ---
 
@@ -866,3 +897,38 @@ entries short — one line per event.
   `references/resume_guidelines.md` differ across copies; two templates are `.github`-only) —
   that drift is out of scope for this branch and tracked separately. README documentation update
   and a decision on optional CI wiring still remain. Status: **In progress**.
+- 2026-09-11: `simulation-subskill-breakdown` — a 5th Copilot review round addressed several
+  remaining substantive gaps. Fixed 4g's hard-reject branch instructing "skip directly to step 4"
+  when step 4 is actually the formula step meant to be skipped (corrected to "step 5"). Added the
+  missing `➖ Not specified` label to contract §5.1's canonical list and the §8.1 Degree Score
+  table (previously used as a table value and in the sidecar enum but absent from the label list
+  and `degree_mapping_template.md`); 4d's checkpoint updated to match. Clarified §6.2/4e: the
+  Experience Match table's `Match` column must contain only the bare glyph (✔/~/✘) — matching
+  `experience_mapping_template.md` and required by `run_ranking.py`'s legacy Markdown-only
+  fallback parser, which regex-matches a standalone glyph — while the full canonical label
+  wording is for internal/prose use only, resolving an apparent conflict the review flagged.
+  Fixed the `skill_alignment` derivation: added an explicit zero-required-skills → `high` rule
+  (matching §8.1's rule that Skill Score = 100 with no required skills), evaluated before the
+  `major_gaps` check that would otherwise misclassify a zero-skill JD; also corrected the
+  high/moderate thresholds, which had been invented as 0.8/0.5 in the prior round, to actually
+  match `run_ranking.py`'s real fallback heuristic (0.7 high with zero No-Match; moderate at 0.4
+  direct-ratio or 0.6 combined direct+partial ratio). Corrected an inaccurate internship claim:
+  §8.1's Skill Score has no input from Responsibility Alignment, so Internship Mode does not
+  lighten missing-required-skill penalties as §9.4/4g previously implied — reworded to only claim
+  the Degree/Experience effects that are actually implemented. Reconciled §9.5's internship-mode
+  Final Fit Summary labels with §10.1's generic lookup table via an explicit 1:1 mapping, with 4h
+  now selecting the internship label from that mapping rather than independently. Fixed a
+  regression from the prior round's incomplete fix: §8.7's worked Example B still showed
+  `Preference Penalty = −10` after the §8.1 table itself was corrected to positive values;
+  corrected to `10`. Also fixed 5 latent bugs in `tools/check_skill_sync.py` found while using it
+  this round: `--sync`/`--sync-all` were not mutually exclusive; `--sync` accepted unsanitized
+  absolute paths and `..` components (path-traversal risk); the README's documented `--sync
+  skills/simulation/SKILL.md` example resolved to a nonexistent double-`skills/` path (now
+  tolerated via path normalization); `--sync-all` silently ignored files present only in
+  `.claude`/`.gemini` but missing from the canonical `.github` tree (now warns and exits 1); and
+  a stale docstring reference to a nonexistent `--check` flag. Deferred (per explicit user
+  decision) fixing the mobile one-shot prompt's stale scoring bands/step structure to a separate
+  follow-up branch rather than folding it into this PR. All contract/SKILL.md fixes applied
+  identically to `.github`/`.claude`/`.gemini` and verified byte-identical; confirmed the
+  pre-existing `resume-restructure` drift (tracked separately under
+  `skill-sync-checker-tooling`) remains unchanged and out of scope.
