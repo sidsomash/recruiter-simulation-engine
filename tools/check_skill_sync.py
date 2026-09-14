@@ -14,34 +14,37 @@ etc.). This script exists to catch that drift instead of relying on manual
 `Compare-Object`/`diff` calls after every edit.
 
 Usage:
-    # Report-only: scan every skill file and print any drift. Exits 1 if
-    # any file differs across copies or is missing from some copy (unless
-    # explicitly allowed - see ALLOWED_EXCEPTIONS below). Safe to run in CI
-    # or as a pre-commit check.
+    # Report-only (the default when no flag is given): scan every skill
+    # file and print any drift. Exits 1 if any file differs across copies
+    # or is missing from some copy (unless explicitly allowed - see
+    # ALLOWED_EXCEPTIONS below). Safe to run in CI or as a pre-commit check.
     python3 tools/check_skill_sync.py
 
     # Fix ONE specific file: mirror it byte-for-byte from the canonical
-    # .github copy to .claude and .gemini.
-    python3 tools/check_skill_sync.py --sync skills/simulation/SKILL.md
+    # .github copy to .claude and .gemini. Path is relative to
+    # <platform>/skills/ (e.g. simulation/SKILL.md, NOT skills/simulation/SKILL.md).
+    python3 tools/check_skill_sync.py --sync simulation/SKILL.md
 
     # Fix EVERY drifted/missing file in one pass (canonical = .github).
     # Use with care - review the diff before committing.
     python3 tools/check_skill_sync.py --sync-all
+
+--sync and --sync-all are mutually exclusive.
 
 Stdlib-only (pathlib, sys, argparse) - no external packages, no virtualenv
 required. Requires Python 3.8+.
 """
 import argparse
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 PLATFORM_DIRS = (".github", ".claude", ".gemini")
 CANONICAL_DIR = ".github"
 
 # Files/patterns that are *intentionally* not mirrored across all three
-# copies. Anything matched here is skipped by both --check and --sync-all.
-# Keep this list short and well-justified - if in doubt, a file should be
-# mirrored, not excluded.
+# copies. Anything matched here is skipped by both the default check and
+# --sync-all. Keep this list short and well-justified - if in doubt, a file
+# should be mirrored, not excluded.
 ALLOWED_EXCEPTIONS = (
     # Mobile one-shot prompt: canonical-only by design (see initialize
     # SKILL.md Step 8/9) - Claude/Gemini users don't need their own copy.
@@ -142,6 +145,29 @@ def check(repo_root: Path):
     return 1
 
 
+def normalize_sync_path(raw: str) -> Path:
+    """Validate and normalize a user-supplied --sync path.
+
+    Accepts paths relative to <platform>/skills/ (the documented form, e.g.
+    'simulation/SKILL.md'), and also tolerates an accidental leading
+    'skills/' prefix (e.g. 'skills/simulation/SKILL.md') by stripping it,
+    so the command works regardless of which form the user copies from
+    docs. Rejects absolute paths and any '..' component to prevent writing
+    outside the intended skill trees.
+    """
+    posix = PurePosixPath(raw.replace("\\", "/"))
+    if posix.is_absolute():
+        raise ValueError(f"--sync path must be relative, got absolute path: {raw}")
+    if ".." in posix.parts:
+        raise ValueError(f"--sync path must not contain '..' components: {raw}")
+    parts = posix.parts
+    if parts and parts[0] == "skills":
+        parts = parts[1:]
+    if not parts:
+        raise ValueError(f"--sync path is empty after normalization: {raw}")
+    return Path(*parts)
+
+
 def sync_one(repo_root: Path, rel: Path):
     source = repo_root / CANONICAL_DIR / "skills" / rel
     if not source.exists():
@@ -164,11 +190,20 @@ def sync_one(repo_root: Path, rel: Path):
 
 def sync_all(repo_root: Path):
     canonical_skills_dir = repo_root / CANONICAL_DIR / "skills"
-    rel_paths = [
+    rel_paths = {
         p.relative_to(canonical_skills_dir)
         for p in canonical_skills_dir.rglob("*")
         if p.is_file() and not is_excluded(p.relative_to(canonical_skills_dir))
-    ]
+    }
+
+    # Files that exist in a non-canonical copy but are absent from the
+    # canonical .github copy can't be fixed by copying *from* .github - flag
+    # them instead of silently leaving them unresolved (previously this case
+    # was neither synced nor reported, so `check()` would still report drift
+    # right after sync-all claimed success).
+    all_rel_paths = set(collect_relative_paths(repo_root))
+    canonical_missing = sorted(all_rel_paths - rel_paths, key=str)
+
     total_synced = 0
     for rel in sorted(rel_paths, key=str):
         source = canonical_skills_dir / rel
@@ -184,18 +219,30 @@ def sync_all(repo_root: Path):
             total_synced += 1
             print(f"  - wrote {target.relative_to(repo_root)}")
     print(f"Done. {total_synced} file(s) written/updated from {CANONICAL_DIR}.")
+
+    if canonical_missing:
+        print(
+            f"\nWARNING: {len(canonical_missing)} file(s) exist in a non-canonical "
+            f"copy but are MISSING from {CANONICAL_DIR} - these were NOT resolved "
+            "(sync-all only copies canonical -> other copies). Add them to "
+            f"{CANONICAL_DIR} manually, then re-run:"
+        )
+        for rel in canonical_missing:
+            print(f"  - skills/{rel}")
+        return 1
     return 0
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "--sync",
         metavar="RELATIVE_PATH",
         help="Mirror one file (relative to skills/, e.g. simulation/SKILL.md) "
         "from the canonical .github copy to .claude and .gemini.",
     )
-    parser.add_argument(
+    group.add_argument(
         "--sync-all",
         action="store_true",
         help="Mirror every non-excluded file from the canonical .github copy "
@@ -212,7 +259,12 @@ def main():
         return 1
 
     if args.sync:
-        return sync_one(repo_root, Path(args.sync))
+        try:
+            rel = normalize_sync_path(args.sync)
+        except ValueError as exc:
+            print(f"Error: {exc}")
+            return 1
+        return sync_one(repo_root, rel)
     if args.sync_all:
         return sync_all(repo_root)
     return check(repo_root)
