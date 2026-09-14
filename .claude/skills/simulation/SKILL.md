@@ -179,7 +179,7 @@ experience.
 
 **Output checkpoint:** a single Match Category label using the contract §5.1 canonical wording
 (✔ Direct match / ✔ Equivalent match / ~ Partial match / ✘ No match / ❌ Hard mismatch /
-Not specified (Rule E)) — the same labels used in `degree_mapping_template.md` and the §8.1
+➖ Not specified) — the same labels used in `degree_mapping_template.md` and the §8.1
 Degree Score lookup table. This label alone drives both 4g's Degree Score lookup and the §8.4
 Hard Reject Override check.
 
@@ -188,9 +188,12 @@ Compare the JD's stated (or absent) years-of-experience requirement against the 
 history, applying §9.1 Internship Mode adjustments if 4b's flag is `Yes`.
 
 **Output checkpoint:** a single Experience Match label using the contract §6.2 canonical wording
-(✔ Meets requirement / ~ Partially meets requirement / ✘ Does not meet requirement) — the same
-labels used in `experience_mapping_template.md` and the §8.1 Experience Score lookup table. This
-label alone drives 4g's Experience Score lookup.
+(✔ Meets requirement / ~ Partially meets requirement / ✘ Does not meet requirement) for internal
+use and the §8.1 Experience Score lookup table. When populating the `Match` column of
+`experience_mapping_template.md`'s Markdown table, write **only the bare glyph** (✔ / ~ / ✘) per
+§6.2's note on the legacy `run_ranking.py` fallback parser — the full label text belongs in
+prose (e.g. this checkpoint's own record, or the table's Notes column), never in the `Match`
+cell itself. This label alone drives 4g's Experience Score lookup.
 
 #### 4f — Preference Violations
 Compare the JD against `candidate_preferences.md` (if present) and identify every violation.
@@ -203,13 +206,16 @@ Compare the JD against `candidate_preferences.md` (if present) and identify ever
 Using only the checkpoint outputs from 4b–4f (do not re-derive any of them), compute, in order:
 1. Check 4d's Match Category label first: if it is ❌ Hard mismatch, apply the §8.4 Hard Reject
    Override — `Recruiter% = 2`, `Interview% = 1` (fixed, deterministic values) — and skip directly
-   to step 4 below. Per contract §8.7 Example C, Skill Score and Experience Score are **not
-   computed** in this case; the override is unconditional and independent of them.
+   to step 5 below (step 4, the §8.2/§8.3 formula, is explicitly skipped). Per contract §8.7
+   Example C, Skill Score and Experience Score are **not computed** in this case; the override is
+   unconditional and independent of them.
 2. Otherwise, compute Skill Score, Degree Score, Experience Score (contract §8.1, from
    4c/4d/4e's checkpoints). If 4b's flag is `Yes`, no separate internship penalty is applied here
-   — the internship-adjusted labels 4c/4d/4e already locked (per §9.1/§9.2/§9.3) naturally
-   produce the correct (lighter) scores; §9.4 is descriptive of that effect, not an additional
-   step (see contract §9.4's note).
+   — the internship-adjusted Degree and Experience labels 4d/4e already locked (per §9.1/§9.3)
+   naturally produce the correct (lighter) Degree/Experience scores; §9.4 is descriptive of that
+   effect, not an additional step (see contract §9.4's note). The Skill Score itself is unaffected
+   by Internship Mode — per §9.4's note, it is derived purely from 4c's Required Skills counts,
+   the same as a full-time role.
 3. Preference Penalty: sum the positive point magnitude (5/10/15/20) from the §8.1 Preference
    Penalty table for every violation in 4f's list — this sum is a non-negative number that the
    §8.2/§8.3 formulas subtract directly, per the §8.7 worked examples.
@@ -226,7 +232,10 @@ Using only the checkpoint outputs from 4b–4f (do not re-derive any of them), c
 
 #### 4h — Final Fit Summary + Output Assembly
 1. Derive the Final Fit Summary category by looking up 4g's computed Recruiter% band in contract
-   §10.1's deterministic mapping table — this is a lookup, never chosen independently of it.
+   §10.1's deterministic mapping table — this is a lookup, never chosen independently of it. If
+   4b's Internship Mode flag is `Yes`, use §9.5's internship-mode label for that same band instead
+   of §10.1's generic label (§9.5's table maps each §10.1 row 1:1 onto its internship-mode
+   equivalent) — this is still a lookup, never an independent judgment.
 2. Populate `simulation_output_template.md`, `skill_mapping_template.md`,
    `experience_mapping_template.md`, and `degree_mapping_template.md` using the checkpoint
    outputs from 4a–4g. This is pure formatting/assembly — no new analysis happens at this stage.

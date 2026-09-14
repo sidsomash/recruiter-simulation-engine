@@ -120,6 +120,9 @@ vs.
 - ~ **Partial match** — Degree is adjacent but not explicitly listed  
 - ✘ **No match** — Degree is not relevant to the required field  
 - ❌ **Hard mismatch** — JD requires Master’s/PhD with no “or equivalent experience” clause  
+- ➖ **Not specified** — the JD does not state a degree requirement at all (Rule E); no penalty,
+  no flag (see §8.1's Degree Score table, which scores this the same as a Direct/Equivalent
+  match)
 
 ### 5.2 Degree Mapping Rules
 
@@ -255,6 +258,15 @@ experience (see also §6.3).
 - ~ Partially meets requirement  
 - ✘ Does not meet requirement  
 
+**Markdown table representation:** `experience_mapping_template.md`'s `Match` column holds
+**only the standalone glyph** (✔ / ~ / ✘), matching the template's own header. The full label
+text above is the canonical internal/checkpoint wording (and is what appears in prose elsewhere
+in the output, e.g. the Rationale/Notes column), but the table's `Match` cell itself must contain
+just the glyph — `.github/skills/ranking/run_ranking.py`'s legacy Markdown-only fallback parser
+(used only for older simulation outputs saved without a JSON sidecar) matches the Match column
+via a regex that expects a bare glyph and nothing else; writing the full text into that cell
+would make the legacy parser silently fail (falling back to "Unknown" experience for that file).
+
 ### 6.3 Degree‑vs‑Experience Interaction (Career Switchers)
 
 A degree mismatch (per §5) and years-of-experience alignment (per §6.1/§6.2) are evaluated
@@ -325,7 +337,7 @@ If there are zero required skills listed in the JD, Skill Score = 100.
 | ~ Partial match | 60 |
 | ✘ No match | 25 |
 | ❌ Hard mismatch | 0 (also triggers the §8.4 override) |
-| Not specified (Rule E) | 100 |
+| ➖ Not specified | 100 |
 
 **Experience Score (0–100):** From the §6 Years-of-Experience Mapping match label.
 
@@ -428,7 +440,7 @@ output — they are descriptive of the formula above, not a separate/independent
   → Skill Score = 100 × (1 + 1 + 0.5×1) / 4 = 100 × 2.5 / 4 = 62.5
 - Degree: Partial match → Degree Score = 60
 - Experience: Partially meets requirement → Experience Score = 55
-- Preferences: 1 moderate violation → Preference Penalty = −10
+- Preferences: 1 moderate violation → Preference Penalty = 10
 - Recruiter% = round(0.40×62.5 + 0.35×60 + 0.25×55) − 10 = round(59.75) − 10 = 60 − 10 = **50%** →
   Moderate
 - Interview% = round(0.35×62.5 + 0.40×60 + 0.25×55) − 10 = round(59.625) − 10 = 60 − 10 = 50,
@@ -472,22 +484,37 @@ set explicitly rather than left blank or inferred later from the job title.
 
 ### 9.4 Recruiter Decision Adjustments (Internships)
 These restate how §9.1–§9.3's internship-adjusted labels (already locked by 4c/4d/4e in
-`simulation/SKILL.md`) naturally reduce Skill/Degree/Experience Score penalties for internship
+`simulation/SKILL.md`) naturally reduce Degree/Experience Score penalties for internship
 candidates — they are descriptive of that already-applied effect, not a separate additive penalty
 computed inside §8's formula (same framing as §8.6's Decision Rules):
-- Missing required skills → moderate penalty (not heavy), because §9.2's leniency keeps the
-  Responsibility Alignment (and thus Skill Score) from dropping as sharply as it would full-time
 - Missing required experience → light penalty, because §9.1 already lets coursework/projects/
   research count as experience, raising the Experience Match label (and Experience Score) that
   would otherwise apply
 - Degree mismatch → evaluated based on enrollment, not completion, per §9.3's Match Category
   rules (already reflected in 4d's locked label)
 
+**Note on Skill Score:** §8.1's Skill Score formula is derived solely from the Required Skills
+Direct/Equivalent/Partial/No Match counts (§4.1) — it has no input from Responsibility Alignment
+or Internship Mode. §9.2's leniency only affects the Responsibility Alignment narrative, not the
+Skill Score number itself. Internship Mode therefore does **not** automatically produce a lighter
+Skill Score for missing required skills; a missing required skill still counts as No Match in 4c
+exactly as it would for a full-time role.
+
 ### 9.5 Internship Fit Summary Labels
-- Strong internship match  
-- Moderate internship match  
-- Weak internship match  
-- Mismatch  
+For internship-mode runs, these labels are the internship-mode equivalent of §10.1's generic
+rows — the same Recruiter% band lookup applies, with the label text swapped per this table:
+
+| §10.1 Generic Label | Internship-Mode Label |
+|---|---|
+| Strong match | Strong internship match |
+| Moderate match | Moderate internship match |
+| Weak match | Weak internship match |
+| Mismatch | Mismatch |
+| Hard reject | Hard reject |
+
+4h selects the internship-mode label from this table (instead of §10.1's generic label) whenever
+4b's Internship Mode flag is `Yes`, using the same Recruiter% band already computed in 4g — never
+an independently chosen label.
 
 ---
 
@@ -558,11 +585,16 @@ acceptable discrepancy.
 **`skill_alignment` derivation:** since §8.1's Skill Score is a continuous 0–100 number (not an
 enum), derive this field deterministically from 4c's locked Direct/Equivalent/Partial/No Match
 counts, using the same tiers `run_ranking.py` already scores (`ranking_rules.md` §3.4), via these
-explicit, non-overlapping thresholds (evaluated in this order):
-1. `major_gaps` — No Match count ≥ 2, or the candidate has zero Direct/Equivalent/Partial matches
-   at all
-2. `high` — No Match count = 0 **and** (Direct + Equivalent) / total_required_skills ≥ 0.8
-3. `moderate` — not `major_gaps`, and (Direct + Equivalent) / total_required_skills ≥ 0.5
+explicit, non-overlapping thresholds (evaluated in this order). Let `direct` = Direct + Equivalent
+count, `partial` = Partial count, `no_match` = No Match count, and `total` = total_required_skills:
+0. `high` — `total` = 0 (no required skills listed in the JD). This matches §8.1's rule that
+   Skill Score = 100 when there are zero required skills; it must be checked **before** rule 1,
+   since an empty-JD candidate would otherwise have `direct = partial = no_match = 0` and be
+   misclassified as `major_gaps` by rule 1.
+1. `major_gaps` — `total` > 0, and either `no_match` ≥ 2, or `direct` = 0 **and** `partial` = 0
+2. `high` — `no_match` = 0 **and** `direct / total` ≥ 0.7
+3. `moderate` — not `major_gaps`, and (`direct / total` ≥ 0.4 **or** (`direct` + `partial`) /
+   `total` ≥ 0.6)
 4. `low` — none of the above (some matches exist, but below the `moderate` threshold)
 
 This tier must be locked once, during `simulation/SKILL.md` Step 4c (alongside the Direct/

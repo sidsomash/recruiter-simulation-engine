@@ -12,7 +12,7 @@
 - Enrollment Status (if internship): <enrolled / completed>
 
 ## Match Evaluation
-**Match Category:** ✔ Direct / ✔ Equivalent / ~ Partial / ✘ No Match / ❌ Hard mismatch
+**Match Category:** ✔ Direct / ✔ Equivalent / ~ Partial / ✘ No Match / ❌ Hard mismatch / ➖ Not specified
 
 ## Rationale
 - <reason 1>
