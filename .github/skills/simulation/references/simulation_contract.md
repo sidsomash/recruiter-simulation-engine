@@ -119,7 +119,9 @@ vs.
 - ✔ **Equivalent match** — Degree is a STEM/quantitative equivalent  
 - ~ **Partial match** — Degree is adjacent but not explicitly listed  
 - ✘ **No match** — Degree is not relevant to the required field  
-- ❌ **Hard mismatch** — JD requires Master’s/PhD with no “or equivalent experience” clause  
+- ❌ **Hard mismatch** — JD requires Master’s/PhD with no “or equivalent experience” clause
+  (Rule D), or an internship JD requires ongoing enrollment through a future date/term that the
+  candidate has already passed (Rule H)  
 - ➖ **Not specified** — the JD does not state a degree requirement at all (Rule E); no penalty,
   no flag (see §8.1's Degree Score table, which scores this the same as a Direct/Equivalent
   match)
@@ -182,6 +184,22 @@ Engineering):
 experience that upgrades the categorization per the categorization guidance above (in which
 case, apply the upgraded category's table instead). Do not apply ❌ Hard mismatch here — that
 label is reserved for the advanced-degree cases in Rules C/D (§5.1).
+
+**Rule H — Internship Enrollment Window vs. Already-Graduated Candidate**
+If the JD (an internship posting, per 4b's Internship Mode flag) explicitly requires the
+candidate to be enrolled in a degree program through a stated future date or term (e.g., "must be
+enrolled through Fall 2026," "graduating December 2026 or later," "currently pursuing a degree
+with an expected graduation of [future date]"), and the candidate's actual (or expected)
+graduation date, per `candidate_resume.md`/`candidate_profile.md`, is on or before the JD's
+posting date (i.e., the candidate has already graduated or will graduate before the JD's required
+enrollment window begins):  
+→ ❌ **Hard mismatch** — this is a strict eligibility gate equivalent in kind to Rules C/D (the
+candidate cannot satisfy an ongoing-enrollment requirement after graduation), so it triggers the
+§8.4 Hard Reject Override the same way an unmet Master's/PhD requirement does.
+Exception: if the JD's own text explicitly also accepts "recent graduates" (or equivalent
+language broadening eligibility beyond currently-enrolled students) for the same posting, this
+rule does not apply — evaluate the candidate under Rules A/F instead, since the JD itself has
+opened eligibility to graduated candidates.
 
 ### 5.3 Degree Domain Mapping (Generalized)
 
@@ -262,7 +280,7 @@ experience (see also §6.3).
 **only the standalone glyph** (✔ / ~ / ✘), matching the template's own header. The full label
 text above is the canonical internal/checkpoint wording (and is what appears in prose elsewhere
 in the output, e.g. the Rationale/Notes column), but the table's `Match` cell itself must contain
-just the glyph — `.github/skills/ranking/run_ranking.py`'s legacy Markdown-only fallback parser
+just the glyph — `skills/ranking/run_ranking.py`'s legacy Markdown-only fallback parser
 (used only for older simulation outputs saved without a JSON sidecar) matches the Match column
 via a regex that expects a bare glyph and nothing else; writing the full text into that cell
 would make the legacy parser silently fail (falling back to "Unknown" experience for that file).
@@ -481,6 +499,10 @@ set explicitly rather than left blank or inferred later from the job title.
   ✔ Direct match if candidate is enrolled in that field  
   ✔ Equivalent match if enrolled in a related STEM field  
 - Degree completion is **not required**  
+- If the JD requires ongoing enrollment through a stated future date/term and the candidate has
+  already graduated (or will graduate) before that window begins, apply §5.2 Rule H (❌ Hard
+  mismatch, unless the JD explicitly also accepts recent graduates) instead of treating degree
+  completion as automatically qualifying.
 
 ### 9.4 Recruiter Decision Adjustments (Internships)
 These restate how §9.1–§9.3's internship-adjusted labels (already locked by 4c/4d/4e in
@@ -515,6 +537,16 @@ rows — the same Recruiter% band lookup applies, with the label text swapped pe
 4h selects the internship-mode label from this table (instead of §10.1's generic label) whenever
 4b's Internship Mode flag is `Yes`, using the same Recruiter% band already computed in 4g — never
 an independently chosen label.
+
+**Scope — Markdown display only, not the JSON sidecar enum:** this substitution applies only to
+the Markdown output's Final Fit Summary section (human-readable prose). The JSON sidecar's
+`fit_category` field (§11) always uses the §10.1 **generic** enum value (`strong_match` /
+`moderate_match` / `weak_match` / `mismatch` / `hard_reject`) regardless of Internship Mode — the
+sidecar schema, `validate_simulation_output.py`, and `run_ranking.py` have no internship-specific
+enum values, so writing an internship label (or its would-be enum form) into `fit_category` would
+fail validation or be scored as `Unknown`/zero by the ranking skill. 4h must derive `fit_category`
+from the same §10.1 band lookup used for the Markdown's generic label, independent of whether the
+Markdown prose itself displays the internship-mode variant.
 
 ---
 

@@ -233,9 +233,12 @@ Using only the checkpoint outputs from 4b–4f (do not re-derive any of them), c
 #### 4h — Final Fit Summary + Output Assembly
 1. Derive the Final Fit Summary category by looking up 4g's computed Recruiter% band in contract
    §10.1's deterministic mapping table — this is a lookup, never chosen independently of it. If
-   4b's Internship Mode flag is `Yes`, use §9.5's internship-mode label for that same band instead
-   of §10.1's generic label (§9.5's table maps each §10.1 row 1:1 onto its internship-mode
-   equivalent) — this is still a lookup, never an independent judgment.
+   4b's Internship Mode flag is `Yes`, use §9.5's internship-mode label for that same band in the
+   **Markdown output's** Final Fit Summary prose (§9.5's table maps each §10.1 row 1:1 onto its
+   internship-mode equivalent) — this is still a lookup, never an independent judgment. The JSON
+   sidecar's `fit_category` field always uses the §10.1 **generic** enum value regardless of
+   Internship Mode (per §9.5's scope note and §11's schema) — never write an internship-mode
+   label or a nonstandard enum value into `fit_category`.
 2. Populate `simulation_output_template.md`, `skill_mapping_template.md`,
    `experience_mapping_template.md`, and `degree_mapping_template.md` using the checkpoint
    outputs from 4a–4g. This is pure formatting/assembly — no new analysis happens at this stage.
