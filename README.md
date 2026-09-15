@@ -238,7 +238,9 @@ results). To fix drift automatically once you've confirmed which copy is correct
 # Mirror one file from the canonical .github copy to .claude/.gemini
 python3 tools/check_skill_sync.py --sync skills/simulation/SKILL.md
 
-# Mirror every drifted/missing file in one pass
+# Sync every canonical (.github) file to .claude/.gemini in one pass; a
+# file that exists only in .claude/.gemini (missing from .github) is
+# reported as an unresolved warning instead, not created/copied
 python3 tools/check_skill_sync.py --sync-all
 ```
 

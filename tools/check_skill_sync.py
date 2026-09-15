@@ -25,8 +25,11 @@ Usage:
     # <platform>/skills/ (e.g. simulation/SKILL.md, NOT skills/simulation/SKILL.md).
     python3 tools/check_skill_sync.py --sync simulation/SKILL.md
 
-    # Fix EVERY drifted/missing file in one pass (canonical = .github).
-    # Use with care - review the diff before committing.
+    # Sync every canonical (.github) file to .claude/.gemini in one pass.
+    # This can only copy FROM .github - a file that exists only in .claude
+    # or .gemini (missing from .github) is NOT created/copied; it is
+    # reported as an unresolved warning and the command exits 1 so it isn't
+    # silently ignored. Use with care - review the diff before committing.
     python3 tools/check_skill_sync.py --sync-all
 
 --sync and --sync-all are mutually exclusive.
@@ -35,6 +38,7 @@ Stdlib-only (pathlib, sys, argparse) - no external packages, no virtualenv
 required. Requires Python 3.8+.
 """
 import argparse
+import ntpath
 import sys
 from pathlib import Path, PurePosixPath
 
@@ -56,6 +60,7 @@ ALLOWED_EXCEPTIONS = (
 # to differ per-platform-copy, per-run, or be entirely absent).
 EXCLUDED_DIR_PARTS = (
     "simulations",  # generated simulation Markdown/JSON pairs
+    "resumes",  # generated tailored resumes (resume-restructure output)
 )
 EXCLUDED_FILENAMES = (
     "ranking_results.csv",  # generated ranking output, overwritten per run
@@ -106,12 +111,22 @@ def check(repo_root: Path):
     rel_paths = collect_relative_paths(repo_root)
     missing_issues = []
     diff_issues = []
+    type_conflict_issues = []
 
     for rel in rel_paths:
         full_paths = {
             platform: repo_root / platform / "skills" / rel for platform in PLATFORM_DIRS
         }
-        existing = {p: fp for p, fp in full_paths.items() if fp.exists()}
+        # Only count actual files as "existing" - a path that is a file in
+        # one platform copy but a directory (or other non-file entry) in
+        # another is itself a form of drift, not something read_bytes() can
+        # safely handle, so it must never be treated as present here.
+        existing = {p: fp for p, fp in full_paths.items() if fp.is_file()}
+        non_file = [p for p, fp in full_paths.items() if fp.exists() and not fp.is_file()]
+
+        if non_file:
+            type_conflict_issues.append((rel, non_file))
+            continue
 
         if len(existing) < len(PLATFORM_DIRS):
             missing_from = [p for p in PLATFORM_DIRS if p not in existing]
@@ -127,12 +142,20 @@ def check(repo_root: Path):
         for rel, missing_from in missing_issues:
             print(f"  - skills/{rel}  (absent from: {', '.join(missing_from)})")
 
+    if type_conflict_issues:
+        print(f"FILE/DIRECTORY TYPE CONFLICT ({len(type_conflict_issues)}):")
+        for rel, non_file in type_conflict_issues:
+            print(
+                f"  - skills/{rel}  (is a file in some copies, but a directory or "
+                f"other non-file entry in: {', '.join(non_file)})"
+            )
+
     if diff_issues:
         print(f"CONTENT DIFFERS across copies ({len(diff_issues)}):")
         for rel in diff_issues:
             print(f"  - skills/{rel}")
 
-    if not missing_issues and not diff_issues:
+    if not missing_issues and not diff_issues and not type_conflict_issues:
         print(f"OK - {len(rel_paths)} skill files checked, all copies identical.")
         return 0
 
@@ -152,10 +175,24 @@ def normalize_sync_path(raw: str) -> Path:
     'simulation/SKILL.md'), and also tolerates an accidental leading
     'skills/' prefix (e.g. 'skills/simulation/SKILL.md') by stripping it,
     so the command works regardless of which form the user copies from
-    docs. Rejects absolute paths and any '..' component to prevent writing
+    docs. Rejects absolute paths (POSIX-style, e.g. '/etc/passwd', and
+    Windows drive-qualified, e.g. 'C:/tmp/x' or 'C:\\tmp\\x' - PurePosixPath
+    alone does not treat a drive-qualified path as absolute, so it is
+    checked explicitly here) and any '..' component, to prevent writing
     outside the intended skill trees.
     """
-    posix = PurePosixPath(raw.replace("\\", "/"))
+    normalized_raw = raw.replace("\\", "/")
+    # ntpath.splitdrive() is used explicitly (rather than os.path.splitdrive)
+    # so a Windows drive-qualified path (e.g. 'C:/tmp/x') is rejected even
+    # when this script runs on a POSIX host, where os.path.splitdrive()
+    # would never detect a drive and PurePosixPath("C:/tmp/x").is_absolute()
+    # is also False - without this explicit check such a path could pass
+    # both checks below and Path(*parts) could later preserve the drive,
+    # escaping the repo root.
+    drive, _ = ntpath.splitdrive(normalized_raw)
+    if drive:
+        raise ValueError(f"--sync path must be relative, got a drive-qualified path: {raw}")
+    posix = PurePosixPath(normalized_raw)
     if posix.is_absolute():
         raise ValueError(f"--sync path must be relative, got absolute path: {raw}")
     if ".." in posix.parts:
