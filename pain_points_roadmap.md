@@ -546,9 +546,10 @@ inconsistent step numbering, mismatched wording caught only after the fact).
    templates under `assets/templates/` are `.github`-only) — confirming the tool catches real
    drift, not just the specific case it was built for. That pre-existing `resume-restructure`
    drift is tracked separately and is out of scope for this branch to fix.
-3. Update `README.md` (`Contributing & Customization` and/or `Directory Structure` sections) to
-   document the script and make 3-way propagation an explicit, discoverable part of the
-   contribution workflow instead of tribal knowledge.
+3. ✅ Updated `README.md`'s "Keeping the three copies in sync" section (`Directory Structure`)
+   to document the script's report-only/`--sync`/`--sync-all` usage as an explicit,
+   discoverable part of the contribution workflow, including the known `resume-restructure`
+   drift caveat so a non-zero exit isn't mistaken for a broken checkout.
 4. Consider wiring `--check` mode into a CI workflow (e.g., a GitHub Actions step on PRs touching
    `.github/skills/`, `.claude/skills/`, or `.gemini/skills/`) as a follow-up, once the script has
    proven itself in manual use for a few PRs. Not pursued yet — flagged as a future enhancement,
@@ -1088,3 +1089,48 @@ entries short — one line per event.
         `ALLOWED_EXCEPTIONS` file and an `EXCLUDED_FILENAMES` file. `python tools/check_skill_sync.py`
         confirmed only the known out-of-scope `resume-restructure` drift remains after propagating all
         skill-file fixes to `.github`/`.claude`/`.gemini`. Committed as 3 commits.
+        - 2026-09-15: Round-11 PR review fixes on `simulation-subskill-breakdown` — (1) Fixed
+          contract §10, which listed a "One of:" set of 5 generic Final Fit Summary labels with no
+          scope qualifier, contradicting §9.5's internship-mode label substitutions that 4h/the
+          output template require for internship runs. Reworded §10's intro to explicitly scope
+          that list to full-time/generic Markdown output and the JSON sidecar's `fit_category`
+          enum (which is always generic per §9.5's existing scope note), and cross-referenced §9.5
+          as a deliberate, scoped Markdown-display exception rather than a contradiction. (2)
+          Broadened Rule E (no-degree-requirement) handling: `SKILL.md`'s Step 2 JD-parsing
+          instructions now tell the model to normalize phrasing like "no degree required"/"degree
+          not required" to the literal value "Not specified" when extracting the JD's degree
+          field, so 4d's Rule E branch — previously matching only the literal string "Not
+          specified" and risking an incorrect No-match label for differently-worded JDs — has a
+          single clean value to check; also broadened 4d's branch condition text itself as
+          defense-in-depth in case normalization is missed. (3) Marked
+          `skill-sync-checker-tooling`'s roadmap checklist item 3 (README documentation) complete —
+          it was already done in round 10 but the checkbox was stale. (4) Made
+          `tools/check_skill_sync.py`'s `sync_all()` genuinely all-or-nothing: previously, if any
+          `(rel, platform)` pair had a type/symlink conflict, only that specific pair was skipped
+          while every other conflict-free pair in the same invocation was still written — still a
+          form of partial sync across the whole command. Now the entire write phase is skipped
+          (nothing written, not even conflict-free entries) whenever any conflict exists anywhere
+          in the batch. (5) Added a `write_targets_transactionally()` helper used by both
+          `sync_one()` and `sync_all()`: it records each target's prior state (existed + prior
+          bytes) before writing, and if a later write in the same call raises `OSError` (disk full,
+          permissions, concurrent external modification — failure modes preflight validation can't
+          catch in advance), rolls back every target already written in that call (restoring prior
+          bytes, or deleting newly-created files) instead of leaving a partially-synced,
+          inconsistent tree with an unhandled exception. (6) Fixed `check()`'s report-only mode,
+          which used `Path.is_file()`/`read_bytes()` and so silently reported a symlinked file as
+          "OK" whenever its resolved content happened to be byte-identical across all 3 copies,
+          even though `--sync`/`--sync-all` would reject that same path — `check()` now calls
+          `find_symlink_component()` per platform before its existing missing/type-conflict/diff
+          logic and reports a new "SYMLINKED PATH COMPONENT" category, included in the overall
+          pass/fail and exit code. Verified via `py_compile`; isolated scratch-directory tests
+          confirmed `sync_all()`'s full-batch abort (a conflict for one path left an unrelated
+          conflict-free path's target completely untouched), `write_targets_transactionally()`'s
+          rollback (a simulated mid-batch `OSError` restored the first target's prior content and
+          left the second absent rather than partially written), and `check()`'s new symlink
+          detection (a path monkeypatched to report `is_symlink() == True` was correctly flagged
+          even though its content was identical across all 3 copies). `python
+          tools/check_skill_sync.py` confirmed only the known out-of-scope `resume-restructure`
+          drift remains after propagating the contract/`SKILL.md` fixes to
+          `.github`/`.claude`/`.gemini`. The PR-description-scope comment on `run_ranking.py`
+          (repeated from earlier rounds) was again noted as a PR description update, not a code
+          fix, since that scoring behavior was already fixed in a prior round.
