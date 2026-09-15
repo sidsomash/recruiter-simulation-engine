@@ -95,6 +95,12 @@ Extract structured information into an explicit, machine-readable job metadata o
 - Location(s) (city, state, remote/hybrid flags)  
 - Required years of experience (numeric range or "entry/mid/senior")  
 - Degree requirements (degree level and domain)  
+- Internship enrollment window (if the JD requires ongoing enrollment through a stated future
+  cutoff date/term, e.g. "must be enrolled through Fall 2026," "graduating December 2026 or
+  later" — record the exact cutoff date/term verbatim, or null if the JD gives no such cutoff)  
+- Recent-graduate exception (whether the JD's own text explicitly also accepts recent graduates
+  alongside currently-enrolled students — record Yes/No/Not stated; this determines whether
+  contract §5.2 Rule H's exception applies)  
 - Required skills  
 - Preferred skills  
 - Responsibilities / duties  
@@ -134,6 +140,7 @@ especially for smaller/cheaper models.
 #### 4a — Confirm JD Structured Metadata
 Finalize the structured JD metadata object built in Step 2 (company, title, posting date/JD
 timestamp, job URL/source reference, compensation, location, years required, degree requirement,
+internship enrollment window/cutoff (or null), recent-graduate exception (Yes/No/Not stated),
 required/preferred skills, responsibilities, clearance/defense flags, internship indicators,
 remote/onsite/hybrid, seniority).
 

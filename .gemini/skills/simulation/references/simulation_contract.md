@@ -196,24 +196,26 @@ enrollment-window eligibility.
 
 If the JD explicitly requires the candidate to be enrolled in a degree program through a stated
 cutoff date or term (e.g., "must be enrolled through Fall 2026," "graduating December 2026 or
-later," "currently pursuing a degree with an expected graduation of [future date]"), compare the
-candidate's actual (or expected) graduation date, per `candidate_resume.md`/`candidate_profile.md`,
-against **that stated cutoff** — not the JD's posting date. If the candidate's graduation date is
-before the JD's stated cutoff (i.e., the candidate will no longer be enrolled by the point the JD
-requires ongoing enrollment through):  
+later," "currently pursuing a degree with an expected graduation of [future date]") — this is the
+"Internship enrollment window" field locked in 4a's JD metadata object; do not re-derive it from
+the JD text at this step — compare the candidate's actual (or expected) graduation date, per
+`candidate_resume.md`/`candidate_profile.md`, against **that stated cutoff** — not the JD's
+posting date. If the candidate's graduation date is before the JD's stated cutoff (i.e., the
+candidate will no longer be enrolled by the point the JD requires ongoing enrollment through):  
 → ❌ **Hard mismatch** — this is a strict eligibility gate equivalent in kind to Rules C/D (the
 candidate cannot satisfy an ongoing-enrollment requirement after graduation), so it triggers the
 §8.4 Hard Reject Override the same way an unmet Master's/PhD requirement does.
 
-If the JD does not state an explicit cutoff (only a general "currently enrolled" requirement with
-no date/term), fall back to comparing the candidate's graduation date against the JD's posting
-date instead, using "Unknown" posting date to mean this comparison cannot be made — in that case,
-do not apply Rule H (there's no date to compare against); evaluate under Rules A–G instead.
+If 4a's "Internship enrollment window" field is null (the JD gives no explicit cutoff, only a
+general "currently enrolled" requirement with no date/term), fall back to comparing the
+candidate's graduation date against the JD's posting date instead, using "Unknown" posting date to
+mean this comparison cannot be made — in that case, do not apply Rule H (there's no date to
+compare against); evaluate under Rules A–G instead.
 
-Exception: if the JD's own text explicitly also accepts "recent graduates" (or equivalent
-language broadening eligibility beyond currently-enrolled students) for the same posting, this
-rule does not apply — evaluate the candidate under Rules A/F instead, since the JD itself has
-opened eligibility to graduated candidates.
+Exception: if 4a's "Recent-graduate exception" field is `Yes` (the JD's own text explicitly also
+accepts recent graduates alongside currently-enrolled students), this rule does not apply —
+evaluate the candidate under Rules A/F instead, since the JD itself has opened eligibility to
+graduated candidates.
 
 ### 5.3 Degree Domain Mapping (Generalized)
 
@@ -516,10 +518,12 @@ set explicitly rather than left blank or inferred later from the job title.
   ✔ Direct match if candidate is enrolled in that field  
   ✔ Equivalent match if enrolled in a related STEM field  
 - Degree completion is **not required**  
-- If the JD requires ongoing enrollment through a stated future date/term and the candidate has
-  already graduated (or will graduate) before that window begins, apply §5.2 Rule H (❌ Hard
-  mismatch, unless the JD explicitly also accepts recent graduates) instead of treating degree
-  completion as automatically qualifying.
+- If the JD requires ongoing enrollment through a stated future cutoff date/term and the
+  candidate's graduation date (actual or expected) falls before that cutoff, apply §5.2 Rule H
+  (❌ Hard mismatch, unless the JD explicitly also accepts recent graduates) instead of treating
+  degree completion as automatically qualifying — see Rule H for the exact cutoff-based
+  condition (not the internship's start date or application window, but the JD's stated
+  enrollment-through date/term itself).
 
 ### 9.4 Recruiter Decision Adjustments (Internships)
 These restate how §9.1–§9.3's internship-adjusted labels (already locked by 4c/4d/4e in
