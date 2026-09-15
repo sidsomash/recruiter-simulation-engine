@@ -23,6 +23,9 @@ Usage:
     # Fix ONE specific file: mirror it byte-for-byte from the canonical
     # .github copy to .claude and .gemini. Path is relative to
     # <platform>/skills/ (e.g. simulation/SKILL.md, NOT skills/simulation/SKILL.md).
+    # Refuses generated/excluded paths (see EXCLUDED_DIR_PARTS/
+    # EXCLUDED_FILENAMES/ALLOWED_EXCEPTIONS below) - those are intentionally
+    # outside the sync contract and must never be propagated across copies.
     python3 tools/check_skill_sync.py --sync simulation/SKILL.md
 
     # Sync every canonical (.github) file to .claude/.gemini in one pass.
@@ -206,10 +209,57 @@ def normalize_sync_path(raw: str) -> Path:
     return Path(*parts)
 
 
+def find_symlink_component(repo_root: Path, path: Path):
+    """Return the first path component between repo_root and `path`
+    (inclusive of both ends) that is itself a symlink, or None if none are.
+
+    Containment checks based on os.path.realpath()/commonpath() alone are
+    not sufficient: a symlink whose resolved target still happens to land
+    inside the expected root passes those checks, but write_bytes()/
+    read_bytes() would still follow it and mutate/read the *link's target*
+    rather than the path that was actually requested - e.g. a final target
+    that is a symlink to a different regular file inside the same skills
+    root would pass containment yet cause `--sync` to silently overwrite
+    that other file while leaving the requested path as an untouched link;
+    an ancestor directory symlinked to a different directory inside the
+    root would let mkdir()/write_bytes() write into that aliased directory
+    instead of the intended one; and `<platform>/skills` (or the platform
+    directory, or repo_root itself) being a symlink would make every
+    containment check below trivially "consistent" against whatever
+    external location the link resolves to. Rejecting every symlinked
+    component outright - regardless of where it resolves to - closes all
+    of these cases at once, rather than trying to special-case each one.
+    """
+    try:
+        rel = path.relative_to(repo_root)
+    except ValueError:
+        rel = None
+    if repo_root.is_symlink():
+        return repo_root
+    current = repo_root
+    if rel is not None:
+        for part in rel.parts:
+            current = current / part
+            if current.is_symlink():
+                return current
+        return None
+    # `path` isn't under repo_root at all (e.g. repo_root itself resolved
+    # oddly) - fall back to checking path's own component chain directly.
+    chain = list(reversed(path.parents)) + [path]
+    for component in chain:
+        if component.is_symlink():
+            return component
+    return None
+
+
 def validate_sync_target(repo_root: Path, platform: str, rel: Path):
     """Validate that writing `content` to <platform>/skills/<rel> is safe.
 
     Returns None if safe, or an error message string if not. Checks:
+    - no component from repo_root down to the final target (the platform
+      directory, <platform>/skills/ itself, every ancestor under it, and
+      the target itself) may be a symlink - see find_symlink_component()
+      for why containment checks alone can't safely replace this;
     - <platform>/skills/ itself, and every ancestor directory component
       under it, must be a real directory (not a file, and not a broken
       symlink) wherever something already exists at that path - otherwise
@@ -218,12 +268,12 @@ def validate_sync_target(repo_root: Path, platform: str, rel: Path):
     - the final target, if anything already exists at that path (including
       a broken symlink), must be a regular file (not a directory or other
       non-file entry);
-    - the resolved (symlink-following) real path of the target must remain
-      under the resolved <platform>/skills/ root - target.is_file() alone
-      follows symlinks, so a symlinked path component (or a symlinked
-      target itself) could otherwise let write_bytes() escape the
-      platform's skills tree even though normalize_sync_path() already
-      rejected textual '..'/absolute-path traversal.
+    - the resolved real path of <platform>/skills/ itself must remain
+      under the resolved repo_root, and the resolved real path of the
+      target must remain under the resolved skills root - kept as
+      defense-in-depth alongside the symlink rejection above (e.g. for
+      reparse points/junctions that is_symlink() may not catch on every
+      platform).
 
     Path.exists() is deliberately avoided for these existence checks since
     it returns False for a broken symlink (it follows the link and reports
@@ -236,6 +286,15 @@ def validate_sync_target(repo_root: Path, platform: str, rel: Path):
     a conflict rather than a usable directory/file).
     """
     skills_root = repo_root / platform / "skills"
+    target = skills_root / rel
+
+    symlink_hit = find_symlink_component(repo_root, target)
+    if symlink_hit is not None:
+        return (
+            f"path component is a symlink, refusing to write through it "
+            f"(syncing one path must not be able to alias/modify another): "
+            f"{symlink_hit}"
+        )
 
     # skills_root itself must be a directory (not a file/broken symlink) if
     # anything exists there at all - previously only rel.parts[:-1] below
@@ -246,8 +305,6 @@ def validate_sync_target(repo_root: Path, platform: str, rel: Path):
             f"path component exists but is not a directory, refusing to "
             f"write under it: {skills_root}"
         )
-
-    target = skills_root / rel
 
     # Walk every remaining ancestor from skills_root down to target's
     # parent, and confirm any that already exist are directories (not
@@ -268,12 +325,23 @@ def validate_sync_target(repo_root: Path, platform: str, rel: Path):
             f"refusing to overwrite: {target}"
         )
 
-    # Containment check: resolve symlinks in whatever part of the path
-    # already exists (realpath does not require the full path to exist -
-    # it resolves as far as it can and appends the remaining, necessarily
-    # nonexistent, components literally) and confirm the result is still
-    # inside the resolved skills root.
+    # Containment check (defense-in-depth alongside the symlink rejection
+    # above): resolve whatever part of the path already exists (realpath
+    # does not require the full path to exist - it resolves as far as it
+    # can and appends the remaining, necessarily nonexistent, components
+    # literally) and confirm skills_root itself is under repo_root, and the
+    # target is under skills_root.
+    real_repo_root = os.path.realpath(str(repo_root))
     real_root = os.path.realpath(str(skills_root))
+    try:
+        root_common = os.path.commonpath([real_repo_root, real_root])
+    except ValueError:
+        root_common = None
+    if root_common != real_repo_root:
+        return (
+            f"platform skills root resolves outside the repository (possible "
+            f"symlink escape): {skills_root} -> {real_root}"
+        )
     real_target = os.path.realpath(str(target))
     try:
         common = os.path.commonpath([real_root, real_target])
@@ -299,7 +367,24 @@ def validate_sync_source(repo_root: Path, source: Path):
     then copy into .claude/.gemini) any file the process can access.
     """
     canonical_root = repo_root / CANONICAL_DIR / "skills"
+
+    symlink_hit = find_symlink_component(repo_root, source)
+    if symlink_hit is not None:
+        return (
+            f"path component is a symlink, refusing to read through it: {symlink_hit}"
+        )
+
+    real_repo_root = os.path.realpath(str(repo_root))
     real_root = os.path.realpath(str(canonical_root))
+    try:
+        root_common = os.path.commonpath([real_repo_root, real_root])
+    except ValueError:
+        root_common = None
+    if root_common != real_repo_root:
+        return (
+            f"canonical skills root resolves outside the repository (possible "
+            f"symlink escape): {canonical_root} -> {real_root}"
+        )
     real_source = os.path.realpath(str(source))
     try:
         common = os.path.commonpath([real_root, real_source])
@@ -314,6 +399,13 @@ def validate_sync_source(repo_root: Path, source: Path):
 
 
 def sync_one(repo_root: Path, rel: Path):
+    if is_excluded(rel):
+        print(
+            f"Error: '{rel}' is excluded from the sync contract (generated output, or a "
+            f"canonical-only ALLOWED_EXCEPTIONS file) and must not be propagated across "
+            f"platform copies: {rel}"
+        )
+        return 1
     source = repo_root / CANONICAL_DIR / "skills" / rel
     if not source.exists():
         print(f"Error: canonical source file does not exist: {source}")
