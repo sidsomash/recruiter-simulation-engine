@@ -350,10 +350,11 @@ should land last, once the target schema/formulas/validation are stable).
      compensation preference violation) → Strong match, Recruiter 90% / Interview 90%.
    - **Amazon Automation Engineer Intern** (internship; JD requires *current* enrollment
      through a Dec 2027-Aug 2028 graduation window, but the candidate already graduated and
-     is employed full-time) → classified as ❌ Hard mismatch (closest analogous rule to
-     §5.1's Master's/PhD case, since the JD's specific "already-graduated-but-JD-requires-
-     ongoing-enrollment" scenario isn't explicitly named in the contract — flagged as a
-     future contract-refinement candidate), triggering the §8.4 override → Hard reject,
+     is employed full-time) → classified as ❌ Hard mismatch (at the time of this test, the
+     closest analogous rule to §5.1's Master's/PhD case, since the JD's specific "already-
+     graduated-but-JD-requires-ongoing-enrollment" scenario wasn't yet explicitly named in the
+     contract; this exact scenario is now codified as contract §5.2 Rule H, added in a later
+     review round — see below), triggering the §8.4 override → Hard reject,
      Recruiter 2% / Interview 1%.
    - **ICF Early Talent Acquisition Associate** (full-time, unspecified degree field per
      Rule E, but a full domain shift into HR/recruiting with a 2+ year recruiting-specific

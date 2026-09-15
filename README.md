@@ -234,6 +234,15 @@ This reports any file that's missing from one or two copies, or whose content di
 copies (excluding intentionally platform-specific files and generated output like simulation
 results). To fix drift automatically once you've confirmed which copy is correct, use:
 
+> **Known pre-existing exception:** on the current checkout, this command reports drift in
+> `resume-restructure` (`SKILL.md`/`references/resume_guidelines.md` differ across copies, and
+> two templates are `.github`-only) and exits non-zero because of it. This drift is real,
+> pre-existing, and tracked separately in `pain_points_roadmap.md` under the
+> `skill-sync-checker-tooling` branch — it is intentionally out of scope for unrelated changes
+> and is not something a clean checkout can currently avoid. When using this command to verify
+> your own change, confirm the *only* reported drift is this known `resume-restructure` case;
+> any other file reported means your edit wasn't propagated to all three copies.
+
 ```bash
 # Mirror one file from the canonical .github copy to .claude/.gemini
 python3 tools/check_skill_sync.py --sync skills/simulation/SKILL.md
