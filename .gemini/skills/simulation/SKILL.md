@@ -177,6 +177,12 @@ eligibility gate) — this check is unconditional and independent of the JSON lo
 since Rule H governs enrollment-window eligibility, not degree-domain matching. If Rule H applies,
 lock ❌ Hard mismatch as the Match Category now and skip the rest of this step.
 
+Otherwise, if 4a's locked degree-requirement field is empty/null/"Not specified" (the JD does not
+state a degree requirement at all), apply Rule E directly and lock ➖ Not specified as the Match
+Category now — do not run the category classification/JSON lookup below in this case, since there
+is no JD degree field to match against and doing so risks scoring a domain mismatch that Rule E
+explicitly forbids.
+
 Otherwise, determine which of the four candidate degree categories in
 `references/degree_domain_map.json` applies (`stem_quantitative`, `business_finance_accounting`,
 `liberal_arts_humanities`, `social_sciences`, or none of these), using the candidate's degree title

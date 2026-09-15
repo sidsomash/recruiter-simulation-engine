@@ -68,6 +68,8 @@ If no preferences file provided:
 ---
 
 ## 8. Final Fit Summary
-**Category:** <Strong match / Moderate match / Weak match / Mismatch / Hard reject>
+**Category:** <Strong match / Moderate match / Weak match / Mismatch / Hard reject — or, when
+Internship Mode is Yes, the §9.5 internship-mode equivalent: Strong internship match / Moderate
+internship match / Weak internship match / Mismatch / Hard reject>
   
 **Notes:** <brief explanation>
