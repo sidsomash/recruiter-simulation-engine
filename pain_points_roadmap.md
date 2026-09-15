@@ -961,3 +961,33 @@ entries short — one line per event.
   from the canonical `.github` copy. All fixes verified (script re-run cleanly, drive-path
   rejection tested directly) and applied identically to `.github`/`.claude`/`.gemini` where
   applicable; confirmed the pre-existing `resume-restructure` drift remains unchanged.
+- 2026-09-14: `simulation-subskill-breakdown` — a 7th Copilot review round fixed remaining
+  ranking-compatibility and rule-scoping gaps. (1) Fixed Rule H (added in the prior round) to
+  compare the candidate's graduation date against the JD's **stated enrollment cutoff** instead
+  of its posting date — a candidate graduating after posting but before the JD's actual cutoff
+  was previously incorrectly let through; falls back to the posting-date comparison only when the
+  JD gives no explicit cutoff, and is skipped entirely when neither is available. (2) Made Rule H
+  an explicit unconditional internship eligibility gate, evaluated before/independently of the
+  §5.2 Rules A–G JSON-miss fallback and the §5.3 JSON lookup — previously a JSON hit could
+  silently bypass the enrollment-window hard-mismatch check; updated §5.2's intro, §5.3's fallback
+  description, and SKILL.md 4d to check Rule H first, unconditionally, whenever Internship Mode is
+  on. (3) Fixed 3 `run_ranking.py` compatibility gaps the review found between the newly-added
+  contract labels and the legacy scoring code: added `not specified` to `DEGREE_POINTS` (was
+  unmapped, scoring 62.5/100 via the `.md` fallback instead of the contract's 100/100) and
+  corrected `JSON_DEGREE_POINTS`'s `not_specified` entry from `(0, ...)` to `(3, ...)` (was scoring
+  37.5/100 via the JSON sidecar path instead of 100/100); fixed the `.md` fallback's
+  zero-required-skills case to return High alignment instead of Unknown/0, matching the
+  contract's `total = 0 → high` rule added two rounds ago (previously only the JSON sidecar path
+  honored that rule); added internship-mode Final Fit Summary label variants (`strong/moderate/
+  weak internship match`) to `FIT_POINTS`, since they are not contiguous substrings of the
+  existing generic labels and were previously scored Unknown/0 by the legacy parser whenever a
+  sidecar was missing or malformed. (4) Fixed `tools/check_skill_sync.py` crashing with an
+  unhandled `IsADirectoryError` when `--sync`/`--sync-all` encountered a file/directory type
+  conflict (the prior round only added detection of this case to the report-only `check()` path,
+  not the two repair paths) — both now validate source/target types before reading/writing and
+  report a clear error (or, for `--sync-all`, an unresolved warning) instead of crashing partway
+  through. All fixes verified directly (sample Markdown snippets scored correctly; a scratch-repo
+  file/directory collision test confirmed clean error handling in all three modes) and applied
+  identically to `.github`/`.claude`/`.gemini` where applicable; confirmed the pre-existing
+  `resume-restructure` drift remains unchanged (a second accidental `--sync-all` fix of that
+  out-of-scope drift, while testing this round's crash fix, was caught and reverted).
