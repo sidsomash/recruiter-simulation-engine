@@ -39,6 +39,7 @@ required. Requires Python 3.8+.
 """
 import argparse
 import ntpath
+import os
 import sys
 from pathlib import Path, PurePosixPath
 
@@ -205,6 +206,63 @@ def normalize_sync_path(raw: str) -> Path:
     return Path(*parts)
 
 
+def validate_sync_target(repo_root: Path, platform: str, rel: Path):
+    """Validate that writing `content` to <platform>/skills/<rel> is safe.
+
+    Returns None if safe, or an error message string if not. Checks:
+    - every ancestor directory component under <platform>/skills/ that
+      already exists must be a real directory (not a file) - otherwise
+      mkdir(parents=True) would raise an unhandled FileExistsError instead
+      of a clear error;
+    - the final target, if it already exists, must be a regular file (not
+      a directory or other non-file entry);
+    - the resolved (symlink-following) real path of the target must remain
+      under the resolved <platform>/skills/ root - target.is_file() alone
+      follows symlinks, so a symlinked path component (or a symlinked
+      target itself) could otherwise let write_bytes() escape the
+      platform's skills tree even though normalize_sync_path() already
+      rejected textual '..'/absolute-path traversal.
+    """
+    skills_root = repo_root / platform / "skills"
+    target = skills_root / rel
+
+    # Walk every ancestor from skills_root down to target's parent, and
+    # confirm any that already exist are directories (not files/symlinks to
+    # files) - this is what would otherwise make mkdir(parents=True) raise.
+    ancestor = skills_root
+    for part in rel.parts[:-1]:
+        ancestor = ancestor / part
+        if ancestor.exists() and not ancestor.is_dir():
+            return (
+                f"path component exists but is not a directory, refusing to "
+                f"write under it: {ancestor}"
+            )
+
+    if target.exists() and not target.is_file():
+        return (
+            f"target path exists but is not a regular file (e.g. a directory), "
+            f"refusing to overwrite: {target}"
+        )
+
+    # Containment check: resolve symlinks in whatever part of the path
+    # already exists (realpath does not require the full path to exist -
+    # it resolves as far as it can and appends the remaining, necessarily
+    # nonexistent, components literally) and confirm the result is still
+    # inside the resolved skills root.
+    real_root = os.path.realpath(str(skills_root))
+    real_target = os.path.realpath(str(target))
+    try:
+        common = os.path.commonpath([real_root, real_target])
+    except ValueError:
+        common = None
+    if common != real_root:
+        return (
+            f"target path resolves outside the platform's skills root (possible "
+            f"symlink escape): {target} -> {real_target}"
+        )
+    return None
+
+
 def sync_one(repo_root: Path, rel: Path):
     source = repo_root / CANONICAL_DIR / "skills" / rel
     if not source.exists():
@@ -214,17 +272,25 @@ def sync_one(repo_root: Path, rel: Path):
         print(f"Error: canonical source path is not a regular file (e.g. a directory): {source}")
         return 1
     content = source.read_bytes()
-    synced = []
+
+    targets = [
+        repo_root / platform / "skills" / rel
+        for platform in PLATFORM_DIRS if platform != CANONICAL_DIR
+    ]
+    # Preflight every target before writing any of them, so a conflict on
+    # (say) the .gemini copy can't leave .claude written and .gemini stale -
+    # a partially-synced state would otherwise result from validating and
+    # writing each destination in the same loop.
     for platform in PLATFORM_DIRS:
         if platform == CANONICAL_DIR:
             continue
-        target = repo_root / platform / "skills" / rel
-        if target.exists() and not target.is_file():
-            print(
-                f"Error: target path exists but is not a regular file (e.g. a "
-                f"directory), refusing to overwrite: {target}"
-            )
+        error = validate_sync_target(repo_root, platform, rel)
+        if error:
+            print(f"Error: {error}")
             return 1
+
+    synced = []
+    for target in targets:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(content)
         synced.append(str(target.relative_to(repo_root)))
@@ -258,14 +324,14 @@ def sync_all(repo_root: Path):
         for platform in PLATFORM_DIRS:
             if platform == CANONICAL_DIR:
                 continue
-            target = repo_root / platform / "skills" / rel
-            if target.exists() and not target.is_file():
-                # A directory (or other non-file entry) occupying the same
-                # path as a canonical file is a drift condition that can't
-                # be resolved by writing bytes over it - report it instead
-                # of letting read_bytes()/write_bytes() raise.
-                type_conflicts.append(str(target.relative_to(repo_root)))
+            error = validate_sync_target(repo_root, platform, rel)
+            if error:
+                # A directory (or other non-file/symlink-escape) conflict
+                # can't be resolved by writing bytes over it - report it
+                # instead of letting mkdir()/read_bytes()/write_bytes() raise.
+                type_conflicts.append(f"{platform}/skills/{rel} - {error}")
                 continue
+            target = repo_root / platform / "skills" / rel
             target.parent.mkdir(parents=True, exist_ok=True)
             if target.exists() and target.read_bytes() == content:
                 continue
@@ -277,9 +343,8 @@ def sync_all(repo_root: Path):
     exit_code = 0
     if type_conflicts:
         print(
-            f"\nWARNING: {len(type_conflicts)} target path(s) are a directory (or "
-            "other non-file entry) where a canonical file was expected - NOT "
-            "resolved automatically:"
+            f"\nWARNING: {len(type_conflicts)} target path(s) could not be validated as "
+            "safe to write - NOT resolved automatically:"
         )
         for path in type_conflicts:
             print(f"  - {path}")
@@ -323,7 +388,7 @@ def main():
         )
         return 1
 
-    if args.sync:
+    if args.sync is not None:
         try:
             rel = normalize_sync_path(args.sync)
         except ValueError as exc:
