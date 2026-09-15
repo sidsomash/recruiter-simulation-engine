@@ -932,3 +932,32 @@ entries short — one line per event.
   identically to `.github`/`.claude`/`.gemini` and verified byte-identical; confirmed the
   pre-existing `resume-restructure` drift (tracked separately under
   `skill-sync-checker-tooling`) remains unchanged and out of scope.
+- 2026-09-14: `simulation-subskill-breakdown` — a 6th Copilot review round addressed the
+  remaining substantive gaps. Codified the previously-undocumented internship enrollment-window
+  case as a new contract §5.2 Rule H: an internship JD requiring ongoing enrollment through a
+  future date/term, applied against a candidate who has already graduated (or will graduate
+  before that window begins), is now an explicit ❌ Hard mismatch (with an explicit exception if
+  the JD's own text also accepts recent graduates) — cross-referenced from §5.1's label list and
+  §9.3, replacing the prior undocumented by-analogy handling from end-to-end testing. Fixed a
+  real internship-mode/tooling conflict the review caught in the prior round's §9.5/4h fix:
+  clarified that the internship-mode Final Fit Summary label swap (e.g. "Strong internship
+  match") applies only to the Markdown output's display prose — the JSON sidecar's `fit_category`
+  field always uses §10.1's generic enum value regardless of Internship Mode, since neither the
+  sidecar schema, `validate_simulation_output.py`, nor `run_ranking.py` has internship-specific
+  enum values (writing the internship label into `fit_category` would have failed validation or
+  scored as Unknown/zero). Fixed a hardcoded `.github/skills/ranking/run_ranking.py`
+  cross-reference (added in the prior round) to the platform-neutral `skills/ranking/
+  run_ranking.py` form, since the contract text is mirrored verbatim into `.claude`/`.gemini`
+  where the actual runner lives at a different platform-prefixed path. Also fixed 4 more
+  `tools/check_skill_sync.py` issues: added `resumes/` (resume-restructure's generated tailored
+  résumé output directory) to `EXCLUDED_DIR_PARTS`, which was missing and would have caused
+  future generated-output false positives and PII-copying risk via `--sync-all`; fixed a crash
+  (`IsADirectoryError`) when a relative path is a file in one platform copy but a directory in
+  another, now surfaced as a new "FILE/DIRECTORY TYPE CONFLICT" report category instead of
+  crashing; closed a Windows-drive-letter path-validation gap (`C:/tmp/x` previously passed
+  `PurePosixPath.is_absolute()`'s check undetected — now explicitly rejected via
+  `ntpath.splitdrive()`); and corrected the script's docstring and README's `--sync-all`
+  description, which overstated it as fixing "every drifted/missing file" when it can only copy
+  from the canonical `.github` copy. All fixes verified (script re-run cleanly, drive-path
+  rejection tested directly) and applied identically to `.github`/`.claude`/`.gemini` where
+  applicable; confirmed the pre-existing `resume-restructure` drift remains unchanged.
