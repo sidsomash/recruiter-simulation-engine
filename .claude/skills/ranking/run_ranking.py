@@ -42,6 +42,7 @@ DEGREE_POINTS = {
     "partial": 1,
     "equivalent": 2,
     "direct": 3,
+    "not specified": 3,
 }
 DEGREE_RANGE = (-5, 3)  # min, max possible raw points
 
@@ -51,6 +52,13 @@ FIT_POINTS = {
     "weak match": 1,
     "moderate match": 2,
     "strong match": 3,
+    # Internship-mode display labels (contract §9.5) are not contiguous
+    # substrings of the generic labels above (e.g. "strong internship match"
+    # does not contain "strong match" as a substring), so they need their
+    # own entries to be recognized by this legacy substring-based lookup.
+    "weak internship match": 1,
+    "moderate internship match": 2,
+    "strong internship match": 3,
 }
 FIT_RANGE = (-5, 3)
 
@@ -72,7 +80,7 @@ JSON_DEGREE_POINTS = {
     "partial": (1, "Partial match"),
     "no_match": (-2, "No match"),
     "hard_mismatch": (-5, "Hard mismatch"),
-    "not_specified": (0, "Not specified"),
+    "not_specified": (3, "Not specified"),
 }
 JSON_SKILL_POINTS = {
     "high": (3, "High alignment"),
@@ -174,7 +182,13 @@ def extract_skill_score(text):
     total = direct + partial + no_match
 
     if total == 0:
-        return 0, "Unknown"
+        # Matches contract §8.1: Skill Score = 100 when the JD lists zero
+        # required skills, and the sidecar's skill_alignment derivation
+        # (§11) maps that same zero-required-skills case to "high". This
+        # legacy .md-only fallback must produce the same tier so a
+        # sidecarless zero-required-skills simulation scores identically to
+        # one with a sidecar.
+        return 3, "High alignment"
     ratio_direct = direct / total
     if no_match >= 2 or (total > 0 and direct == 0 and partial == 0):
         return -2, "Major skill gaps"
