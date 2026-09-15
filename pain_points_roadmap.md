@@ -1021,3 +1021,36 @@ entries short — one line per event.
     `.github`/`.claude`/`.gemini`. Committed as 3 commits. A reviewer comment noting the PR
     description didn't mention `run_ranking.py`-scoped changes was noted for the PR description,
     not a code fix.
+    - 2026-09-14: Round-9 PR review fixes on `simulation-subskill-breakdown` — (1) Fixed
+      `run_ranking.py`'s `extract_skill_score()` further: the round-8 fix still treated any
+      Required-Skills table with zero recognized-status rows as a genuine zero-required-skills JD,
+      but a malformed/legacy file with unrecognized status text — including the raw
+      `skill_mapping_template.md` placeholder row itself, whose "Candidate Match" cell literally
+      reads "Direct / Equivalent / Partial / No Match" and matches none of the four values exactly —
+      has the identical shape. Now counts raw table data rows (excluding header/separator lines) to
+      distinguish the two: only a table with zero data rows at all is the genuine zero-skills case;
+      rows present with unrecognized status text fall back to Unknown/0. (2) Added an explicit early
+      Rule E branch to `SKILL.md` 4d: previously, if 4a's locked metadata showed no JD degree
+      requirement at all, 4d ran straight into category classification/JSON lookup anyway, risking a
+      domain mismatch instead of the required ➖ Not specified label — now checks for an empty/null/
+      "Not specified" degree field first and locks ➖ Not specified immediately, skipping category
+      classification. (3) Updated `simulation_output_template.md` (all 3 copies) to list the
+      Strong/Moderate/Weak internship match label variants in the Final Fit Summary Category
+      placeholder, since 4h/§9.5 require them for internship-mode runs but the template only
+      advertised the generic labels (JSON `fit_category` remains generic per §9.5's scope note,
+      unchanged). (4) Further hardened `tools/check_skill_sync.py`: `validate_sync_target()` now
+      also checks `<platform>/skills/` itself for a type conflict (previously only `rel.parts[:-1]`
+      under it was checked, so a `skills/` path that was itself a file passed validation and crashed
+      the first `mkdir(parents=True)` call); switched existence checks from `Path.exists()` to
+      `os.path.lexists()` so broken symlinks (which `exists()` silently treats as absent) are
+      correctly flagged as conflicts instead of surfacing later as an unhandled `OSError`; `sync_all()`
+      now preflights every (rel, platform) pair — including canonical source containment — before
+      writing anything, mirroring `sync_one()`'s round-8 atomicity fix (previously a later rel/
+      platform conflict could leave earlier files already written); and added
+      `validate_sync_source()` so a symlinked canonical source file can no longer be used to read (and
+      copy into `.claude`/`.gemini`) an arbitrary file from outside `.github/skills`. Verified via
+      `py_compile`, isolated scratch-directory tests (confirmed zero files written on a later-pair
+      conflict, and confirmed an out-of-tree source path is rejected), and
+      `python tools/check_skill_sync.py` showing only the known out-of-scope `resume-restructure`
+      drift remains. All skill-file fixes propagated identically to `.github`/`.claude`/`.gemini`.
+      Committed as 3 commits.
