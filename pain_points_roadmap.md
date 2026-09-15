@@ -1055,3 +1055,36 @@ entries short — one line per event.
       `python tools/check_skill_sync.py` showing only the known out-of-scope `resume-restructure`
       drift remains. All skill-file fixes propagated identically to `.github`/`.claude`/`.gemini`.
       Committed as 3 commits.
+      - 2026-09-14: Round-10 PR review fixes on `simulation-subskill-breakdown` — (1) Fixed
+        `run_ranking.py`'s `extract_skill_score()` once more: even after round-9's raw-row check, a
+        "## Required Skills" subheading present with no Markdown table following it at all (e.g.
+        truncated/malformed output) still fell through to the genuine-zero-skills High-alignment
+        branch, since the absence of a table isn't evidence of zero required skills. Now requires the
+        table's own header-separator row (`|---|---|---|`) to actually be present before treating zero
+        data rows as genuine; otherwise falls back to Unknown/0. (2) Substantially hardened
+        `tools/check_skill_sync.py`'s symlink handling: added `find_symlink_component()`, which rejects
+        *any* symlinked component from `repo_root` down to the final target/source (inclusive) rather
+        than relying on containment checks alone — containment alone was insufficient because a
+        symlink whose resolved target still lands inside the expected root (e.g. a final target
+        symlinked to a different regular file in the same skills tree, an ancestor directory symlinked
+        to a different directory, or `<platform>/skills`/the platform dir/repo_root itself being a
+        symlink) previously passed validation while `write_bytes()`/`read_bytes()` silently
+        read/modified the aliased path instead of the requested one. Also added repo-root containment
+        for the platform skills root itself (previously only the final target was checked against its
+        own root, not the root against the repo), and fixed `sync_one()` to reject excluded/generated
+        paths (matching `sync_all()`/`check()`'s existing exclusion policy) so an explicit
+        `--sync ranking/assets/ranking_results.csv`-style call can no longer propagate generated,
+        potentially PII-bearing output across platform trees. (3) Updated `README.md`'s sync-
+        verification section to explicitly document that `python3 tools/check_skill_sync.py` currently
+        reports known, pre-existing, separately-tracked `resume-restructure` drift and exits non-zero
+        because of it — previously the doc implied a clean exit was the expected baseline, which isn't
+        achievable on this checkout regardless of a contributor's own change being fully synchronized.
+        (4) Fixed a stale roadmap test note: the Amazon internship end-to-end test's Hard-mismatch
+        classification was described as an undocumented by-analogy judgment "flagged as a future
+        contract-refinement candidate," but a subsequent review round in this same PR codified that
+        exact scenario as contract §5.2 Rule H — updated the note accordingly. Verified via
+        `py_compile`, direct calls confirming `validate_sync_target`/`validate_sync_source` return
+        `None` (safe) for real repository files, and `sync_one()` correctly rejecting both an
+        `ALLOWED_EXCEPTIONS` file and an `EXCLUDED_FILENAMES` file. `python tools/check_skill_sync.py`
+        confirmed only the known out-of-scope `resume-restructure` drift remains after propagating all
+        skill-file fixes to `.github`/`.claude`/`.gemini`. Committed as 3 commits.
