@@ -210,14 +210,27 @@ def extract_skill_score(text):
             # Rows exist but none parsed as a recognized status - this is
             # unparseable/malformed content, not a genuine zero-skills JD.
             return 0, "Unknown"
-        # The table body is genuinely empty (header/separator only, or no
-        # table at all under the subheading) - this is a genuine
-        # zero-required-skills JD. Matches contract §8.1: Skill Score = 100
-        # when the JD lists zero required skills, and the sidecar's
-        # skill_alignment derivation (§11) maps that same case to "high".
-        # This legacy .md-only fallback must produce the same tier so a
-        # sidecarless zero-required-skills simulation scores identically to
-        # one with a sidecar.
+        # No data rows were found, but that alone still isn't proof of a
+        # genuine zero-required-skills JD: if the "## Required Skills"
+        # subheading is present but no Markdown table follows it at all
+        # (e.g. truncated/malformed output that never emitted a table),
+        # there is nothing to distinguish that from an intentionally empty
+        # table. Require the table's header-separator row (e.g.
+        # "|---|---|---|") to actually be present before treating this as
+        # the genuine zero-skills case - only a *recognizable, empty*
+        # table (header + separator, zero data rows) counts.
+        has_table_structure = bool(
+            re.search(r"^\s*\|[\s:-]+\|[\s:-]+\|[\s:-]+\|\s*$", required, re.M)
+        )
+        if not has_table_structure:
+            return 0, "Unknown"
+        # The table structure was found and is genuinely empty of data rows
+        # - this is a genuine zero-required-skills JD. Matches contract
+        # §8.1: Skill Score = 100 when the JD lists zero required skills,
+        # and the sidecar's skill_alignment derivation (§11) maps that same
+        # case to "high". This legacy .md-only fallback must produce the
+        # same tier so a sidecarless zero-required-skills simulation scores
+        # identically to one with a sidecar.
         return 3, "High alignment"
     ratio_direct = direct / total
     if no_match >= 2 or (total > 0 and direct == 0 and partial == 0):
