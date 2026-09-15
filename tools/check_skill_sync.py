@@ -210,12 +210,21 @@ def sync_one(repo_root: Path, rel: Path):
     if not source.exists():
         print(f"Error: canonical source file does not exist: {source}")
         return 1
+    if not source.is_file():
+        print(f"Error: canonical source path is not a regular file (e.g. a directory): {source}")
+        return 1
     content = source.read_bytes()
     synced = []
     for platform in PLATFORM_DIRS:
         if platform == CANONICAL_DIR:
             continue
         target = repo_root / platform / "skills" / rel
+        if target.exists() and not target.is_file():
+            print(
+                f"Error: target path exists but is not a regular file (e.g. a "
+                f"directory), refusing to overwrite: {target}"
+            )
+            return 1
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(content)
         synced.append(str(target.relative_to(repo_root)))
@@ -242,6 +251,7 @@ def sync_all(repo_root: Path):
     canonical_missing = sorted(all_rel_paths - rel_paths, key=str)
 
     total_synced = 0
+    type_conflicts = []
     for rel in sorted(rel_paths, key=str):
         source = canonical_skills_dir / rel
         content = source.read_bytes()
@@ -249,6 +259,13 @@ def sync_all(repo_root: Path):
             if platform == CANONICAL_DIR:
                 continue
             target = repo_root / platform / "skills" / rel
+            if target.exists() and not target.is_file():
+                # A directory (or other non-file entry) occupying the same
+                # path as a canonical file is a drift condition that can't
+                # be resolved by writing bytes over it - report it instead
+                # of letting read_bytes()/write_bytes() raise.
+                type_conflicts.append(str(target.relative_to(repo_root)))
+                continue
             target.parent.mkdir(parents=True, exist_ok=True)
             if target.exists() and target.read_bytes() == content:
                 continue
@@ -256,6 +273,17 @@ def sync_all(repo_root: Path):
             total_synced += 1
             print(f"  - wrote {target.relative_to(repo_root)}")
     print(f"Done. {total_synced} file(s) written/updated from {CANONICAL_DIR}.")
+
+    exit_code = 0
+    if type_conflicts:
+        print(
+            f"\nWARNING: {len(type_conflicts)} target path(s) are a directory (or "
+            "other non-file entry) where a canonical file was expected - NOT "
+            "resolved automatically:"
+        )
+        for path in type_conflicts:
+            print(f"  - {path}")
+        exit_code = 1
 
     if canonical_missing:
         print(
@@ -266,8 +294,8 @@ def sync_all(repo_root: Path):
         )
         for rel in canonical_missing:
             print(f"  - skills/{rel}")
-        return 1
-    return 0
+        exit_code = 1
+    return exit_code
 
 
 def main():
