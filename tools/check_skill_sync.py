@@ -116,11 +116,28 @@ def check(repo_root: Path):
     missing_issues = []
     diff_issues = []
     type_conflict_issues = []
+    symlink_issues = []
 
     for rel in rel_paths:
         full_paths = {
             platform: repo_root / platform / "skills" / rel for platform in PLATFORM_DIRS
         }
+
+        # A symlinked path component (the file itself, or any ancestor
+        # directory) is drift regardless of what content it resolves to -
+        # Path.is_file()/read_bytes() both follow symlinks, so without this
+        # check a symlink pointing at byte-identical content in all three
+        # trees would be silently reported as "synchronized" even though
+        # --sync/--sync-all (validate_sync_target/validate_sync_source)
+        # would reject that same path outright.
+        symlinked = {
+            p: fp for p, fp in full_paths.items()
+            if find_symlink_component(repo_root, fp) is not None
+        }
+        if symlinked:
+            symlink_issues.append((rel, sorted(symlinked)))
+            continue
+
         # Only count actual files as "existing" - a path that is a file in
         # one platform copy but a directory (or other non-file entry) in
         # another is itself a form of drift, not something read_bytes() can
@@ -154,12 +171,20 @@ def check(repo_root: Path):
                 f"other non-file entry in: {', '.join(non_file)})"
             )
 
+    if symlink_issues:
+        print(f"SYMLINKED PATH COMPONENT ({len(symlink_issues)}):")
+        for rel, platforms in symlink_issues:
+            print(
+                f"  - skills/{rel}  (symlinked path component under: "
+                f"{', '.join(platforms)} - not a plain file/directory, refused by --sync)"
+            )
+
     if diff_issues:
         print(f"CONTENT DIFFERS across copies ({len(diff_issues)}):")
         for rel in diff_issues:
             print(f"  - skills/{rel}")
 
-    if not missing_issues and not diff_issues and not type_conflict_issues:
+    if not missing_issues and not diff_issues and not type_conflict_issues and not symlink_issues:
         print(f"OK - {len(rel_paths)} skill files checked, all copies identical.")
         return 0
 
@@ -398,6 +423,45 @@ def validate_sync_source(repo_root: Path, source: Path):
     return None
 
 
+def write_targets_transactionally(targets_content):
+    """Write every (target_path, content_bytes) pair in `targets_content`.
+
+    Returns None on full success, or an error message string if any write
+    failed. On failure, every target already written *during this call* is
+    rolled back - restored to its prior content if it existed before, or
+    deleted if it didn't - so a mid-batch OSError (e.g. permission denied on
+    a later destination) cannot leave some destinations updated and others
+    stale. This is scoped to the current call only: it cannot undo writes
+    from a previous, already-returned invocation, but preflight validation
+    (validate_sync_target/validate_sync_source) is what prevents foreseeable
+    conflicts from reaching this point at all - this rollback specifically
+    covers unforeseeable failures (disk full, permissions, concurrent
+    external modification) that preflight checks can't detect in advance.
+    """
+    written = []
+    try:
+        for target, content in targets_content:
+            existed = target.exists()
+            prior = target.read_bytes() if existed else None
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+            written.append((target, existed, prior))
+    except OSError as exc:
+        for target, existed, prior in reversed(written):
+            try:
+                if existed:
+                    target.write_bytes(prior)
+                else:
+                    target.unlink()
+            except OSError:
+                pass
+        return (
+            f"write failed ({exc}); rolled back {len(written)} already-written "
+            "destination(s) from this operation"
+        )
+    return None
+
+
 def sync_one(repo_root: Path, rel: Path):
     if is_excluded(rel):
         print(
@@ -436,10 +500,12 @@ def sync_one(repo_root: Path, rel: Path):
             return 1
 
     synced = []
-    for target in targets:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(content)
-        synced.append(str(target.relative_to(repo_root)))
+    targets_content = [(target, content) for target in targets]
+    write_error = write_targets_transactionally(targets_content)
+    if write_error:
+        print(f"Error: {write_error}")
+        return 1
+    synced = [str(target.relative_to(repo_root)) for target in targets]
     print(f"Synced {rel} to:")
     for path in synced:
         print(f"  - {path}")
@@ -487,19 +553,42 @@ def sync_all(repo_root: Path):
             plan.append(rel)
 
     total_synced = 0
-    for rel in plan:
-        source = canonical_skills_dir / rel
-        content = source.read_bytes()
-        for platform in PLATFORM_DIRS:
-            if platform == CANONICAL_DIR:
-                continue
-            target = repo_root / platform / "skills" / rel
-            target.parent.mkdir(parents=True, exist_ok=True)
-            if target.exists() and target.read_bytes() == content:
-                continue
-            target.write_bytes(content)
-            total_synced += 1
+    if type_conflicts:
+        # Full-batch abort: if ANY (rel, platform) pair failed validation,
+        # write nothing at all - not even the conflict-free entries -
+        # rather than partially applying the sync and reporting a warning
+        # afterward. Preflighting-but-still-writing-the-rest would leave
+        # the three trees in a mixed state (some paths freshly
+        # synchronized, others still stale because of the conflict) every
+        # time any single path in the whole tree has a problem, which is
+        # exactly the inconsistent partial-sync state this function is
+        # meant to avoid.
+        print(
+            f"Aborting: {len(type_conflicts)} target path(s) failed validation - "
+            "writing nothing (not even conflict-free paths) so the sync stays "
+            "all-or-nothing:"
+        )
+        for path in type_conflicts:
+            print(f"  - {path}")
+    else:
+        targets_content = []
+        for rel in plan:
+            source = canonical_skills_dir / rel
+            content = source.read_bytes()
+            for platform in PLATFORM_DIRS:
+                if platform == CANONICAL_DIR:
+                    continue
+                target = repo_root / platform / "skills" / rel
+                if target.exists() and target.read_bytes() == content:
+                    continue
+                targets_content.append((target, content))
+        write_error = write_targets_transactionally(targets_content)
+        if write_error:
+            print(f"Error: {write_error}")
+            return 1
+        for target, _ in targets_content:
             print(f"  - wrote {target.relative_to(repo_root)}")
+            total_synced += 1
     print(f"Done. {total_synced} file(s) written/updated from {CANONICAL_DIR}.")
 
     exit_code = 0
