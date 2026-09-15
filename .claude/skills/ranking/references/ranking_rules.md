@@ -77,6 +77,9 @@ Degree match categories are scored as:
 - ~ Partial match → +1  
 - ✘ No match → −2  
 - ❌ Hard mismatch → −5  
+- ➖ Not specified → +3 (JD states no degree requirement at all; scored the same as Direct/
+  Equivalent per `simulation_contract.md` §8.1 — a Degree Score of 100, not a penalty or neutral
+  value, since the absence of a requirement means the candidate cannot fail it)
 
 ### 3.4 Skill Alignment
 Based on the simulation’s skill mapping:

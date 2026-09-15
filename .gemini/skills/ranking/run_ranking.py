@@ -182,12 +182,21 @@ def extract_skill_score(text):
     total = direct + partial + no_match
 
     if total == 0:
-        # Matches contract §8.1: Skill Score = 100 when the JD lists zero
-        # required skills, and the sidecar's skill_alignment derivation
-        # (§11) maps that same zero-required-skills case to "high". This
-        # legacy .md-only fallback must produce the same tier so a
-        # sidecarless zero-required-skills simulation scores identically to
-        # one with a sidecar.
+        if section_m is None or required_m is None:
+            # The "## 2. Skill & Responsibility Mapping" section or its
+            # "## Required Skills" subheading could not be found at all -
+            # this is a parsing failure (malformed/legacy output), not a
+            # genuine zero-required-skills JD, so it must stay Unknown/0
+            # rather than being conflated with the real zero-skills case
+            # below.
+            return 0, "Unknown"
+        # The section/table structure was found, but it has zero data rows
+        # - this is a genuine zero-required-skills JD. Matches contract
+        # §8.1: Skill Score = 100 when the JD lists zero required skills,
+        # and the sidecar's skill_alignment derivation (§11) maps that same
+        # case to "high". This legacy .md-only fallback must produce the
+        # same tier so a sidecarless zero-required-skills simulation scores
+        # identically to one with a sidecar.
         return 3, "High alignment"
     ratio_direct = direct / total
     if no_match >= 2 or (total > 0 and direct == 0 and partial == 0):
