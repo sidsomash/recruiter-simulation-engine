@@ -119,13 +119,20 @@ vs.
 - ✔ **Equivalent match** — Degree is a STEM/quantitative equivalent  
 - ~ **Partial match** — Degree is adjacent but not explicitly listed  
 - ✘ **No match** — Degree is not relevant to the required field  
-- ❌ **Hard mismatch** — JD requires Master’s/PhD with no “or equivalent experience” clause  
+- ❌ **Hard mismatch** — JD requires Master’s/PhD with no “or equivalent experience” clause
+  (Rule D), or an internship JD requires ongoing enrollment through a future date/term that the
+  candidate has already passed (Rule H)  
+- ➖ **Not specified** — the JD does not state a degree requirement at all (Rule E); no penalty,
+  no flag (see §8.1's Degree Score table, which scores this the same as a Direct/Equivalent
+  match)
 
 ### 5.2 Degree Mapping Rules
 
-These rules apply **only when the JD's degree domain is not found** in the authoritative JSON
+Rules A–G apply **only when the JD's degree domain is not found** in the authoritative JSON
 lookup table (`references/degree_domain_map.json`, see §5.3), or when the candidate's degree does
-not fall into a category the JSON covers. Always check the JSON lookup first.
+not fall into a category the JSON covers. Always check the JSON lookup first for those rules.
+**Rule H is the sole exception** — it is an unconditional internship eligibility gate evaluated
+for every internship posting regardless of the JSON lookup outcome (see Rule H below for why).
 
 **Determining the candidate's degree category:** Do not classify the candidate's degree from its
 literal title alone. Cross-reference `candidate_profile.md` (technical strengths, quantitative
@@ -180,6 +187,36 @@ experience that upgrades the categorization per the categorization guidance abov
 case, apply the upgraded category's table instead). Do not apply ❌ Hard mismatch here — that
 label is reserved for the advanced-degree cases in Rules C/D (§5.1).
 
+**Rule H — Internship Enrollment Window vs. Already-Graduated Candidate**
+This rule is an **unconditional internship eligibility gate**, evaluated for every internship
+posting (per 4b's Internship Mode flag) regardless of whether the JD's degree domain is found in
+the §5.3 JSON lookup — it is not limited to the JSON-miss fallback path that the rest of this
+§5.2 section otherwise applies to, since the JSON lookup only covers domain-matching, not
+enrollment-window eligibility.
+
+If the JD explicitly requires the candidate to be enrolled in a degree program through a stated
+cutoff date or term (e.g., "must be enrolled through Fall 2026," "graduating December 2026 or
+later," "currently pursuing a degree with an expected graduation of [future date]") — this is the
+"Internship enrollment window" field locked in 4a's JD metadata object; do not re-derive it from
+the JD text at this step — compare the candidate's actual (or expected) graduation date, per
+`candidate_resume.md`/`candidate_profile.md`, against **that stated cutoff** — not the JD's
+posting date. If the candidate's graduation date is before the JD's stated cutoff (i.e., the
+candidate will no longer be enrolled by the point the JD requires ongoing enrollment through):  
+→ ❌ **Hard mismatch** — this is a strict eligibility gate equivalent in kind to Rules C/D (the
+candidate cannot satisfy an ongoing-enrollment requirement after graduation), so it triggers the
+§8.4 Hard Reject Override the same way an unmet Master's/PhD requirement does.
+
+If 4a's "Internship enrollment window" field is null (the JD gives no explicit cutoff, only a
+general "currently enrolled" requirement with no date/term), fall back to comparing the
+candidate's graduation date against the JD's posting date instead, using "Unknown" posting date to
+mean this comparison cannot be made — in that case, do not apply Rule H (there's no date to
+compare against); evaluate under Rules A–G instead.
+
+Exception: if 4a's "Recent-graduate exception" field is `Yes` (the JD's own text explicitly also
+accepts recent graduates alongside currently-enrolled students), this rule does not apply —
+evaluate the candidate under Rules A/F instead, since the JD itself has opened eligibility to
+graduated candidates.
+
 ### 5.3 Degree Domain Mapping (Generalized)
 
 **Authoritative source:** `references/degree_domain_map.json`. The model must first determine
@@ -188,7 +225,10 @@ which candidate degree category applies — `stem_quantitative`, `business_finan
 guidance — this considers the candidate's degree title, skills/profile, and preferences, not the
 title alone) — then look up the JD's required degree field under that category in the JSON file.
 If the category and domain are both found, use the match category from the JSON verbatim. If
-either is not found, fall back to Rules A–G in §5.2.
+either is not found, fall back to Rules A–G in §5.2. **Rule H is evaluated independently of this
+JSON lookup, before or alongside it** — a JSON hit does not exempt an internship posting from the
+Rule H eligibility check, since the JSON only encodes degree-domain matching, not enrollment-
+window eligibility.
 
 The tables below are human-readable renderings of the JSON's four categories for quick reference
 — if they ever disagree with `degree_domain_map.json`, the JSON wins. See the JSON's
@@ -254,6 +294,15 @@ experience (see also §6.3).
 - ✔ Meets requirement  
 - ~ Partially meets requirement  
 - ✘ Does not meet requirement  
+
+**Markdown table representation:** `experience_mapping_template.md`'s `Match` column holds
+**only the standalone glyph** (✔ / ~ / ✘), matching the template's own header. The full label
+text above is the canonical internal/checkpoint wording (and is what appears in prose elsewhere
+in the output, e.g. the Rationale/Notes column), but the table's `Match` cell itself must contain
+just the glyph — `skills/ranking/run_ranking.py`'s legacy Markdown-only fallback parser
+(used only for older simulation outputs saved without a JSON sidecar) matches the Match column
+via a regex that expects a bare glyph and nothing else; writing the full text into that cell
+would make the legacy parser silently fail (falling back to "Unknown" experience for that file).
 
 ### 6.3 Degree‑vs‑Experience Interaction (Career Switchers)
 
@@ -325,7 +374,7 @@ If there are zero required skills listed in the JD, Skill Score = 100.
 | ~ Partial match | 60 |
 | ✘ No match | 25 |
 | ❌ Hard mismatch | 0 (also triggers the §8.4 override) |
-| Not specified (Rule E) | 100 |
+| ➖ Not specified | 100 |
 
 **Experience Score (0–100):** From the §6 Years-of-Experience Mapping match label.
 
@@ -339,13 +388,16 @@ If there are zero required skills listed in the JD, Skill Score = 100.
 
 | Violation Severity | Penalty |
 |---|---|
-| Minor (e.g., location) | −5 |
-| Moderate (e.g., compensation, domain mismatch) | −10 |
-| Major (e.g., on-site/remote mismatch candidate strongly opposes) | −15 |
-| Defense/clearance (candidate opts out) | −20 |
+| Minor (e.g., location) | 5 |
+| Moderate (e.g., compensation, domain mismatch) | 10 |
+| Major (e.g., on-site/remote mismatch candidate strongly opposes) | 15 |
+| Defense/clearance (candidate opts out) | 20 |
 
-Sum the penalty for every applicable violation. If no preferences file was provided, Preference
-Penalty = 0.
+Sum the penalty magnitudes for every applicable violation to get the Preference Penalty — a
+non-negative number. If no preferences file was provided, Preference Penalty = 0. The formulas
+below (§8.2/§8.3) subtract this value directly, exactly as shown in the §8.7 worked examples
+(e.g., a single moderate violation subtracts 10, not −10) — never store or apply it as a negative
+number.
 
 ### 8.2 Recruiter Screen Likelihood Formula
 
@@ -425,7 +477,7 @@ output — they are descriptive of the formula above, not a separate/independent
   → Skill Score = 100 × (1 + 1 + 0.5×1) / 4 = 100 × 2.5 / 4 = 62.5
 - Degree: Partial match → Degree Score = 60
 - Experience: Partially meets requirement → Experience Score = 55
-- Preferences: 1 moderate violation → Preference Penalty = −10
+- Preferences: 1 moderate violation → Preference Penalty = 10
 - Recruiter% = round(0.40×62.5 + 0.35×60 + 0.25×55) − 10 = round(59.75) − 10 = 60 − 10 = **50%** →
   Moderate
 - Interview% = round(0.35×62.5 + 0.40×60 + 0.25×55) − 10 = round(59.625) − 10 = 60 − 10 = 50,
@@ -466,23 +518,67 @@ set explicitly rather than left blank or inferred later from the job title.
   ✔ Direct match if candidate is enrolled in that field  
   ✔ Equivalent match if enrolled in a related STEM field  
 - Degree completion is **not required**  
+- If the JD requires ongoing enrollment through a stated future cutoff date/term and the
+  candidate's graduation date (actual or expected) falls before that cutoff, apply §5.2 Rule H
+  (❌ Hard mismatch, unless the JD explicitly also accepts recent graduates) instead of treating
+  degree completion as automatically qualifying — see Rule H for the exact cutoff-based
+  condition (not the internship's start date or application window, but the JD's stated
+  enrollment-through date/term itself).
 
 ### 9.4 Recruiter Decision Adjustments (Internships)
-- Missing required skills → moderate penalty (not heavy)  
-- Missing required experience → light penalty  
-- Degree mismatch → evaluated based on enrollment, not completion  
+These restate how §9.1–§9.3's internship-adjusted labels (already locked by 4c/4d/4e in
+`simulation/SKILL.md`) naturally reduce Degree/Experience Score penalties for internship
+candidates — they are descriptive of that already-applied effect, not a separate additive penalty
+computed inside §8's formula (same framing as §8.6's Decision Rules):
+- Missing required experience → light penalty, because §9.1 already lets coursework/projects/
+  research count as experience, raising the Experience Match label (and Experience Score) that
+  would otherwise apply
+- Degree mismatch → evaluated based on enrollment, not completion, per §9.3's Match Category
+  rules (already reflected in 4d's locked label)
+
+**Note on Skill Score:** §8.1's Skill Score formula is derived solely from the Required Skills
+Direct/Equivalent/Partial/No Match counts (§4.1) — it has no input from Responsibility Alignment
+or Internship Mode. §9.2's leniency only affects the Responsibility Alignment narrative, not the
+Skill Score number itself. Internship Mode therefore does **not** automatically produce a lighter
+Skill Score for missing required skills; a missing required skill still counts as No Match in 4c
+exactly as it would for a full-time role.
 
 ### 9.5 Internship Fit Summary Labels
-- Strong internship match  
-- Moderate internship match  
-- Weak internship match  
-- Mismatch  
+For internship-mode runs, these labels are the internship-mode equivalent of §10.1's generic
+rows — the same Recruiter% band lookup applies, with the label text swapped per this table:
+
+| §10.1 Generic Label | Internship-Mode Label |
+|---|---|
+| Strong match | Strong internship match |
+| Moderate match | Moderate internship match |
+| Weak match | Weak internship match |
+| Mismatch | Mismatch |
+| Hard reject | Hard reject |
+
+4h selects the internship-mode label from this table (instead of §10.1's generic label) whenever
+4b's Internship Mode flag is `Yes`, using the same Recruiter% band already computed in 4g — never
+an independently chosen label.
+
+**Scope — Markdown display only, not the JSON sidecar enum:** this substitution applies only to
+the Markdown output's Final Fit Summary section (human-readable prose). The JSON sidecar's
+`fit_category` field (§11) always uses the §10.1 **generic** enum value (`strong_match` /
+`moderate_match` / `weak_match` / `mismatch` / `hard_reject`) regardless of Internship Mode — the
+sidecar schema, `validate_simulation_output.py`, and `run_ranking.py` have no internship-specific
+enum values, so writing an internship label (or its would-be enum form) into `fit_category` would
+fail validation or be scored as `Unknown`/zero by the ranking skill. 4h must derive `fit_category`
+from the same §10.1 band lookup used for the Markdown's generic label, independent of whether the
+Markdown prose itself displays the internship-mode variant.
 
 ---
 
 ## 10. Final Fit Summary
 
-One of:
+One of the following generic labels — this is the full set for full-time/non-internship output,
+and also the fixed set used for the JSON sidecar's `fit_category` enum in **every** run (see the
+Scope note above §10.1 and §11). For internship-mode runs, the **Markdown output's** display
+prose additionally substitutes the §9.5 internship-mode label for Strong/Moderate/Weak match
+(never Mismatch/Hard reject, which are unchanged) — §9.5 is an explicit, scoped exception to this
+list, not a contradiction of it:
 
 - **Strong match**  
 - **Moderate match**  
@@ -492,12 +588,27 @@ One of:
 
 The summary must reflect the recruiter decision logic above.
 
+### 10.1 Deterministic Category Mapping
+
+The Final Fit Summary category is looked up from the computed Recruiter% band (§8.5) — it is a
+lookup, never an independent judgment call. The same Recruiter% always produces the same Final
+Fit Summary category:
+
+| Recruiter% Band (§8.5) | Final Fit Summary |
+|---|---|
+| Very High (80–100%) | Strong match |
+| High (65–79%) | Strong match |
+| Moderate (45–64%) | Moderate match |
+| Low (20–44%) | Weak match |
+| Very Low (5–19%) | Mismatch |
+| Hard Reject (0–4%) | Hard reject |
+
 ---
 
 ## 11. JSON Sidecar (Required Companion Output)
 
 Every simulation must produce a `.json` sidecar file alongside the Markdown output (same base
-filename, see `simulation/SKILL.md` Steps 5–6). The Markdown file remains the canonical
+filename, see `simulation/SKILL.md` Steps 4h–5). The Markdown file remains the canonical
 **human-readable** record. The JSON sidecar is the canonical **machine-readable** record that the
 ranking skill consumes directly (see `ranking_rules.md`), instead of parsing prose strings out of
 the Markdown via regex. The sidecar is a required companion, not a replacement for the Markdown
@@ -530,10 +641,20 @@ independent re-derivation. If the two ever disagree, that is a bug in output gen
 acceptable discrepancy.
 
 **`skill_alignment` derivation:** since §8.1's Skill Score is a continuous 0–100 number (not an
-enum), derive the enum for this field only using the same thresholds `run_ranking.py` already
-uses for its independent skill-alignment heuristic (documented in `ranking_rules.md` §3.4): `high`
-if Skill Score reflects mostly Direct/Equivalent matches with no gaps, `major_gaps` if two or more
-required skills are No Match (or the candidate has no Direct/Equivalent/Partial matches at all),
-`moderate` or `low` otherwise based on the proportion of strong matches. This keeps the sidecar's
-categorical field consistent with the ranking skill's existing categorical scoring, independent of
-the continuous Skill Score used only inside the §8 formula.
+enum), derive this field deterministically from 4c's locked Direct/Equivalent/Partial/No Match
+counts, using the same tiers `run_ranking.py` already scores (`ranking_rules.md` §3.4), via these
+explicit, non-overlapping thresholds (evaluated in this order). Let `direct` = Direct + Equivalent
+count, `partial` = Partial count, `no_match` = No Match count, and `total` = total_required_skills:
+0. `high` — `total` = 0 (no required skills listed in the JD). This matches §8.1's rule that
+   Skill Score = 100 when there are zero required skills; it must be checked **before** rule 1,
+   since an empty-JD candidate would otherwise have `direct = partial = no_match = 0` and be
+   misclassified as `major_gaps` by rule 1.
+1. `major_gaps` — `total` > 0, and either `no_match` ≥ 2, or `direct` = 0 **and** `partial` = 0
+2. `high` — `no_match` = 0 **and** `direct / total` ≥ 0.7
+3. `moderate` — not `major_gaps`, and (`direct / total` ≥ 0.4 **or** (`direct` + `partial`) /
+   `total` ≥ 0.6)
+4. `low` — none of the above (some matches exist, but below the `moderate` threshold)
+
+This tier must be locked once, during `simulation/SKILL.md` Step 4c (alongside the Direct/
+Equivalent/Partial/No Match counts) — 4h only copies this already-locked value into the sidecar,
+it must never derive or second-guess it during output assembly.

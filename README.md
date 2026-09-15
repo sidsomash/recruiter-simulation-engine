@@ -217,6 +217,45 @@ recruiter-simulation-engine/
 
 Each directory contains the same skills with identical logic. Pick the one matching your AI agent platform.
 
+### **Keeping the three copies in sync**
+
+Skill-definition files (`SKILL.md`, `references/*`, `assets/templates/*`) must be identical across
+all three platform copies — each AI platform reads its own directory independently, so an edit
+made to only one copy silently drifts out of sync with the others. There is no automatic
+propagation for these files today (unlike candidate data files, which `initialize/
+sync_candidate_files.py` mirrors automatically); if you edit a skill file, apply the same change
+to all three copies, then verify with:
+
+```bash
+python3 tools/check_skill_sync.py
+```
+
+This reports any file that's missing from one or two copies, or whose content differs across
+copies (excluding intentionally platform-specific files and generated output like simulation
+results). To fix drift automatically once you've confirmed which copy is correct, use:
+
+> **Known pre-existing exception:** on the current checkout, this command reports drift in
+> `resume-restructure` (`SKILL.md`/`references/resume_guidelines.md` differ across copies, and
+> two templates are `.github`-only) and exits non-zero because of it. This drift is real,
+> pre-existing, and tracked separately in `pain_points_roadmap.md` under the
+> `skill-sync-checker-tooling` branch — it is intentionally out of scope for unrelated changes
+> and is not something a clean checkout can currently avoid. When using this command to verify
+> your own change, confirm the *only* reported drift is this known `resume-restructure` case;
+> any other file reported means your edit wasn't propagated to all three copies.
+
+```bash
+# Mirror one file from the canonical .github copy to .claude/.gemini
+python3 tools/check_skill_sync.py --sync skills/simulation/SKILL.md
+
+# Sync every canonical (.github) file to .claude/.gemini in one pass; a
+# file that exists only in .claude/.gemini (missing from .github) is
+# reported as an unresolved warning instead, not created/copied
+python3 tools/check_skill_sync.py --sync-all
+```
+
+`.github/skills/` is treated as the canonical source for `--sync`/`--sync-all`. The script is
+stdlib-only (no virtualenv or `pip install` needed).
+
 ---
 
 ## 🏗️ Core Skills
@@ -684,6 +723,7 @@ This engine is designed to be forked and customized:
 2. Add a `SKILL.md` file describing the new skill
 3. Add necessary templates and references
 4. Update this README with the new skill description
+5. Run `python3 tools/check_skill_sync.py` before committing to confirm all three copies match
 
 ### **To report bugs or request features:**
 Open an issue on GitHub: https://github.com/sidsomash/recruiter-simulation-engine/issues

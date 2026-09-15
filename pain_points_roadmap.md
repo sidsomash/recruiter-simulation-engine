@@ -311,8 +311,7 @@ secondarily).
 ---
 
 ### Branch: `simulation-subskill-breakdown`
-**Status:** In progress (restructure implemented and committed on the branch; end-to-end
-testing against varied JDs still pending — see checklist item 4)
+**Status:** Ready for review (all checklist items complete)
 
 **Problem:** Step 4 ("Apply Simulation Contract") asks the model to perform 8 distinct analyses in
 one pass, each with its own branching rules — the single biggest source of rule-blending errors,
@@ -343,8 +342,32 @@ should land last, once the target schema/formulas/validation are stable).
    explicit internal checkpoints (simpler UX), only splitting into separate skills if a sub-step
    needs independent reuse (e.g., the JD parser being reused by Resume-Restructure). (Not
    pursued — kept as one skill per the default recommendation.)
-4. **Not yet done:** Test end-to-end with 2–3 varied JDs (full-time, internship, ambiguous
-   degree) to confirm output parity with the pre-refactor monolithic version.
+4. ✅ Tested end-to-end with 3 real, varied JDs against the candidate's actual (if slightly
+   outdated) résumé data on `candidate/sid-somashekar`, applying the restructured 4a-4h
+   sub-steps by hand and validating the resulting Markdown + JSON sidecar pairs with the
+   unchanged `validate_simulation_output.py`:
+   - **Mizuho Data Engineer** (full-time, direct STEM-degree/skill match, one moderate
+     compensation preference violation) → Strong match, Recruiter 90% / Interview 90%.
+   - **Amazon Automation Engineer Intern** (internship; JD requires *current* enrollment
+     through a Dec 2027-Aug 2028 graduation window, but the candidate already graduated and
+     is employed full-time) → classified as ❌ Hard mismatch (at the time of this test, the
+     closest analogous rule to §5.1's Master's/PhD case, since the JD's specific "already-
+     graduated-but-JD-requires-ongoing-enrollment" scenario wasn't yet explicitly named in the
+     contract; this exact scenario is now codified as contract §5.2 Rule H, added in a later
+     review round — see below), triggering the §8.4 override → Hard reject,
+     Recruiter 2% / Interview 1%.
+   - **ICF Early Talent Acquisition Associate** (full-time, unspecified degree field per
+     Rule E, but a full domain shift into HR/recruiting with a 2+ year recruiting-specific
+     experience requirement the candidate doesn't meet, plus an explicit avoided-domain
+     preference violation) → Weak match, Recruiter 35% / Interview 35%.
+   All three pairs passed `validate_simulation_output.py` (structural sections, enum values,
+   percentage ranges, and cross-file Markdown/JSON consistency). Independently recomputed all
+   three Recruiter%/Interview% formulas in a separate script and confirmed exact agreement
+   (90/90, 2/1, 35/35) with no rounding-order discrepancies. Test artifacts were scratch-only
+   (not committed to any branch) since the resume used was known to be somewhat outdated;
+   confirms output parity and correct checkpoint-sequencing behavior across a full-time
+   direct-match case, an internship hard-reject edge case, and a full-time domain-mismatch
+   case.
 
 ---
 
@@ -423,7 +446,7 @@ example path (the one pre-existing intentional drift point in this file).
 ## Tier 3 — Cross-cutting (independent, can be done anytime)
 
 ### Branch: `candidate-branch-isolation`
-**Status:** Ready for review (all checklist items complete)
+**Status:** Merged
 
 **Problem:** Candidate PII (résumé, profile, preferences, and by extension simulation/résumé
 outputs derived from them) has historically been committed directly onto `main` and other
@@ -490,6 +513,50 @@ a dedicated candidate branch.
 
 ---
 
+### Branch: `skill-sync-checker-tooling`
+**Status:** In progress
+
+**Problem:** Skill-definition files (`SKILL.md`, `references/*`, `assets/templates/*`) must be
+byte-for-byte identical across `.github/skills/`, `.claude/skills/`, and `.gemini/skills/`, since
+each AI platform reads its own copy independently. Unlike candidate data files (mirrored
+automatically by `initialize/sync_candidate_files.py`), there has been **no equivalent tooling for
+skill-definition files** — every propagation has been fully manual (edit x3, then eyeball- or
+`Compare-Object`-diff). This has been a recurring, repeated source of PR review findings across
+multiple Copilot review rounds on `simulation-subskill-breakdown` (stale cross-references,
+inconsistent step numbering, mismatched wording caught only after the fact).
+
+**Depends on:** Nothing.
+
+**Checklist:**
+1. ✅ Added `tools/check_skill_sync.py` — a stdlib-only, repo-root-level script with three modes:
+   - `python3 tools/check_skill_sync.py` — report-only: scans every skill file across all 3
+     platform copies and reports any that are missing from one/two copies or whose content
+     differs; exits non-zero on any drift (usable as a manual pre-commit check).
+   - `python3 tools/check_skill_sync.py --sync <relative-path>` — mirrors one file byte-for-byte
+     from the canonical `.github` copy to `.claude`/`.gemini`.
+   - `python3 tools/check_skill_sync.py --sync-all` — mirrors every non-excluded file from
+     `.github` to `.claude`/`.gemini` in one pass.
+   - Maintains an explicit, justified `ALLOWED_EXCEPTIONS` list (currently just
+     `simulation/one_shot_simulation_prompt.md`, which is canonical-`.github`-only by design) plus
+     exclusions for generated/non-definition content (`simulations/` output dirs,
+     `ranking_results.csv`, `__pycache__`/`.pyc`).
+2. ✅ Validated the script against the current repo state: correctly ignores generated artifacts
+   and the mobile-prompt exception, and correctly surfaces genuine pre-existing drift in
+   `resume-restructure` (`SKILL.md`, `references/resume_guidelines.md` differ across copies; two
+   templates under `assets/templates/` are `.github`-only) — confirming the tool catches real
+   drift, not just the specific case it was built for. That pre-existing `resume-restructure`
+   drift is tracked separately and is out of scope for this branch to fix.
+3. ✅ Updated `README.md`'s "Keeping the three copies in sync" section (`Directory Structure`)
+   to document the script's report-only/`--sync`/`--sync-all` usage as an explicit,
+   discoverable part of the contribution workflow, including the known `resume-restructure`
+   drift caveat so a non-zero exit isn't mistaken for a broken checkout.
+4. Consider wiring `--check` mode into a CI workflow (e.g., a GitHub Actions step on PRs touching
+   `.github/skills/`, `.claude/skills/`, or `.gemini/skills/`) as a follow-up, once the script has
+   proven itself in manual use for a few PRs. Not pursued yet — flagged as a future enhancement,
+   not a blocker for this branch.
+
+---
+
 ### Branch: `golden-examples-fewshot`
 **Status:** Not started
 
@@ -511,6 +578,35 @@ rules.
 
 ---
 
+### Branch: `mobile-prompt-4a-4h-sync`
+**Status:** Not started
+
+**Problem:** `simulation/one_shot_simulation_prompt.md` (the pre-populated mobile prompt built by
+the Initialize skill) still reflects the pre-`simulation-subskill-breakdown` workflow — it uses
+the old 0–5% band language and has no awareness of the 4a–4h checkpoint sequencing, the §10.1
+deterministic Final Fit Summary lookup, or the JSON sidecar requirement. Flagged during a
+`simulation-subskill-breakdown` PR review round and explicitly deferred (per user decision) to its
+own branch rather than folding a bigger-scope prompt rewrite into that PR.
+
+**Depends on:** `simulation-subskill-breakdown` (must be merged first, since this branch mirrors
+its finalized 4a–4h structure and §10.1 mapping into the mobile prompt).
+
+**Checklist:**
+1. Rewrite the mobile prompt's embedded scoring/workflow instructions to match the current
+   `simulation_contract.md` (positive Preference Penalty convention, §8.1 formulas, §10.1
+   Recruiter%-band lookup table, §9.4/§9.5 internship label mapping).
+2. Add the 4a–4h checkpoint sequencing (or an equivalently faithful condensed version suitable for
+   a single mobile-friendly prompt) so a standalone AI app run stays consistent with the CLI-skill
+   run.
+3. Confirm the prompt still instructs producing both the Markdown output and JSON sidecar (or
+   explicitly scopes mobile-only runs out of sidecar production, if infeasible for that context —
+   needs a decision).
+4. Re-run the Initialize skill's Step 8 population logic (or its manual equivalent) against the
+   updated template to confirm placeholders still populate correctly.
+5. Propagate to all 3 platform copies and verify byte-identical.
+
+---
+
 ## Suggested Branch Order Summary
 
 | Order | Branch | Depends on | Status |
@@ -520,17 +616,20 @@ rules.
 | 1 | `simulation-contract-versioning` | — | Merged |
 | 1 | `resume-restructure-fact-guard` | — | Merged |
 | 1 | `golden-examples-fewshot` | — | Not started |
-| 1 | `candidate-branch-isolation` | — | Ready for review |
+| 1 | `candidate-branch-isolation` | — | Merged |
+| 1 | `skill-sync-checker-tooling` | — | In progress |
 | 2 | `simulation-degree-lookup-table` | — | Merged |
 | 2b | `simulation-degree-lookup-non-stem-coverage` | `simulation-degree-lookup-table` | Merged |
 | 3 | `simulation-deterministic-scoring-formula` | `simulation-degree-lookup-table` | Merged |
 | 4 | `simulation-json-sidecar` | `simulation-degree-lookup-table`, `simulation-deterministic-scoring-formula` | Merged |
 | 5 | `simulation-output-validator` | `simulation-json-sidecar` | Merged |
 | 5 | `resume-restructure-shared-context` | `simulation-json-sidecar` | Merged |
-| 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | In progress |
+| 6 | `simulation-subskill-breakdown` | all Tier 1 branches above | Ready for review |
+| 7 | `mobile-prompt-4a-4h-sync` | `simulation-subskill-breakdown` | Not started |
 
 Rows sharing the same "Order" number have no dependency on each other and can be branched/worked
 in parallel.
+
 
 ---
 
@@ -733,3 +832,305 @@ entries short — one line per event.
   corrected a README example that said `candidate/<your-name>` instead of `candidate/<slug>`.
   All fixes verified with dedicated scratch-repo tests (git hidden from PATH, unquoted name,
   two colliding non-ASCII names) and propagated identically to `.github`/`.claude`/`.gemini`.
+- 2026-09-03: `candidate-branch-isolation` — two more Copilot review rounds addressed: (3) fixed
+  `git status --porcelain`'s exit code being silently discarded in the dirty-`main` check (a
+  failing git command was treated as "clean" and let the guard proceed anyway), fixed a
+  residual Unicode slug-collision risk where ASCII-folding via a plain regex silently dropped
+  diacritics (e.g. differently-accented names could fold to the same base slug) — now uses
+  `unicodedata.normalize("NFKD", ...)` plus a stable hash suffix appended whenever the input
+  contains any non-ASCII character, and closed an unclosed Markdown backtick span plus reworded
+  a guard-behavior description in `README.md` that contradicted the no-op-on-candidate-branch
+  behavior. Several subsequent review comments (backtick fix, anchor-link warnings) were
+  confirmed stale/false-positive: the intra-README anchors (`#-candidate-data--git-branches`)
+  were verified correct against GitHub's actual slug-generation algorithm (emoji-prefixed
+  headings get a leading `-`; `&` surrounded by spaces produces a double hyphen). PR merged;
+  remote branch deleted. Status set to **Merged**.
+- 2026-09-04: `simulation-subskill-breakdown` — closed the last remaining checklist item
+  (end-to-end testing). Ran 3 real, varied JDs (Mizuho Data Engineer full-time, Amazon
+  Automation Engineer Intern, ICF Early Talent Acquisition Associate) through the restructured
+  4a-4h sub-steps against the candidate's real (if slightly outdated) résumé/profile/
+  preferences on `candidate/sid-somashekar`, producing Strong match / Hard reject / Weak match
+  results respectively. All three Markdown+JSON sidecar pairs passed
+  `validate_simulation_output.py`, and the Recruiter%/Interview% formulas were independently
+  recomputed and matched exactly (90/90, 2/1, 35/35). The Amazon internship case surfaced a
+  genuine contract gap worth a future follow-up: §5.1's Hard Mismatch definition only names the
+  Master's/PhD scenario explicitly, not "JD requires ongoing enrollment through a future
+  graduation window, candidate already graduated" — handled by analogy this round, flagged for
+  a possible future contract refinement rather than silently resolved. Status set to
+  **Ready for review**.
+- 2026-09-04–2026-09-10: `simulation-subskill-breakdown` — 4 Copilot review rounds addressed on
+  the open PR: (1) removed a hardcoded `.github/` path prefix from Step 6's example confirmation
+  message and propagated the "Steps 5–6" → "Steps 4h–5" cross-reference fix to `.claude`/
+  `.gemini` copies of `simulation_contract.md` and (previously missed entirely) all 3 copies of
+  `simulation_output_template.md`; also fixed a mislabeled "Step 6's error handling" reference
+  inside Step 5's own text. (2) Anchored the previously-missing §9.2 (Responsibility Mapping) and
+  §9.4 (Recruiter Decision Adjustments) Internship Mode rules to 4c/4g respectively (only 4d/4e
+  had anchored §9.1/§9.3). (3) Aligned 4d/4e's checkpoint label wording/glyphs with the contract's
+  actual §5.1/§6.2 canonical labels and the mapping templates (checkpoints had invented their own
+  wording). (4) A substantive round: reordered 4g so the §8.4 Hard Reject Override is checked
+  *before* computing Skill/Experience Score (contract §8.7 Example C says those scores are never
+  computed for a Hard mismatch); fixed the contract's own internal inconsistency where the §8.1
+  Preference Penalty table listed negative point values (`−5`/`−10`/etc.) while the formulas and
+  worked examples treat the penalty as a positive magnitude to subtract (now the table uses
+  positive values and the sign convention is stated explicitly); clarified §9.4 as descriptive of
+  §9.1–§9.3's already-applied effects rather than a separate, non-deterministic additive penalty;
+  added a new contract §10.1 with an explicit Recruiter%-band → Final Fit Summary lookup table
+  (previously §10 only enumerated the 5 labels with no deterministic mapping) — verified this
+  mapping against all 3 real JD test results from the prior round (90%→Strong match, 2%→Hard
+  reject, 35%→Weak match all match); tightened the JSON sidecar's `skill_alignment` derivation
+  into explicit, ordered numeric thresholds and moved its locking into 4c (previously 4h would
+  have had to invent the tier, violating 4h's "no new analysis" rule); added the missing posting
+  date/JD-timestamp and job-URL/source-reference fields to 4a's checkpoint (Step 2 already
+  required them, 4a's checkpoint just didn't list them); and fixed 4g's stated input scope
+  ("4c–4f") to include 4b, since the internship-mode flag it reads is locked there. All fixes
+  applied identically to `.github`/`.claude`/`.gemini` and verified byte-identical after each
+  round. One review-round item (a claimed Step 5/6 output-path inconsistency) was re-confirmed as
+  a false positive — both steps already use the same relative-path convention used elsewhere in
+  the repo (`ranking/SKILL.md`, `resume-restructure` templates), and `run_ranking.py` resolves
+  the simulations directory script-relatively, not by string-matching the docs.
+- 2026-09-10: Added `skill-sync-checker-tooling` (new Tier 3 branch) after noticing the repeated
+  propagation-drift findings above had no tooling support — only candidate data files have an
+  automated mirror script (`sync_candidate_files.py`); skill-definition files have always been
+  synced by hand. Added `tools/check_skill_sync.py` (stdlib-only) with report-only, `--sync
+  <path>`, and `--sync-all` modes, plus an explicit `ALLOWED_EXCEPTIONS` list and exclusions for
+  generated content (`simulations/` outputs, `ranking_results.csv`, `__pycache__`). Validated
+  against the current repo: correctly ignored known exceptions/generated files, and correctly
+  surfaced genuine **pre-existing, unrelated** drift in `resume-restructure` (`SKILL.md` and
+  `references/resume_guidelines.md` differ across copies; two templates are `.github`-only) —
+  that drift is out of scope for this branch and tracked separately. README documentation update
+  and a decision on optional CI wiring still remain. Status: **In progress**.
+- 2026-09-11: `simulation-subskill-breakdown` — a 5th Copilot review round addressed several
+  remaining substantive gaps. Fixed 4g's hard-reject branch instructing "skip directly to step 4"
+  when step 4 is actually the formula step meant to be skipped (corrected to "step 5"). Added the
+  missing `➖ Not specified` label to contract §5.1's canonical list and the §8.1 Degree Score
+  table (previously used as a table value and in the sidecar enum but absent from the label list
+  and `degree_mapping_template.md`); 4d's checkpoint updated to match. Clarified §6.2/4e: the
+  Experience Match table's `Match` column must contain only the bare glyph (✔/~/✘) — matching
+  `experience_mapping_template.md` and required by `run_ranking.py`'s legacy Markdown-only
+  fallback parser, which regex-matches a standalone glyph — while the full canonical label
+  wording is for internal/prose use only, resolving an apparent conflict the review flagged.
+  Fixed the `skill_alignment` derivation: added an explicit zero-required-skills → `high` rule
+  (matching §8.1's rule that Skill Score = 100 with no required skills), evaluated before the
+  `major_gaps` check that would otherwise misclassify a zero-skill JD; also corrected the
+  high/moderate thresholds, which had been invented as 0.8/0.5 in the prior round, to actually
+  match `run_ranking.py`'s real fallback heuristic (0.7 high with zero No-Match; moderate at 0.4
+  direct-ratio or 0.6 combined direct+partial ratio). Corrected an inaccurate internship claim:
+  §8.1's Skill Score has no input from Responsibility Alignment, so Internship Mode does not
+  lighten missing-required-skill penalties as §9.4/4g previously implied — reworded to only claim
+  the Degree/Experience effects that are actually implemented. Reconciled §9.5's internship-mode
+  Final Fit Summary labels with §10.1's generic lookup table via an explicit 1:1 mapping, with 4h
+  now selecting the internship label from that mapping rather than independently. Fixed a
+  regression from the prior round's incomplete fix: §8.7's worked Example B still showed
+  `Preference Penalty = −10` after the §8.1 table itself was corrected to positive values;
+  corrected to `10`. Also fixed 5 latent bugs in `tools/check_skill_sync.py` found while using it
+  this round: `--sync`/`--sync-all` were not mutually exclusive; `--sync` accepted unsanitized
+  absolute paths and `..` components (path-traversal risk); the README's documented `--sync
+  skills/simulation/SKILL.md` example resolved to a nonexistent double-`skills/` path (now
+  tolerated via path normalization); `--sync-all` silently ignored files present only in
+  `.claude`/`.gemini` but missing from the canonical `.github` tree (now warns and exits 1); and
+  a stale docstring reference to a nonexistent `--check` flag. Deferred (per explicit user
+  decision) fixing the mobile one-shot prompt's stale scoring bands/step structure to a separate
+  follow-up branch rather than folding it into this PR. All contract/SKILL.md fixes applied
+  identically to `.github`/`.claude`/`.gemini` and verified byte-identical; confirmed the
+  pre-existing `resume-restructure` drift (tracked separately under
+  `skill-sync-checker-tooling`) remains unchanged and out of scope.
+- 2026-09-14: `simulation-subskill-breakdown` — a 6th Copilot review round addressed the
+  remaining substantive gaps. Codified the previously-undocumented internship enrollment-window
+  case as a new contract §5.2 Rule H: an internship JD requiring ongoing enrollment through a
+  future date/term, applied against a candidate who has already graduated (or will graduate
+  before that window begins), is now an explicit ❌ Hard mismatch (with an explicit exception if
+  the JD's own text also accepts recent graduates) — cross-referenced from §5.1's label list and
+  §9.3, replacing the prior undocumented by-analogy handling from end-to-end testing. Fixed a
+  real internship-mode/tooling conflict the review caught in the prior round's §9.5/4h fix:
+  clarified that the internship-mode Final Fit Summary label swap (e.g. "Strong internship
+  match") applies only to the Markdown output's display prose — the JSON sidecar's `fit_category`
+  field always uses §10.1's generic enum value regardless of Internship Mode, since neither the
+  sidecar schema, `validate_simulation_output.py`, nor `run_ranking.py` has internship-specific
+  enum values (writing the internship label into `fit_category` would have failed validation or
+  scored as Unknown/zero). Fixed a hardcoded `.github/skills/ranking/run_ranking.py`
+  cross-reference (added in the prior round) to the platform-neutral `skills/ranking/
+  run_ranking.py` form, since the contract text is mirrored verbatim into `.claude`/`.gemini`
+  where the actual runner lives at a different platform-prefixed path. Also fixed 4 more
+  `tools/check_skill_sync.py` issues: added `resumes/` (resume-restructure's generated tailored
+  résumé output directory) to `EXCLUDED_DIR_PARTS`, which was missing and would have caused
+  future generated-output false positives and PII-copying risk via `--sync-all`; fixed a crash
+  (`IsADirectoryError`) when a relative path is a file in one platform copy but a directory in
+  another, now surfaced as a new "FILE/DIRECTORY TYPE CONFLICT" report category instead of
+  crashing; closed a Windows-drive-letter path-validation gap (`C:/tmp/x` previously passed
+  `PurePosixPath.is_absolute()`'s check undetected — now explicitly rejected via
+  `ntpath.splitdrive()`); and corrected the script's docstring and README's `--sync-all`
+  description, which overstated it as fixing "every drifted/missing file" when it can only copy
+  from the canonical `.github` copy. All fixes verified (script re-run cleanly, drive-path
+  rejection tested directly) and applied identically to `.github`/`.claude`/`.gemini` where
+  applicable; confirmed the pre-existing `resume-restructure` drift remains unchanged.
+- 2026-09-14: `simulation-subskill-breakdown` — a 7th Copilot review round fixed remaining
+  ranking-compatibility and rule-scoping gaps. (1) Fixed Rule H (added in the prior round) to
+  compare the candidate's graduation date against the JD's **stated enrollment cutoff** instead
+  of its posting date — a candidate graduating after posting but before the JD's actual cutoff
+  was previously incorrectly let through; falls back to the posting-date comparison only when the
+  JD gives no explicit cutoff, and is skipped entirely when neither is available. (2) Made Rule H
+  an explicit unconditional internship eligibility gate, evaluated before/independently of the
+  §5.2 Rules A–G JSON-miss fallback and the §5.3 JSON lookup — previously a JSON hit could
+  silently bypass the enrollment-window hard-mismatch check; updated §5.2's intro, §5.3's fallback
+  description, and SKILL.md 4d to check Rule H first, unconditionally, whenever Internship Mode is
+  on. (3) Fixed 3 `run_ranking.py` compatibility gaps the review found between the newly-added
+  contract labels and the legacy scoring code: added `not specified` to `DEGREE_POINTS` (was
+  unmapped, scoring 62.5/100 via the `.md` fallback instead of the contract's 100/100) and
+  corrected `JSON_DEGREE_POINTS`'s `not_specified` entry from `(0, ...)` to `(3, ...)` (was scoring
+  37.5/100 via the JSON sidecar path instead of 100/100); fixed the `.md` fallback's
+  zero-required-skills case to return High alignment instead of Unknown/0, matching the
+  contract's `total = 0 → high` rule added two rounds ago (previously only the JSON sidecar path
+  honored that rule); added internship-mode Final Fit Summary label variants (`strong/moderate/
+  weak internship match`) to `FIT_POINTS`, since they are not contiguous substrings of the
+  existing generic labels and were previously scored Unknown/0 by the legacy parser whenever a
+  sidecar was missing or malformed. (4) Fixed `tools/check_skill_sync.py` crashing with an
+  unhandled `IsADirectoryError` when `--sync`/`--sync-all` encountered a file/directory type
+  conflict (the prior round only added detection of this case to the report-only `check()` path,
+  not the two repair paths) — both now validate source/target types before reading/writing and
+  report a clear error (or, for `--sync-all`, an unresolved warning) instead of crashing partway
+  through. All fixes verified directly (sample Markdown snippets scored correctly; a scratch-repo
+  file/directory collision test confirmed clean error handling in all three modes) and applied
+  identically to `.github`/`.claude`/`.gemini` where applicable; confirmed the pre-existing
+  `resume-restructure` drift remains unchanged (a second accidental `--sync-all` fix of that
+  out-of-scope drift, while testing this round's crash fix, was caught and reverted).
+  - 2026-09-11: Round-8 PR review fixes on `simulation-subskill-breakdown` — (1) Added explicit
+    "Internship enrollment window/cutoff" and "Recent-graduate exception" fields to `SKILL.md`
+    Step 2 (JD parsing) and 4a's locked metadata checkpoint, since Rule H needs the JD's exact
+    cutoff date/term and whether it explicitly accepts recent graduates, and sub-steps 4b-4h are
+    forbidden from re-reading the JD text later; updated contract §5.2 Rule H to read these fields
+    from the locked 4a object instead of re-deriving them from JD text, and reworded §9.3 to
+    reference the JD's stated cutoff date/term explicitly (previously "before that window begins"
+    could be misread as the internship's start/application window rather than the enrollment
+    cutoff Rule H actually compares against). (2) Fixed `run_ranking.py`'s
+    `extract_skill_score()` .md-only fallback, which had conflated "JD has zero required skills"
+    with "parser found no required-skills table at all" (round-7 fix) — malformed/legacy output
+    with no parseable section now correctly falls back to Unknown/0 instead of the max
+    High-alignment score; also documented round-7's `DEGREE_POINTS["not specified"] = +3` value in
+    `ranking_rules.md` §3.3's Degree Alignment table so the canonical policy doc matches the actual
+    runtime scoring. (3) Hardened `tools/check_skill_sync.py`: `sync_one()` now preflights all
+    platform targets before writing any (previously a `.gemini` conflict could leave `.claude`
+    already written, an inconsistent partial-sync state); the type-conflict guard now checks every
+    ancestor directory component under `<platform>/skills/`, not just the final target (previously
+    a file occupying a directory's path would crash `mkdir(parents=True)` with an unhandled
+    `FileExistsError`); added symlink/containment validation (resolve real path, confirm it stays
+    under the platform's `skills/` root) to both `sync_one()` and `sync_all()`, since
+    `Path.is_file()` follows symlinks and could otherwise let a write escape the intended tree; and
+    fixed `if args.sync:` truthiness to `if args.sync is not None:` so an empty `--sync` value is
+    rejected instead of silently falling through to report-only mode. Verified via
+    `py_compile`, an isolated scratch-directory test of the parent-conflict guard (confirmed no
+    partial write), and `python tools/check_skill_sync.py` showing only the known out-of-scope
+    `resume-restructure` drift remains. All skill-file fixes propagated identically to
+    `.github`/`.claude`/`.gemini`. Committed as 3 commits. A reviewer comment noting the PR
+    description didn't mention `run_ranking.py`-scoped changes was noted for the PR description,
+    not a code fix.
+    - 2026-09-14: Round-9 PR review fixes on `simulation-subskill-breakdown` — (1) Fixed
+      `run_ranking.py`'s `extract_skill_score()` further: the round-8 fix still treated any
+      Required-Skills table with zero recognized-status rows as a genuine zero-required-skills JD,
+      but a malformed/legacy file with unrecognized status text — including the raw
+      `skill_mapping_template.md` placeholder row itself, whose "Candidate Match" cell literally
+      reads "Direct / Equivalent / Partial / No Match" and matches none of the four values exactly —
+      has the identical shape. Now counts raw table data rows (excluding header/separator lines) to
+      distinguish the two: only a table with zero data rows at all is the genuine zero-skills case;
+      rows present with unrecognized status text fall back to Unknown/0. (2) Added an explicit early
+      Rule E branch to `SKILL.md` 4d: previously, if 4a's locked metadata showed no JD degree
+      requirement at all, 4d ran straight into category classification/JSON lookup anyway, risking a
+      domain mismatch instead of the required ➖ Not specified label — now checks for an empty/null/
+      "Not specified" degree field first and locks ➖ Not specified immediately, skipping category
+      classification. (3) Updated `simulation_output_template.md` (all 3 copies) to list the
+      Strong/Moderate/Weak internship match label variants in the Final Fit Summary Category
+      placeholder, since 4h/§9.5 require them for internship-mode runs but the template only
+      advertised the generic labels (JSON `fit_category` remains generic per §9.5's scope note,
+      unchanged). (4) Further hardened `tools/check_skill_sync.py`: `validate_sync_target()` now
+      also checks `<platform>/skills/` itself for a type conflict (previously only `rel.parts[:-1]`
+      under it was checked, so a `skills/` path that was itself a file passed validation and crashed
+      the first `mkdir(parents=True)` call); switched existence checks from `Path.exists()` to
+      `os.path.lexists()` so broken symlinks (which `exists()` silently treats as absent) are
+      correctly flagged as conflicts instead of surfacing later as an unhandled `OSError`; `sync_all()`
+      now preflights every (rel, platform) pair — including canonical source containment — before
+      writing anything, mirroring `sync_one()`'s round-8 atomicity fix (previously a later rel/
+      platform conflict could leave earlier files already written); and added
+      `validate_sync_source()` so a symlinked canonical source file can no longer be used to read (and
+      copy into `.claude`/`.gemini`) an arbitrary file from outside `.github/skills`. Verified via
+      `py_compile`, isolated scratch-directory tests (confirmed zero files written on a later-pair
+      conflict, and confirmed an out-of-tree source path is rejected), and
+      `python tools/check_skill_sync.py` showing only the known out-of-scope `resume-restructure`
+      drift remains. All skill-file fixes propagated identically to `.github`/`.claude`/`.gemini`.
+      Committed as 3 commits.
+      - 2026-09-14: Round-10 PR review fixes on `simulation-subskill-breakdown` — (1) Fixed
+        `run_ranking.py`'s `extract_skill_score()` once more: even after round-9's raw-row check, a
+        "## Required Skills" subheading present with no Markdown table following it at all (e.g.
+        truncated/malformed output) still fell through to the genuine-zero-skills High-alignment
+        branch, since the absence of a table isn't evidence of zero required skills. Now requires the
+        table's own header-separator row (`|---|---|---|`) to actually be present before treating zero
+        data rows as genuine; otherwise falls back to Unknown/0. (2) Substantially hardened
+        `tools/check_skill_sync.py`'s symlink handling: added `find_symlink_component()`, which rejects
+        *any* symlinked component from `repo_root` down to the final target/source (inclusive) rather
+        than relying on containment checks alone — containment alone was insufficient because a
+        symlink whose resolved target still lands inside the expected root (e.g. a final target
+        symlinked to a different regular file in the same skills tree, an ancestor directory symlinked
+        to a different directory, or `<platform>/skills`/the platform dir/repo_root itself being a
+        symlink) previously passed validation while `write_bytes()`/`read_bytes()` silently
+        read/modified the aliased path instead of the requested one. Also added repo-root containment
+        for the platform skills root itself (previously only the final target was checked against its
+        own root, not the root against the repo), and fixed `sync_one()` to reject excluded/generated
+        paths (matching `sync_all()`/`check()`'s existing exclusion policy) so an explicit
+        `--sync ranking/assets/ranking_results.csv`-style call can no longer propagate generated,
+        potentially PII-bearing output across platform trees. (3) Updated `README.md`'s sync-
+        verification section to explicitly document that `python3 tools/check_skill_sync.py` currently
+        reports known, pre-existing, separately-tracked `resume-restructure` drift and exits non-zero
+        because of it — previously the doc implied a clean exit was the expected baseline, which isn't
+        achievable on this checkout regardless of a contributor's own change being fully synchronized.
+        (4) Fixed a stale roadmap test note: the Amazon internship end-to-end test's Hard-mismatch
+        classification was described as an undocumented by-analogy judgment "flagged as a future
+        contract-refinement candidate," but a subsequent review round in this same PR codified that
+        exact scenario as contract §5.2 Rule H — updated the note accordingly. Verified via
+        `py_compile`, direct calls confirming `validate_sync_target`/`validate_sync_source` return
+        `None` (safe) for real repository files, and `sync_one()` correctly rejecting both an
+        `ALLOWED_EXCEPTIONS` file and an `EXCLUDED_FILENAMES` file. `python tools/check_skill_sync.py`
+        confirmed only the known out-of-scope `resume-restructure` drift remains after propagating all
+        skill-file fixes to `.github`/`.claude`/`.gemini`. Committed as 3 commits.
+        - 2026-09-15: Round-11 PR review fixes on `simulation-subskill-breakdown` — (1) Fixed
+          contract §10, which listed a "One of:" set of 5 generic Final Fit Summary labels with no
+          scope qualifier, contradicting §9.5's internship-mode label substitutions that 4h/the
+          output template require for internship runs. Reworded §10's intro to explicitly scope
+          that list to full-time/generic Markdown output and the JSON sidecar's `fit_category`
+          enum (which is always generic per §9.5's existing scope note), and cross-referenced §9.5
+          as a deliberate, scoped Markdown-display exception rather than a contradiction. (2)
+          Broadened Rule E (no-degree-requirement) handling: `SKILL.md`'s Step 2 JD-parsing
+          instructions now tell the model to normalize phrasing like "no degree required"/"degree
+          not required" to the literal value "Not specified" when extracting the JD's degree
+          field, so 4d's Rule E branch — previously matching only the literal string "Not
+          specified" and risking an incorrect No-match label for differently-worded JDs — has a
+          single clean value to check; also broadened 4d's branch condition text itself as
+          defense-in-depth in case normalization is missed. (3) Marked
+          `skill-sync-checker-tooling`'s roadmap checklist item 3 (README documentation) complete —
+          it was already done in round 10 but the checkbox was stale. (4) Made
+          `tools/check_skill_sync.py`'s `sync_all()` genuinely all-or-nothing: previously, if any
+          `(rel, platform)` pair had a type/symlink conflict, only that specific pair was skipped
+          while every other conflict-free pair in the same invocation was still written — still a
+          form of partial sync across the whole command. Now the entire write phase is skipped
+          (nothing written, not even conflict-free entries) whenever any conflict exists anywhere
+          in the batch. (5) Added a `write_targets_transactionally()` helper used by both
+          `sync_one()` and `sync_all()`: it records each target's prior state (existed + prior
+          bytes) before writing, and if a later write in the same call raises `OSError` (disk full,
+          permissions, concurrent external modification — failure modes preflight validation can't
+          catch in advance), rolls back every target already written in that call (restoring prior
+          bytes, or deleting newly-created files) instead of leaving a partially-synced,
+          inconsistent tree with an unhandled exception. (6) Fixed `check()`'s report-only mode,
+          which used `Path.is_file()`/`read_bytes()` and so silently reported a symlinked file as
+          "OK" whenever its resolved content happened to be byte-identical across all 3 copies,
+          even though `--sync`/`--sync-all` would reject that same path — `check()` now calls
+          `find_symlink_component()` per platform before its existing missing/type-conflict/diff
+          logic and reports a new "SYMLINKED PATH COMPONENT" category, included in the overall
+          pass/fail and exit code. Verified via `py_compile`; isolated scratch-directory tests
+          confirmed `sync_all()`'s full-batch abort (a conflict for one path left an unrelated
+          conflict-free path's target completely untouched), `write_targets_transactionally()`'s
+          rollback (a simulated mid-batch `OSError` restored the first target's prior content and
+          left the second absent rather than partially written), and `check()`'s new symlink
+          detection (a path monkeypatched to report `is_symlink() == True` was correctly flagged
+          even though its content was identical across all 3 copies). `python
+          tools/check_skill_sync.py` confirmed only the known out-of-scope `resume-restructure`
+          drift remains after propagating the contract/`SKILL.md` fixes to
+          `.github`/`.claude`/`.gemini`. The PR-description-scope comment on `run_ranking.py`
+          (repeated from earlier rounds) was again noted as a PR description update, not a code
+          fix, since that scoring behavior was already fixed in a prior round.

@@ -42,6 +42,7 @@ DEGREE_POINTS = {
     "partial": 1,
     "equivalent": 2,
     "direct": 3,
+    "not specified": 3,
 }
 DEGREE_RANGE = (-5, 3)  # min, max possible raw points
 
@@ -51,6 +52,13 @@ FIT_POINTS = {
     "weak match": 1,
     "moderate match": 2,
     "strong match": 3,
+    # Internship-mode display labels (contract §9.5) are not contiguous
+    # substrings of the generic labels above (e.g. "strong internship match"
+    # does not contain "strong match" as a substring), so they need their
+    # own entries to be recognized by this legacy substring-based lookup.
+    "weak internship match": 1,
+    "moderate internship match": 2,
+    "strong internship match": 3,
 }
 FIT_RANGE = (-5, 3)
 
@@ -72,7 +80,7 @@ JSON_DEGREE_POINTS = {
     "partial": (1, "Partial match"),
     "no_match": (-2, "No match"),
     "hard_mismatch": (-5, "Hard mismatch"),
-    "not_specified": (0, "Not specified"),
+    "not_specified": (3, "Not specified"),
 }
 JSON_SKILL_POINTS = {
     "high": (3, "High alignment"),
@@ -174,7 +182,56 @@ def extract_skill_score(text):
     total = direct + partial + no_match
 
     if total == 0:
-        return 0, "Unknown"
+        if section_m is None or required_m is None:
+            # The "## 2. Skill & Responsibility Mapping" section or its
+            # "## Required Skills" subheading could not be found at all -
+            # this is a parsing failure (malformed/legacy output), not a
+            # genuine zero-required-skills JD, so it must stay Unknown/0
+            # rather than being conflated with the real zero-skills case
+            # below.
+            return 0, "Unknown"
+        # The section/subheading were found, but zero rows matched a
+        # recognized status (Direct/Equivalent/Partial/No Match). This is
+        # ambiguous by itself: it could be a genuine zero-required-skills
+        # JD (the table has no data rows at all), OR a malformed/legacy
+        # file whose rows use unrecognized status text (including the raw
+        # skill_mapping_template.md placeholder row, whose "Candidate
+        # Match" cell literally reads "Direct / Equivalent / Partial / No
+        # Match" and matches none of the four exactly). Count raw table
+        # data rows (any pipe-delimited row that isn't the header or the
+        # "|---|---|---|" separator) to distinguish the two: only an empty
+        # table (no data rows at all) is the genuine zero-skills case.
+        raw_rows = [
+            row for row in re.findall(r"^\|(.+)\|\s*$", required, re.M)
+            if not re.fullmatch(r"[\s:|-]+", row.strip("|"))
+            and "candidate match" not in row.lower()
+        ]
+        if raw_rows:
+            # Rows exist but none parsed as a recognized status - this is
+            # unparseable/malformed content, not a genuine zero-skills JD.
+            return 0, "Unknown"
+        # No data rows were found, but that alone still isn't proof of a
+        # genuine zero-required-skills JD: if the "## Required Skills"
+        # subheading is present but no Markdown table follows it at all
+        # (e.g. truncated/malformed output that never emitted a table),
+        # there is nothing to distinguish that from an intentionally empty
+        # table. Require the table's header-separator row (e.g.
+        # "|---|---|---|") to actually be present before treating this as
+        # the genuine zero-skills case - only a *recognizable, empty*
+        # table (header + separator, zero data rows) counts.
+        has_table_structure = bool(
+            re.search(r"^\s*\|[\s:-]+\|[\s:-]+\|[\s:-]+\|\s*$", required, re.M)
+        )
+        if not has_table_structure:
+            return 0, "Unknown"
+        # The table structure was found and is genuinely empty of data rows
+        # - this is a genuine zero-required-skills JD. Matches contract
+        # §8.1: Skill Score = 100 when the JD lists zero required skills,
+        # and the sidecar's skill_alignment derivation (§11) maps that same
+        # case to "high". This legacy .md-only fallback must produce the
+        # same tier so a sidecarless zero-required-skills simulation scores
+        # identically to one with a sidecar.
+        return 3, "High alignment"
     ratio_direct = direct / total
     if no_match >= 2 or (total > 0 and direct == 0 and partial == 0):
         return -2, "Major skill gaps"
