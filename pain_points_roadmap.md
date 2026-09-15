@@ -991,3 +991,33 @@ entries short — one line per event.
   identically to `.github`/`.claude`/`.gemini` where applicable; confirmed the pre-existing
   `resume-restructure` drift remains unchanged (a second accidental `--sync-all` fix of that
   out-of-scope drift, while testing this round's crash fix, was caught and reverted).
+  - 2026-09-11: Round-8 PR review fixes on `simulation-subskill-breakdown` — (1) Added explicit
+    "Internship enrollment window/cutoff" and "Recent-graduate exception" fields to `SKILL.md`
+    Step 2 (JD parsing) and 4a's locked metadata checkpoint, since Rule H needs the JD's exact
+    cutoff date/term and whether it explicitly accepts recent graduates, and sub-steps 4b-4h are
+    forbidden from re-reading the JD text later; updated contract §5.2 Rule H to read these fields
+    from the locked 4a object instead of re-deriving them from JD text, and reworded §9.3 to
+    reference the JD's stated cutoff date/term explicitly (previously "before that window begins"
+    could be misread as the internship's start/application window rather than the enrollment
+    cutoff Rule H actually compares against). (2) Fixed `run_ranking.py`'s
+    `extract_skill_score()` .md-only fallback, which had conflated "JD has zero required skills"
+    with "parser found no required-skills table at all" (round-7 fix) — malformed/legacy output
+    with no parseable section now correctly falls back to Unknown/0 instead of the max
+    High-alignment score; also documented round-7's `DEGREE_POINTS["not specified"] = +3` value in
+    `ranking_rules.md` §3.3's Degree Alignment table so the canonical policy doc matches the actual
+    runtime scoring. (3) Hardened `tools/check_skill_sync.py`: `sync_one()` now preflights all
+    platform targets before writing any (previously a `.gemini` conflict could leave `.claude`
+    already written, an inconsistent partial-sync state); the type-conflict guard now checks every
+    ancestor directory component under `<platform>/skills/`, not just the final target (previously
+    a file occupying a directory's path would crash `mkdir(parents=True)` with an unhandled
+    `FileExistsError`); added symlink/containment validation (resolve real path, confirm it stays
+    under the platform's `skills/` root) to both `sync_one()` and `sync_all()`, since
+    `Path.is_file()` follows symlinks and could otherwise let a write escape the intended tree; and
+    fixed `if args.sync:` truthiness to `if args.sync is not None:` so an empty `--sync` value is
+    rejected instead of silently falling through to report-only mode. Verified via
+    `py_compile`, an isolated scratch-directory test of the parent-conflict guard (confirmed no
+    partial write), and `python tools/check_skill_sync.py` showing only the known out-of-scope
+    `resume-restructure` drift remains. All skill-file fixes propagated identically to
+    `.github`/`.claude`/`.gemini`. Committed as 3 commits. A reviewer comment noting the PR
+    description didn't mention `run_ranking.py`-scoped changes was noted for the PR description,
+    not a code fix.
