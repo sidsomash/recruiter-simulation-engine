@@ -210,35 +210,59 @@ def validate_sync_target(repo_root: Path, platform: str, rel: Path):
     """Validate that writing `content` to <platform>/skills/<rel> is safe.
 
     Returns None if safe, or an error message string if not. Checks:
-    - every ancestor directory component under <platform>/skills/ that
-      already exists must be a real directory (not a file) - otherwise
+    - <platform>/skills/ itself, and every ancestor directory component
+      under it, must be a real directory (not a file, and not a broken
+      symlink) wherever something already exists at that path - otherwise
       mkdir(parents=True) would raise an unhandled FileExistsError instead
       of a clear error;
-    - the final target, if it already exists, must be a regular file (not
-      a directory or other non-file entry);
+    - the final target, if anything already exists at that path (including
+      a broken symlink), must be a regular file (not a directory or other
+      non-file entry);
     - the resolved (symlink-following) real path of the target must remain
       under the resolved <platform>/skills/ root - target.is_file() alone
       follows symlinks, so a symlinked path component (or a symlinked
       target itself) could otherwise let write_bytes() escape the
       platform's skills tree even though normalize_sync_path() already
       rejected textual '..'/absolute-path traversal.
+
+    Path.exists() is deliberately avoided for these existence checks since
+    it returns False for a broken symlink (it follows the link and reports
+    based on the link's target) - that would let a broken symlink slip past
+    this validation and only fail later, inside mkdir()/write_bytes(), with
+    an unhandled OSError. os.path.lexists() reports based on the path entry
+    itself, so broken symlinks are correctly treated as "something is
+    already here" and checked against is_dir()/is_file() (which do follow
+    symlinks, but return False for a broken one, correctly flagging it as
+    a conflict rather than a usable directory/file).
     """
     skills_root = repo_root / platform / "skills"
+
+    # skills_root itself must be a directory (not a file/broken symlink) if
+    # anything exists there at all - previously only rel.parts[:-1] below
+    # was checked, so a <platform>/skills path that is itself a file passed
+    # validation and the first mkdir(parents=True) call raised instead.
+    if os.path.lexists(skills_root) and not skills_root.is_dir():
+        return (
+            f"path component exists but is not a directory, refusing to "
+            f"write under it: {skills_root}"
+        )
+
     target = skills_root / rel
 
-    # Walk every ancestor from skills_root down to target's parent, and
-    # confirm any that already exist are directories (not files/symlinks to
-    # files) - this is what would otherwise make mkdir(parents=True) raise.
+    # Walk every remaining ancestor from skills_root down to target's
+    # parent, and confirm any that already exist are directories (not
+    # files/broken symlinks/symlinks to files) - this is what would
+    # otherwise make mkdir(parents=True) raise.
     ancestor = skills_root
     for part in rel.parts[:-1]:
         ancestor = ancestor / part
-        if ancestor.exists() and not ancestor.is_dir():
+        if os.path.lexists(ancestor) and not ancestor.is_dir():
             return (
                 f"path component exists but is not a directory, refusing to "
                 f"write under it: {ancestor}"
             )
 
-    if target.exists() and not target.is_file():
+    if os.path.lexists(target) and not target.is_file():
         return (
             f"target path exists but is not a regular file (e.g. a directory), "
             f"refusing to overwrite: {target}"
@@ -263,6 +287,32 @@ def validate_sync_target(repo_root: Path, platform: str, rel: Path):
     return None
 
 
+def validate_sync_source(repo_root: Path, source: Path):
+    """Validate that reading `source` (the canonical .github file) is safe.
+
+    Returns None if safe, or an error message string if not. `--sync <path>`
+    is caller-supplied and only textually validated (no '..'/absolute/drive
+    components) by normalize_sync_path() - it does not by itself prevent a
+    symlink placed inside .github/skills from pointing at an arbitrary file
+    outside the repo. source.is_file()/read_bytes() both follow symlinks,
+    so without this check a symlinked source could be used to read (and
+    then copy into .claude/.gemini) any file the process can access.
+    """
+    canonical_root = repo_root / CANONICAL_DIR / "skills"
+    real_root = os.path.realpath(str(canonical_root))
+    real_source = os.path.realpath(str(source))
+    try:
+        common = os.path.commonpath([real_root, real_source])
+    except ValueError:
+        common = None
+    if common != real_root:
+        return (
+            f"canonical source path resolves outside the canonical skills root "
+            f"(possible symlink escape): {source} -> {real_source}"
+        )
+    return None
+
+
 def sync_one(repo_root: Path, rel: Path):
     source = repo_root / CANONICAL_DIR / "skills" / rel
     if not source.exists():
@@ -270,6 +320,10 @@ def sync_one(repo_root: Path, rel: Path):
         return 1
     if not source.is_file():
         print(f"Error: canonical source path is not a regular file (e.g. a directory): {source}")
+        return 1
+    source_error = validate_sync_source(repo_root, source)
+    if source_error:
+        print(f"Error: {source_error}")
         return 1
     content = source.read_bytes()
 
@@ -316,20 +370,36 @@ def sync_all(repo_root: Path):
     all_rel_paths = set(collect_relative_paths(repo_root))
     canonical_missing = sorted(all_rel_paths - rel_paths, key=str)
 
-    total_synced = 0
+    # Preflight every (rel, platform) pair - source containment and target
+    # safety - before writing anything at all. Without this upfront pass,
+    # writing as we iterate could leave the trees partially synchronized if
+    # a later rel/platform pair fails validation (earlier files already
+    # written, command still exits nonzero).
     type_conflicts = []
+    plan = []
     for rel in sorted(rel_paths, key=str):
         source = canonical_skills_dir / rel
-        content = source.read_bytes()
+        source_error = validate_sync_source(repo_root, source)
+        if source_error:
+            type_conflicts.append(f"skills/{rel} - {source_error}")
+            continue
+        rel_ok = True
         for platform in PLATFORM_DIRS:
             if platform == CANONICAL_DIR:
                 continue
             error = validate_sync_target(repo_root, platform, rel)
             if error:
-                # A directory (or other non-file/symlink-escape) conflict
-                # can't be resolved by writing bytes over it - report it
-                # instead of letting mkdir()/read_bytes()/write_bytes() raise.
                 type_conflicts.append(f"{platform}/skills/{rel} - {error}")
+                rel_ok = False
+        if rel_ok:
+            plan.append(rel)
+
+    total_synced = 0
+    for rel in plan:
+        source = canonical_skills_dir / rel
+        content = source.read_bytes()
+        for platform in PLATFORM_DIRS:
+            if platform == CANONICAL_DIR:
                 continue
             target = repo_root / platform / "skills" / rel
             target.parent.mkdir(parents=True, exist_ok=True)
