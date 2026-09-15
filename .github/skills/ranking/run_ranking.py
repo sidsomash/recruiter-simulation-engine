@@ -190,13 +190,34 @@ def extract_skill_score(text):
             # rather than being conflated with the real zero-skills case
             # below.
             return 0, "Unknown"
-        # The section/table structure was found, but it has zero data rows
-        # - this is a genuine zero-required-skills JD. Matches contract
-        # §8.1: Skill Score = 100 when the JD lists zero required skills,
-        # and the sidecar's skill_alignment derivation (§11) maps that same
-        # case to "high". This legacy .md-only fallback must produce the
-        # same tier so a sidecarless zero-required-skills simulation scores
-        # identically to one with a sidecar.
+        # The section/subheading were found, but zero rows matched a
+        # recognized status (Direct/Equivalent/Partial/No Match). This is
+        # ambiguous by itself: it could be a genuine zero-required-skills
+        # JD (the table has no data rows at all), OR a malformed/legacy
+        # file whose rows use unrecognized status text (including the raw
+        # skill_mapping_template.md placeholder row, whose "Candidate
+        # Match" cell literally reads "Direct / Equivalent / Partial / No
+        # Match" and matches none of the four exactly). Count raw table
+        # data rows (any pipe-delimited row that isn't the header or the
+        # "|---|---|---|" separator) to distinguish the two: only an empty
+        # table (no data rows at all) is the genuine zero-skills case.
+        raw_rows = [
+            row for row in re.findall(r"^\|(.+)\|\s*$", required, re.M)
+            if not re.fullmatch(r"[\s:|-]+", row.strip("|"))
+            and "candidate match" not in row.lower()
+        ]
+        if raw_rows:
+            # Rows exist but none parsed as a recognized status - this is
+            # unparseable/malformed content, not a genuine zero-skills JD.
+            return 0, "Unknown"
+        # The table body is genuinely empty (header/separator only, or no
+        # table at all under the subheading) - this is a genuine
+        # zero-required-skills JD. Matches contract §8.1: Skill Score = 100
+        # when the JD lists zero required skills, and the sidecar's
+        # skill_alignment derivation (§11) maps that same case to "high".
+        # This legacy .md-only fallback must produce the same tier so a
+        # sidecarless zero-required-skills simulation scores identically to
+        # one with a sidecar.
         return 3, "High alignment"
     ratio_direct = direct / total
     if no_match >= 2 or (total > 0 and direct == 0 and partial == 0):
