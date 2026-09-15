@@ -165,10 +165,15 @@ are locked here — they are the direct input to 4g's Skill Score and the sideca
 later.
 
 #### 4d — Degree Requirement Mapping
-Determine which of the four candidate degree categories in `references/degree_domain_map.json`
-applies (`stem_quantitative`, `business_finance_accounting`, `liberal_arts_humanities`,
-`social_sciences`, or none of these), using the candidate's degree title **plus**
-`candidate_profile.md` (technical strengths, quantitative coursework) and
+If 4b's Internship Mode flag is `Yes`, first check contract §5.2 Rule H (the enrollment-window
+eligibility gate) — this check is unconditional and independent of the JSON lookup/fallback below,
+since Rule H governs enrollment-window eligibility, not degree-domain matching. If Rule H applies,
+lock ❌ Hard mismatch as the Match Category now and skip the rest of this step.
+
+Otherwise, determine which of the four candidate degree categories in
+`references/degree_domain_map.json` applies (`stem_quantitative`, `business_finance_accounting`,
+`liberal_arts_humanities`, `social_sciences`, or none of these), using the candidate's degree title
+**plus** `candidate_profile.md` (technical strengths, quantitative coursework) and
 `candidate_preferences.md` (stated role preferences) when the title alone is ambiguous or
 borderline — do not classify from the degree title in isolation. Then look up the JD's required
 degree field under that category (see contract §5.2/§5.3). Fall back to Rules A–G only when the

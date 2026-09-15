@@ -128,9 +128,11 @@ vs.
 
 ### 5.2 Degree Mapping Rules
 
-These rules apply **only when the JD's degree domain is not found** in the authoritative JSON
+Rules A–G apply **only when the JD's degree domain is not found** in the authoritative JSON
 lookup table (`references/degree_domain_map.json`, see §5.3), or when the candidate's degree does
-not fall into a category the JSON covers. Always check the JSON lookup first.
+not fall into a category the JSON covers. Always check the JSON lookup first for those rules.
+**Rule H is the sole exception** — it is an unconditional internship eligibility gate evaluated
+for every internship posting regardless of the JSON lookup outcome (see Rule H below for why).
 
 **Determining the candidate's degree category:** Do not classify the candidate's degree from its
 literal title alone. Cross-reference `candidate_profile.md` (technical strengths, quantitative
@@ -186,16 +188,28 @@ case, apply the upgraded category's table instead). Do not apply ❌ Hard mismat
 label is reserved for the advanced-degree cases in Rules C/D (§5.1).
 
 **Rule H — Internship Enrollment Window vs. Already-Graduated Candidate**
-If the JD (an internship posting, per 4b's Internship Mode flag) explicitly requires the
-candidate to be enrolled in a degree program through a stated future date or term (e.g., "must be
-enrolled through Fall 2026," "graduating December 2026 or later," "currently pursuing a degree
-with an expected graduation of [future date]"), and the candidate's actual (or expected)
-graduation date, per `candidate_resume.md`/`candidate_profile.md`, is on or before the JD's
-posting date (i.e., the candidate has already graduated or will graduate before the JD's required
-enrollment window begins):  
+This rule is an **unconditional internship eligibility gate**, evaluated for every internship
+posting (per 4b's Internship Mode flag) regardless of whether the JD's degree domain is found in
+the §5.3 JSON lookup — it is not limited to the JSON-miss fallback path that the rest of this
+§5.2 section otherwise applies to, since the JSON lookup only covers domain-matching, not
+enrollment-window eligibility.
+
+If the JD explicitly requires the candidate to be enrolled in a degree program through a stated
+cutoff date or term (e.g., "must be enrolled through Fall 2026," "graduating December 2026 or
+later," "currently pursuing a degree with an expected graduation of [future date]"), compare the
+candidate's actual (or expected) graduation date, per `candidate_resume.md`/`candidate_profile.md`,
+against **that stated cutoff** — not the JD's posting date. If the candidate's graduation date is
+before the JD's stated cutoff (i.e., the candidate will no longer be enrolled by the point the JD
+requires ongoing enrollment through):  
 → ❌ **Hard mismatch** — this is a strict eligibility gate equivalent in kind to Rules C/D (the
 candidate cannot satisfy an ongoing-enrollment requirement after graduation), so it triggers the
 §8.4 Hard Reject Override the same way an unmet Master's/PhD requirement does.
+
+If the JD does not state an explicit cutoff (only a general "currently enrolled" requirement with
+no date/term), fall back to comparing the candidate's graduation date against the JD's posting
+date instead, using "Unknown" posting date to mean this comparison cannot be made — in that case,
+do not apply Rule H (there's no date to compare against); evaluate under Rules A–G instead.
+
 Exception: if the JD's own text explicitly also accepts "recent graduates" (or equivalent
 language broadening eligibility beyond currently-enrolled students) for the same posting, this
 rule does not apply — evaluate the candidate under Rules A/F instead, since the JD itself has
@@ -209,7 +223,10 @@ which candidate degree category applies — `stem_quantitative`, `business_finan
 guidance — this considers the candidate's degree title, skills/profile, and preferences, not the
 title alone) — then look up the JD's required degree field under that category in the JSON file.
 If the category and domain are both found, use the match category from the JSON verbatim. If
-either is not found, fall back to Rules A–G in §5.2.
+either is not found, fall back to Rules A–G in §5.2. **Rule H is evaluated independently of this
+JSON lookup, before or alongside it** — a JSON hit does not exempt an internship posting from the
+Rule H eligibility check, since the JSON only encodes degree-domain matching, not enrollment-
+window eligibility.
 
 The tables below are human-readable renderings of the JSON's four categories for quick reference
 — if they ever disagree with `degree_domain_map.json`, the JSON wins. See the JSON's
