@@ -573,7 +573,12 @@ Markdown prose itself displays the internship-mode variant.
 
 ## 10. Final Fit Summary
 
-One of:
+One of the following generic labels — this is the full set for full-time/non-internship output,
+and also the fixed set used for the JSON sidecar's `fit_category` enum in **every** run (see the
+Scope note above §10.1 and §11). For internship-mode runs, the **Markdown output's** display
+prose additionally substitutes the §9.5 internship-mode label for Strong/Moderate/Weak match
+(never Mismatch/Hard reject, which are unchanged) — §9.5 is an explicit, scoped exception to this
+list, not a contradiction of it:
 
 - **Strong match**  
 - **Moderate match**  

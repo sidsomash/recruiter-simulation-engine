@@ -94,7 +94,11 @@ Extract structured information into an explicit, machine-readable job metadata o
 - Compensation / Pay Range (salary or hourly)  
 - Location(s) (city, state, remote/hybrid flags)  
 - Required years of experience (numeric range or "entry/mid/senior")  
-- Degree requirements (degree level and domain)  
+- Degree requirements (degree level and domain — if the JD explicitly states no degree is
+  required at all, e.g. "no degree required," "degree not required," "no specific degree
+  required," or equivalent phrasing, normalize and record this field verbatim as
+  "Not specified" rather than a domain value, so 4d's Rule E branch can key off a single literal
+  value)  
 - Internship enrollment window (if the JD requires ongoing enrollment through a stated future
   cutoff date/term, e.g. "must be enrolled through Fall 2026," "graduating December 2026 or
   later" — record the exact cutoff date/term verbatim, or null if the JD gives no such cutoff)  
@@ -177,11 +181,13 @@ eligibility gate) — this check is unconditional and independent of the JSON lo
 since Rule H governs enrollment-window eligibility, not degree-domain matching. If Rule H applies,
 lock ❌ Hard mismatch as the Match Category now and skip the rest of this step.
 
-Otherwise, if 4a's locked degree-requirement field is empty/null/"Not specified" (the JD does not
-state a degree requirement at all), apply Rule E directly and lock ➖ Not specified as the Match
-Category now — do not run the category classification/JSON lookup below in this case, since there
-is no JD degree field to match against and doing so risks scoring a domain mismatch that Rule E
-explicitly forbids.
+Otherwise, if 4a's locked degree-requirement field is empty/null/"Not specified" **or** otherwise
+states in substance that no degree is required at all (e.g. "no degree required," "degree not
+required," "no specific degree required," or equivalent phrasing not yet normalized to "Not
+specified" at Step 2), apply Rule E directly and lock ➖ Not specified as the Match Category now —
+do not run the category classification/JSON lookup below in this case, since there is no JD
+degree field to match against and doing so risks scoring a domain mismatch that Rule E explicitly
+forbids.
 
 Otherwise, determine which of the four candidate degree categories in
 `references/degree_domain_map.json` applies (`stem_quantitative`, `business_finance_accounting`,
